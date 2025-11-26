@@ -1,0 +1,35 @@
+version: '3'
+
+dotenv: ['.env']
+
+tasks:
+  build:ubuntu:
+    desc: Build Ubuntu Nomad template
+    cmds:
+      - packer build packer-templates/ubuntu/ubuntu-nomad.pkr.hcl
+    env:
+      PKR_VAR_clone_vm_id: 9000
+
+  build:alpine:
+    desc: Build Alpine Nomad template
+    cmds:
+      - packer build packer-templates/alpine/alpine-nomad.pkr.hcl
+    env:
+      PKR_VAR_clone_vm_id: 9001
+
+  build:base:
+    desc: Build Ubuntu base image
+    cmds:
+      - packer build packer-templates/ubuntu/base-image.pkr.hcl
+
+  validate:
+    desc: Validate all Packer templates
+    cmds:
+      - packer validate packer-templates/ubuntu/ubuntu-nomad.pkr.hcl
+      - packer validate packer-templates/alpine/alpine-nomad.pkr.hcl
+      - packer validate packer-templates/ubuntu/base-image.pkr.hcl
+
+  fmt:
+    desc: Format all Packer templates
+    cmds:
+      - packer fmt -recursive packer-templates/

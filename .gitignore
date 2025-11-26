@@ -1,0 +1,89 @@
+# Packer
+packer_cache/
+*.box
+crash.log
+crash.*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.secret
+
+# Secrets and credentials
+**/secrets/
+**/credentials/
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+
+# Proxmox specific
+*.qcow2
+*.img
+
+# Operating System Files
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+*~
+.directory
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# IDEs and Editors
+# VSCode
+.vscode/
+*.code-workspace
+
+# JetBrains
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim
+*.swp
+*.swo
+*~
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# Sublime
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+
+# Build artifacts
+build/
+dist/
+output/
