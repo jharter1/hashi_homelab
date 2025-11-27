@@ -1,3 +1,4 @@
+---
 version: '3'
 
 dotenv: ['.env']
@@ -6,16 +7,20 @@ tasks:
   build:ubuntu:
     desc: Build Ubuntu Nomad template
     cmds:
-      - packer build packer-templates/ubuntu/ubuntu-nomad.pkr.hcl
-    env:
-      PKR_VAR_clone_vm_id: 9000
+      - |
+        export PKR_VAR_clone_vm_id=9000
+        export PACKER_LOG=1
+        export PKR_VAR_ssh_username="$UBUNTU_SSH_USERNAME"
+        packer build packer-templates/ubuntu/ubuntu-nomad.pkr.hcl
 
   build:alpine:
     desc: Build Alpine Nomad template
     cmds:
-      - packer build packer-templates/alpine/alpine-nomad.pkr.hcl
-    env:
-      PKR_VAR_clone_vm_id: 9001
+      - |
+        export PKR_VAR_clone_vm_id=9001
+        export PACKER_LOG=1
+        export PKR_VAR_ssh_username="$ALPINE_SSH_USERNAME"
+        packer build packer-templates/alpine/alpine.pkr.hcl
 
   build:base:
     desc: Build Ubuntu base image
@@ -26,10 +31,15 @@ tasks:
     desc: Validate all Packer templates
     cmds:
       - packer validate packer-templates/ubuntu/ubuntu-nomad.pkr.hcl
-      - packer validate packer-templates/alpine/alpine-nomad.pkr.hcl
+      - packer validate packer-templates/alpine/alpine.pkr.hcl
       - packer validate packer-templates/ubuntu/base-image.pkr.hcl
 
   fmt:
     desc: Format all Packer templates
     cmds:
       - packer fmt -recursive packer-templates/
+
+  debug:env:
+    desc: Show environment variables loaded from .env
+    cmds:
+      - env | grep -E '(ALPINE_SSH_USERNAME|UBUNTU_SSH_USERNAME|SSH_PASSWORD|PROXMOX|PKR_VAR)' | sort

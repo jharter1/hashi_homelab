@@ -32,7 +32,7 @@ REQUIRED_VARS=(
     "UBUNTU_CORES"
     "NETWORK_BRIDGE"
     "NETWORK_DNS"
-    "SSH_USERNAME"
+    "UBUNTU_SSH_USERNAME"
     "SSH_PASSWORD"
 )
 
@@ -54,7 +54,7 @@ CORES="${UBUNTU_CORES}"
 BRIDGE="${NETWORK_BRIDGE}"
 
 # Cloud-init user configuration from environment
-CI_USER="${SSH_USERNAME}"
+CI_USER="${UBUNTU_SSH_USERNAME}"
 CI_PASSWORD="${SSH_PASSWORD}"
 CI_SSH_KEY="${SSH_PUBLIC_KEY:-}"  # Optional SSH key
 

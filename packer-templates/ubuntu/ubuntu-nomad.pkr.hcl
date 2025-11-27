@@ -14,6 +14,14 @@ variable "proxmox_password" {
 
 variable "ssh_username" {
   type    = string
+  # Ubuntu cloud-init template uses 'packer' user
+  default = env("UBUNTU_SSH_USERNAME")
+}
+
+variable "ssh_password" {
+  type      = string
+  sensitive = true
+  default   = env("SSH_PASSWORD")
 }
 
 variable "proxmox_node" {
@@ -34,7 +42,7 @@ variable "proxmox_username" {
 
 locals {
   # Common provisioner settings
-  sudo_command = "echo '${var.proxmox_password}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
+  sudo_command = "echo '${var.ssh_password}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
   noninteractive_env = ["DEBIAN_FRONTEND=noninteractive"]
 }
 
@@ -64,7 +72,7 @@ source "proxmox-clone" "ubuntu_nomad" {
   }
 
   ssh_username           = var.ssh_username
-  ssh_password           = var.proxmox_password
+  ssh_password           = var.ssh_password
   ssh_timeout            = "20m"
   ssh_handshake_attempts = 30
 }

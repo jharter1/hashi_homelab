@@ -15,7 +15,14 @@ variable "proxmox_password" {
 
 variable "ssh_username" {
   type    = string
-  default = env("SSH_USERNAME")
+  # Alpine cloud-init template uses 'alpine' user
+  default = env("ALPINE_SSH_USERNAME")
+}
+
+variable "ssh_password" {
+  type      = string
+  sensitive = true
+  default   = env("SSH_PASSWORD")
 }
 
 variable "proxmox_node" {
@@ -29,7 +36,13 @@ variable "proxmox_url" {
 }
 
 variable "clone_vm_id" {
-  default = env("ALPINE_BASE_VMID")
+  type    = number
+  default = 9001
+}
+
+variable "proxmox_username" {
+  type    = string
+  default = env("PROXMOX_USERNAME")
 }
 
 locals {
@@ -37,10 +50,10 @@ locals {
   sudo_command = "doas sh -c '{{ .Vars }} {{ .Path }}'"
 }
 
-source "proxmox-clone" "alpine_nomad" {
+source "proxmox-clone" "alpine" {
   proxmox_url              = var.proxmox_url
   insecure_skip_tls_verify = true
-  username                 = env("PROXMOX_USERNAME")
+  username                 = var.proxmox_username
   password                 = var.proxmox_password
   node                     = var.proxmox_node
 
@@ -48,33 +61,27 @@ source "proxmox-clone" "alpine_nomad" {
   clone_vm_id = var.clone_vm_id
   full_clone  = true
   task_timeout = "10m"
-
+  
   scsi_controller = "virtio-scsi-pci"
 
-  template_name        = "alpine-nomad-template"
-  template_description = "Lightweight Alpine Linux template with Nomad, Consul, and Docker"
+  template_name        = "alpine-minimal-template"
+  template_description = "Lightweight Alpine Linux template with Consul only - for non-containerized tasks (Nomad/Docker not compatible)"
 
   cores  = 2
   memory = 2048
 
-  network_adapters {\n    bridge = \"vmbr0\"\n    model  = \"virtio\"\n  }\n\n  ssh_username = var.ssh_username\n  ssh_password = var.proxmox_password\n  ssh_timeout  = \"20m\"\n  ssh_handshake_attempts = 50
-  
-  # Use network interface to get IP instead of guest agent (guest agent installs during first boot)
-  vm_interface = "eth0"
-  ssh_pty                = true
+  network_adapters {
+    bridge = "vmbr0"
+    model  = "virtio"
+  }
+
+  ssh_username = var.ssh_username
+  ssh_password = var.ssh_password
+  ssh_timeout  = "10m"
 }
 
 build {
-  sources = ["source.proxmox-clone.alpine_nomad"]
-
-  # Wait for cloud-init to complete
-  provisioner "shell" {
-    inline = [
-      "echo 'Waiting for cloud-init to complete...'",
-      "cloud-init status --wait || sleep 30",
-      "echo 'Cloud-init complete, starting provisioning...'"
-    ]
-  }
+  sources = ["source.proxmox-clone.alpine"]
 
   # Install sudo and qemu-guest-agent first (cloud-init should have already done this)
   provisioner "shell" {
@@ -98,7 +105,7 @@ build {
     ]
   }
 
-  # Install HashiCorp tools (Consul and Nomad)
+  # Install HashiCorp tools (Consul only)
   provisioner "shell" {
     execute_command = local.sudo_command
     inline = [
@@ -110,22 +117,9 @@ build {
       "rm /tmp/consul.zip",
       "/usr/local/bin/consul --version",
       
-      "echo '[INFO] Note: Nomad binaries require glibc and do not work natively on Alpine (musl)'",
-      "echo '[INFO] Nomad will be run via Docker container instead'",
-      "echo '[INFO] Skipping Nomad binary installation...'"
-    ]
-  }
-
-  # Install Docker
-  provisioner "shell" {
-    execute_command = local.sudo_command
-    inline = [
-      "echo '[INFO] Installing Docker...'",
-      "apk add --no-cache docker docker-cli-compose",
-      "rc-update add docker default",
-      "service docker start",
-      "addgroup ${var.ssh_username} docker || true",
-      "docker --version"
+      "echo '[INFO] Note: Nomad requires glibc and does not work on Alpine (musl)'",
+      "echo '[INFO] Docker not installed - this template is for non-containerized tasks only'",
+      "echo '[INFO] Use Ubuntu template for Nomad/Docker workloads'"
     ]
   }
 

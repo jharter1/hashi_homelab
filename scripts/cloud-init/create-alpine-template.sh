@@ -32,7 +32,7 @@ REQUIRED_VARS=(
     "ALPINE_CORES"
     "NETWORK_BRIDGE"
     "NETWORK_DNS"
-    "SSH_USERNAME"
+    "ALPINE_SSH_USERNAME"
     "SSH_PASSWORD"
 )
 
@@ -55,7 +55,7 @@ CORES="${ALPINE_CORES}"
 BRIDGE="${NETWORK_BRIDGE}"
 
 # Cloud-init user configuration from environment
-CI_USER="${SSH_USERNAME}"
+CI_USER="${ALPINE_SSH_USERNAME}"
 CI_PASSWORD="${SSH_PASSWORD}"
 CI_SSH_KEY="${SSH_PUBLIC_KEY:-}"  # Optional SSH key
 
@@ -136,7 +136,7 @@ packages:
 runcmd:
   - rc-update add qemu-guest-agent default
   - rc-service qemu-guest-agent start
-  - echo 'permit nopass alpine' > /etc/doas.d/alpine.conf
+  - echo 'permit nopass ${CI_USER}' > /etc/doas.d/${CI_USER}.conf
 EOF
 
 qm set ${VMID} --cicustom "user=local:snippets/alpine-cloudinit.yaml"

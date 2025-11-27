@@ -19,7 +19,7 @@ Automated infrastructure-as-code templates for building HashiCorp-powered virtua
 hashi_homelab/
 ├── packer-templates/
 │   ├── alpine/
-│   │   └── alpine-nomad.pkr.hcl      # Alpine Linux with Nomad/Consul/Docker
+│   │   └── alpine.pkr.hcl            # Alpine Linux minimal (Consul only, no Nomad/Docker)
 │   └── ubuntu/
 │       ├── base-image.pkr.hcl        # Base Ubuntu template with HashiCorp tools
 │       └── ubuntu-nomad.pkr.hcl      # Ubuntu with Nomad/Consul/Docker
@@ -28,8 +28,11 @@ hashi_homelab/
 │   │   ├── create-ubuntu-template.sh # Create Ubuntu cloud-init base template
 │   │   └── create-alpine-template.sh # Create Alpine cloud-init base template
 │   └── install_hashicorp.sh          # HashiCorp tools installation script
+├── Taskfile.yml                       # Task automation for builds and validation
 ├── .env.example                       # Environment variable template
+├── .env                               # Your local configuration (not in git)
 ├── .gitignore                         # Excludes secrets and temp files
+├── LICENSE                            # License file
 └── README.md                          # This file
 ```
 
@@ -203,7 +206,7 @@ bash -c 'set -a; source .env; set +a; export PKR_VAR_clone_vm_id=9000; packer bu
 
 **Use Case**: Nomad worker nodes in a HashiCorp cluster
 
-### Alpine Nomad Template (`alpine-nomad.pkr.hcl`)
+### Alpine Nomad Template (`alpine.pkr.hcl`)
 
 **Purpose**: Lightweight Alpine Linux template (Consul-only for now)
 
@@ -247,6 +250,30 @@ VAULT_VERSION=1.16.0
 ```
 
 ## Troubleshooting
+
+### Packer SSH Authentication Fails with "unexpected message type 51"
+
+**Problem**: Build fails with error: `ssh: handshake failed: ssh: unexpected message type 51 (expected 60)`
+
+**Root Cause**: Packer automatically loads environment variables with the `PKR_VAR_*` prefix. If your `.env` file contains `SSH_USERNAME=packer`, Packer converts it to `PKR_VAR_ssh_username=packer`, which takes precedence over OS-specific variables like `ALPINE_SSH_USERNAME=alpine`.
+
+**Solution**: The Taskfile explicitly sets `PKR_VAR_ssh_username` to the correct OS-specific value:
+
+```yaml
+# For Alpine builds
+export PKR_VAR_ssh_username="$ALPINE_SSH_USERNAME"
+
+# For Ubuntu builds  
+export PKR_VAR_ssh_username="$UBUNTU_SSH_USERNAME"
+```
+
+**Why this matters**:
+
+- Alpine cloud-init creates user `alpine` by default
+- Ubuntu cloud-init creates user `packer` (as configured)
+- Each template must use the correct username for its OS
+
+**Debug tip**: Run `task debug:packer-vars` to see what variable values Packer is actually using.
 
 ### Fish Shell Environment Variable Issues
 
