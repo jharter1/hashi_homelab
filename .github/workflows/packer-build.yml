@@ -1,0 +1,154 @@
+name: Build Packer Templates
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packer/**'
+      - 'scripts/**'
+      - '.github/workflows/packer-build.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packer/**'
+      - 'scripts/**'
+  workflow_dispatch:
+    inputs:
+      template:
+        description: 'Template to build (base, hashicorp, nomad-server, nomad-client, all)'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - base
+          - hashicorp
+          - nomad-server
+          - nomad-client
+          - all
+
+jobs:
+  validate:
+    name: Validate Packer Templates
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Packer
+        uses: hashicorp/setup-packer@main
+        with:
+          version: '1.10.0'
+      
+      - name: Initialize Packer
+        run: |
+          cd packer/templates/ubuntu
+          packer init .
+      
+      - name: Validate Packer templates
+        run: |
+          cd packer/templates/ubuntu
+          packer validate -var-file=../../variables/common.pkrvars.hcl ubuntu-base.pkr.hcl
+          packer validate -var-file=../../variables/common.pkrvars.hcl ubuntu-hashicorp.pkr.hcl
+          packer validate -var-file=../../variables/common.pkrvars.hcl ubuntu-nomad-server.pkr.hcl
+          packer validate -var-file=../../variables/common.pkrvars.hcl ubuntu-nomad-client.pkr.hcl
+      
+      - name: Format check
+        run: |
+          packer fmt -check -recursive packer/
+
+  build:
+    name: Build Templates
+    runs-on: self-hosted  # Requires self-hosted runner with ProxMox access
+    needs: validate
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    strategy:
+      matrix:
+        template: 
+          - ${{ github.event.inputs.template == 'all' && 'base' || github.event.inputs.template }}
+          - ${{ github.event.inputs.template == 'all' && 'hashicorp' || '' }}
+          - ${{ github.event.inputs.template == 'all' && 'nomad-server' || '' }}
+          - ${{ github.event.inputs.template == 'all' && 'nomad-client' || '' }}
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Packer
+        uses: hashicorp/setup-packer@main
+        with:
+          version: '1.10.0'
+      
+      - name: Set build timestamp
+        id: timestamp
+        run: echo "timestamp=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+      
+      - name: Build base template
+        if: matrix.template == 'base' || github.event.inputs.template == 'all'
+        env:
+          PROXMOX_PASSWORD: ${{ secrets.PROXMOX_PASSWORD }}
+        run: |
+          cd packer
+          ./build-single-vm.sh
+        continue-on-error: false
+      
+      - name: Build HashiCorp template
+        if: matrix.template == 'hashicorp' || github.event.inputs.template == 'all'
+        env:
+          PROXMOX_PASSWORD: ${{ secrets.PROXMOX_PASSWORD }}
+        run: |
+          cd packer
+          ./build-hashicorp-template.sh
+        continue-on-error: false
+      
+      - name: Build Nomad server template
+        if: matrix.template == 'nomad-server' || github.event.inputs.template == 'all'
+        env:
+          PROXMOX_PASSWORD: ${{ secrets.PROXMOX_PASSWORD }}
+        run: |
+          cd packer
+          ./build-nomad-server.sh
+        continue-on-error: false
+      
+      - name: Build Nomad client template
+        if: matrix.template == 'nomad-client' || github.event.inputs.template == 'all'
+        env:
+          PROXMOX_PASSWORD: ${{ secrets.PROXMOX_PASSWORD }}
+        run: |
+          cd packer
+          ./build-nomad-client.sh
+        continue-on-error: false
+      
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ matrix.template }}-${{ steps.timestamp.outputs.timestamp }}
+          path: logs/
+          retention-days: 30
+      
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Build failed for template: ${{ matrix.template }}"
+          echo "Check logs for details"
+
+  cleanup:
+    name: Cleanup Old Templates
+    runs-on: self-hosted
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Cleanup old templates
+        env:
+          PROXMOX_HOST: ${{ secrets.PROXMOX_HOST }}
+          PROXMOX_PASSWORD: ${{ secrets.PROXMOX_PASSWORD }}
+        run: |
+          cd terraform/scripts
+          ./cleanup-templates.sh --keep-latest 3

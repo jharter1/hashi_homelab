@@ -1,45 +1,77 @@
 ---
 version: '3'
 
-dotenv: ['.env']
-
 tasks:
   build:ubuntu:
     desc: Build Ubuntu Nomad template
     cmds:
       - |
-        export PKR_VAR_clone_vm_id=9000
-        export PACKER_LOG=1
-        export PKR_VAR_ssh_username="$UBUNTU_SSH_USERNAME"
-        packer build packer-templates/ubuntu/ubuntu-nomad.pkr.hcl
+        bash -lc "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-nomad.pkr.hcl"
 
-  build:alpine:
-    desc: Build Alpine Nomad template
-    cmds:
-      - |
-        export PKR_VAR_clone_vm_id=9001
-        export PACKER_LOG=1
-        export PKR_VAR_ssh_username="$ALPINE_SSH_USERNAME"
-        packer build packer-templates/alpine/alpine.pkr.hcl
+  # build:alpine:
+  #   desc: Build Alpine Nomad template
+  #   cmds:
+  #     - |
+  #       bash -lc "PKR_VAR_clone_vm_id=\${PKR_VAR_clone_vm_id:-9001} PACKER_LOG=1 PKR_VAR_ssh_username=\${PKR_VAR_ssh_username:-\"$ALPINE_SSH_USERNAME\"} packer build packer/templates/alpine/alpine.pkr.hcl"
 
   build:base:
     desc: Build Ubuntu base image
     cmds:
-      - packer build packer-templates/ubuntu/base-image.pkr.hcl
+      - |
+        bash -lc "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-bare-minimum.pkr.hcl"
+
+  build:minimal:
+    desc: Build minimal Ubuntu cloud agent template (qga + cloud-init)
+    cmds:
+      - |
+        bash -lc "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-qemu-agent.pkr.hcl"
+
+  build:debian:client:
+    desc: Build Debian Nomad Client template
+    cmds:
+      - |
+        bash -lc "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/debian/debian-nomad-client.pkr.hcl"
+
+  build:debian:server:
+    desc: Build Debian Nomad Server template
+    cmds:
+      - |
+        bash -lc "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/debian/debian-nomad-server.pkr.hcl"
 
   validate:
     desc: Validate all Packer templates
     cmds:
-      - packer validate packer-templates/ubuntu/ubuntu-nomad.pkr.hcl
-      - packer validate packer-templates/alpine/alpine.pkr.hcl
-      - packer validate packer-templates/ubuntu/base-image.pkr.hcl
+      - packer validate packer/templates/ubuntu/ubuntu-nomad.pkr.hcl
+      # - packer validate packer/templates/alpine/alpine.pkr.hcl
+      - packer validate packer/templates/ubuntu/ubuntu-bare-minimum.pkr.hcl
+      - packer validate packer/templates/debian/debian-nomad-client.pkr.hcl
+      - packer validate packer/templates/debian/debian-nomad-server.pkr.hcl
 
   fmt:
     desc: Format all Packer templates
     cmds:
-      - packer fmt -recursive packer-templates/
+      - packer fmt -recursive packer/templates/
 
-  debug:env:
-    desc: Show environment variables loaded from .env
+  tf:init:
+    desc: "Initialize Terraform workspace"
     cmds:
-      - env | grep -E '(ALPINE_SSH_USERNAME|UBUNTU_SSH_USERNAME|SSH_PASSWORD|PROXMOX|PKR_VAR)' | sort
+      - |
+        cd terraform && terraform init
+
+  tf:plan:
+    desc: "Terraform plan"
+    cmds:
+      - |
+        cd terraform && terraform plan
+
+  tf:apply:
+    desc: "Terraform apply (will create VMs)"
+    cmds:
+      - |
+        cd terraform && terraform init && terraform apply -auto-approve
+
+  tf:destroy:
+    desc: "Terraform destroy (will tear down VMs created by Terraform)"
+    cmds:
+      - |
+        cd terraform && terraform init && terraform destroy -auto-approve

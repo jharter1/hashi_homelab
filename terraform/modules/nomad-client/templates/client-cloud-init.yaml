@@ -1,0 +1,141 @@
+#cloud-config
+# Nomad Client Cloud-Init Configuration
+
+hostname: ${hostname}
+
+# Update packages on first boot
+package_update: true
+package_upgrade: false
+
+# Write configuration files
+write_files:
+  # Consul client configuration
+  - path: /etc/consul.d/consul.hcl
+    owner: consul:consul
+    permissions: '0640'
+    content: |
+      datacenter = "${datacenter}"
+      data_dir = "/opt/consul"
+      
+      server = false
+      
+      retry_join = ${server_addresses}
+      
+      bind_addr = "{{ GetInterfaceIP \"ens18\" }}"
+      client_addr = "127.0.0.1"
+  
+  # Nomad client configuration
+  - path: /etc/nomad.d/nomad.hcl
+    owner: nomad:nomad
+    permissions: '0640'
+    content: |
+      datacenter = "${datacenter}"
+      region = "${region}"
+      data_dir = "/opt/nomad"
+      
+      client {
+        enabled = true
+        
+        node_class = "${node_class}"
+        
+        server_join {
+          retry_join = ${server_addresses}
+          retry_max = 3
+          retry_interval = "15s"
+        }
+        
+        # Enable Docker driver
+        options = {
+          "driver.raw_exec.enable" = "1"
+        }
+      }
+      
+      bind_addr = "0.0.0.0"
+      
+      advertise {
+        http = "{{ GetInterfaceIP \"ens18\" }}"
+        rpc  = "{{ GetInterfaceIP \"ens18\" }}"
+        serf = "{{ GetInterfaceIP \"ens18\" }}"
+      }
+      
+      consul {
+        address = "127.0.0.1:8500"
+        auto_advertise = true
+        client_service_name = "nomad-client"
+        client_auto_join = true
+      }
+      
+      plugin "docker" {
+        config {
+          allow_privileged = false
+          volumes {
+            enabled = true
+          }
+        }
+      }
+  
+  # Docker daemon configuration
+  - path: /etc/docker/daemon.json
+    owner: root:root
+    permissions: '0644'
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "10m",
+          "max-file": "3"
+        },
+        "storage-driver": "overlay2"
+      }
+
+# Run commands on first boot
+runcmd:
+  # Ensure Docker is properly configured
+  - systemctl daemon-reload
+  - systemctl enable docker
+  - systemctl start docker
+  - sleep 3
+  
+  # Add nomad user to docker group
+  - usermod -aG docker nomad
+  
+  # Ensure services are enabled
+  - systemctl enable consul
+  - systemctl enable nomad
+  
+  # Start Consul
+  - systemctl start consul
+  - sleep 5
+  
+  # Start Nomad
+  - systemctl start nomad
+  - sleep 5
+  
+  # Set hostname
+  - hostnamectl set-hostname ${hostname}
+  
+  # Update /etc/hosts
+  - echo "127.0.0.1 ${hostname}" >> /etc/hosts
+
+# Final message
+final_message: |
+  Nomad Client ${hostname} is ready!
+  
+  Client Index: ${client_index}
+  Datacenter: ${datacenter}
+  Region: ${region}
+  Node Class: ${node_class}
+  
+  Services:
+  - Docker: $(docker --version)
+  - Consul: Running (client mode)
+  - Nomad: Running (client mode)
+  
+  Check node status:
+    nomad node status
+    docker ps
+  
+  View logs:
+    journalctl -u nomad -f
+    journalctl -u consul -f
+    journalctl -u docker -f

@@ -87,3 +87,16 @@ temp/
 build/
 dist/
 output/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+!terraform.tfvars.example
+.terraform.lock.hcl
+
+# Packer
+downloaded_iso_path/
+packer/downloaded_iso_path/
+manifest.json

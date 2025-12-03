@@ -1,0 +1,134 @@
+#cloud-config
+# Nomad Server Cloud-Init Configuration
+
+hostname: ${hostname}
+
+# Update packages on first boot
+package_update: true
+package_upgrade: false
+
+# Write configuration files
+write_files:
+  # Consul server configuration
+  - path: /etc/consul.d/consul.hcl
+    owner: consul:consul
+    permissions: '0640'
+    content: |
+      datacenter = "${datacenter}"
+      data_dir = "/opt/consul"
+      
+      server = true
+      bootstrap_expect = ${server_count}
+      
+      retry_join = ${consul_retry_join}
+      
+      bind_addr = "{{ GetInterfaceIP \"ens18\" }}"
+      client_addr = "0.0.0.0"
+      
+      ui_config {
+        enabled = true
+      }
+      
+      performance {
+        raft_multiplier = 1
+      }
+  
+  # Nomad server configuration
+  - path: /etc/nomad.d/nomad.hcl
+    owner: nomad:nomad
+    permissions: '0640'
+    content: |
+      datacenter = "${datacenter}"
+      region = "${region}"
+      data_dir = "/opt/nomad"
+      
+      server {
+        enabled = true
+        bootstrap_expect = ${server_count}
+        
+        server_join {
+          retry_join = ${consul_retry_join}
+          retry_max = 3
+          retry_interval = "15s"
+        }
+      }
+      
+      bind_addr = "0.0.0.0"
+      
+      advertise {
+        http = "{{ GetInterfaceIP \"ens18\" }}"
+        rpc  = "{{ GetInterfaceIP \"ens18\" }}"
+        serf = "{{ GetInterfaceIP \"ens18\" }}"
+      }
+      
+      consul {
+        address = "127.0.0.1:8500"
+        auto_advertise = true
+        server_service_name = "nomad"
+        server_auto_join = true
+      }
+  
+  # Vault server configuration (basic setup)
+  - path: /etc/vault.d/vault.hcl
+    owner: vault:vault
+    permissions: '0640'
+    content: |
+      ui = true
+      
+      storage "consul" {
+        address = "127.0.0.1:8500"
+        path    = "vault/"
+      }
+      
+      listener "tcp" {
+        address     = "0.0.0.0:8200"
+        tls_disable = 1
+      }
+      
+      api_addr = "http://{{ GetInterfaceIP \"ens18\" }}:8200"
+      cluster_addr = "https://{{ GetInterfaceIP \"ens18\" }}:8201"
+
+# Run commands on first boot
+runcmd:
+  # Ensure services are enabled
+  - systemctl daemon-reload
+  - systemctl enable consul
+  - systemctl enable nomad
+  - systemctl enable vault
+  
+  # Start Consul first
+  - systemctl start consul
+  - sleep 5
+  
+  # Start Nomad
+  - systemctl start nomad
+  - sleep 5
+  
+  # Note: Vault requires manual initialization
+  # Do not auto-start Vault in production
+  
+  # Set hostname
+  - hostnamectl set-hostname ${hostname}
+  
+  # Update /etc/hosts
+  - echo "127.0.0.1 ${hostname}" >> /etc/hosts
+
+# Final message
+final_message: |
+  Nomad Server ${hostname} is ready!
+  
+  Server Index: ${server_index}/${server_count}
+  Datacenter: ${datacenter}
+  Region: ${region}
+  
+  Services:
+  - Consul: http://$(hostname -I | awk '{print $1}'):8500
+  - Nomad: http://$(hostname -I | awk '{print $1}'):4646
+  - Vault: http://$(hostname -I | awk '{print $1}'):8200 (not started)
+  
+  Check cluster status:
+    consul members
+    nomad server members
+  
+  Initialize Vault (first server only):
+    vault operator init

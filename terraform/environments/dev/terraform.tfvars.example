@@ -1,0 +1,45 @@
+# Development Environment Configuration
+# Copy this file to terraform.tfvars and update with your values
+
+# ProxMox Configuration
+proxmox_host     = "https://10.0.0.21:8006"  # Base URL without /api2/json
+proxmox_node     = "pve1"
+proxmox_username = "root@pam"
+# proxmox_password = "set-via-TF_VAR_proxmox_password-env-var"
+proxmox_host_ip  = "10.0.0.21"
+
+# Storage Configuration
+storage_pool = "local-lvm"
+
+# Network Configuration
+network_cidr    = "10.0.0.0/24"
+network_gateway = "10.0.0.1"
+dns_servers     = ["1.1.1.1", "8.8.8.8"]
+
+# Template Names (from Packer builds)
+nomad_server_template_name = "ubuntu-nomad-server-template"
+nomad_client_template_name = "ubuntu-nomad-client-template"
+
+# Cluster Configuration
+nomad_server_count = 3
+nomad_client_count = 2
+
+# SSH Configuration
+ssh_public_keys = <<-EOT
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... user@host
+EOT
+
+# ssh_private_key = "set-via-TF_VAR_ssh_private_key-env-var"
+
+# HashiCorp Tool Versions
+consul_version = "1.18.0"
+nomad_version  = "1.7.5"
+vault_version  = "1.16.0"
+docker_version = "24.0.7"
+
+# Environment Settings
+environment    = "dev"
+datacenter     = "dc1"
+region         = "global"
+auto_bootstrap = false
+auto_start_services = false
