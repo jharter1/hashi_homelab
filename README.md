@@ -37,6 +37,16 @@ graph TD
         Server <-->|Consul/Nomad Gossip| Server
         Client -->|Nomad RPC| Server
     end
+
+    %% Styling
+    style Consul fill:#e93e8c,stroke:#333,stroke-width:2px,color:white
+    style Nomad fill:#60ac39,stroke:#333,stroke-width:2px,color:white
+    style Docker fill:#2496ed,stroke:#333,stroke-width:2px,color:white
+    style TF fill:#7b42bc,stroke:#333,stroke-width:2px,color:white
+    style Taskfile fill:#00A0D0,stroke:#333,stroke-width:2px,color:white
+    style Template fill:#E57000,stroke:#333,stroke-width:2px,color:white
+    style Server fill:#60ac39,stroke:#333,stroke-width:2px,color:white
+    style Client fill:#60ac39,stroke:#333,stroke-width:2px,color:white
 ```
 
 ## Quick Start
