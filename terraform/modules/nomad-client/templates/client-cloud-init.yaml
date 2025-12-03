@@ -88,6 +88,94 @@ write_files:
         "storage-driver": "overlay2"
       }
 
+  # Disk setup script
+  - path: /usr/local/bin/setup-nomad-disk.sh
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      set -e
+      
+      # Log function
+      log() {
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+      }
+      
+      log "Starting Nomad disk setup..."
+      
+      # Find the 40GB disk
+      DISK_DEVICE=""
+      for dev in /dev/sd[a-z]; do
+          if [ ! -b "$dev" ]; then continue; fi
+          size=$(lsblk -dn -o SIZE -b $dev)
+          # Check for ~40GB (35GB - 45GB)
+          if [[ $size -gt 37580963840 && $size -lt 48318382080 ]]; then
+              DISK_DEVICE=$dev
+              log "Found 40GB disk candidate: $DISK_DEVICE ($size bytes)"
+              break
+          fi
+      done
+      
+      if [ -z "$DISK_DEVICE" ]; then
+          log "Error: Could not find a ~40GB disk."
+          exit 0 # Exit successfully to not break boot if disk is missing
+      fi
+      
+      # Check if already mounted
+      if mount | grep -q "/opt/nomad"; then
+          log "/opt/nomad is already mounted."
+          exit 0
+      fi
+      
+      # Partition if needed
+      PARTITION="${DISK_DEVICE}1"
+      if ! lsblk "$DISK_DEVICE" | grep -q "${DISK_DEVICE##*/}1"; then
+          log "Partitioning $DISK_DEVICE..."
+          echo "type=83" | sfdisk "$DISK_DEVICE"
+          sleep 2
+      fi
+      
+      # Format if needed
+      if ! blkid "$PARTITION" | grep -q "ext4"; then
+          log "Formatting $PARTITION as ext4..."
+          mkfs.ext4 -F "$PARTITION"
+      fi
+      
+      # Create mount point
+      mkdir -p /opt/nomad
+      
+      # Backup existing data
+      if [ "$(ls -A /opt/nomad)" ] && ! mountpoint -q /opt/nomad; then
+         log "Backing up existing /opt/nomad data..."
+         mv /opt/nomad /opt/nomad.bak
+         mkdir -p /opt/nomad
+      fi
+      
+      # Add to fstab
+      UUID=$(blkid -s UUID -o value "$PARTITION")
+      if ! grep -q "$UUID" /etc/fstab; then
+          log "Adding to /etc/fstab..."
+          echo "UUID=$UUID /opt/nomad ext4 defaults 0 2" >> /etc/fstab
+      fi
+      
+      # Mount
+      log "Mounting /opt/nomad..."
+      mount -a
+      
+      # Restore data
+      if [ -d "/opt/nomad.bak" ]; then
+          log "Restoring data..."
+          cp -a /opt/nomad.bak/* /opt/nomad/
+          rm -rf /opt/nomad.bak
+      fi
+      
+      # Fix permissions
+      log "Fixing permissions..."
+      chown -R nomad:nomad /opt/nomad
+      chmod 755 /opt/nomad
+      
+      log "Disk setup complete."
+
 # Run commands on first boot
 runcmd:
   # Ensure Docker is properly configured
@@ -98,6 +186,9 @@ runcmd:
   
   # Add nomad user to docker group
   - usermod -aG docker nomad
+
+  # Setup Nomad disk
+  - /usr/local/bin/setup-nomad-disk.sh
   
   # Ensure services are enabled
   - systemctl enable consul

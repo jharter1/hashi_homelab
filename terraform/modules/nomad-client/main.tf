@@ -62,6 +62,7 @@ module "nomad_clients" {
   consul_config = templatefile("${path.module}/templates/consul-client.hcl", {
     datacenter       = var.datacenter
     server_addresses = jsonencode(var.server_addresses)
+    bind_addr        = split("/", local.client_ips[count.index])[0]
   })
 
   nomad_config = templatefile("${path.module}/templates/nomad-client.hcl", {

@@ -4,7 +4,7 @@
 # HashiCorp Tool Versions
 consul_version = "1.18.0"
 vault_version  = "1.16.0"
-nomad_version  = "1.7.5"
+nomad_version  = "1.10.3"
 docker_version = "24.0.7"
 
 # Base VM Configuration

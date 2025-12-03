@@ -6,7 +6,7 @@ tasks:
     desc: Build Ubuntu Nomad template
     cmds:
       - |
-        bash -lc "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-nomad.pkr.hcl"
+        fish -c "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-nomad.pkr.hcl"
 
   # build:alpine:
   #   desc: Build Alpine Nomad template
@@ -18,25 +18,30 @@ tasks:
     desc: Build Ubuntu base image
     cmds:
       - |
-        bash -lc "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-bare-minimum.pkr.hcl"
+        fish -c "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-bare-minimum.pkr.hcl"
 
   build:minimal:
     desc: Build minimal Ubuntu cloud agent template (qga + cloud-init)
     cmds:
       - |
-        bash -lc "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-qemu-agent.pkr.hcl"
+        fish -c "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-qemu-agent.pkr.hcl"
+
+  build:debian:base:
+    desc: Create Debian 12 Cloud Base Template (VM 9400)
+    cmds:
+      - bash packer/scripts/create-debian-cloud-base.sh 10.0.0.21
 
   build:debian:client:
     desc: Build Debian Nomad Client template
     cmds:
       - |
-        bash -lc "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/debian/debian-nomad-client.pkr.hcl"
+        fish -c "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/debian/debian-nomad-client.pkr.hcl"
 
   build:debian:server:
     desc: Build Debian Nomad Server template
     cmds:
       - |
-        bash -lc "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/debian/debian-nomad-server.pkr.hcl"
+        fish -c "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/debian/debian-nomad-server.pkr.hcl"
 
   validate:
     desc: Validate all Packer templates

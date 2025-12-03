@@ -25,6 +25,9 @@ echo "Downloading Debian 12 cloud image..."
 cd /tmp
 wget -O $IMAGE_FILE $IMAGE_URL
 
+echo "Installing QEMU Guest Agent into image..."
+virt-customize -a $IMAGE_FILE --install qemu-guest-agent --run-command 'systemctl enable qemu-guest-agent' --run-command 'mkdir -p /etc/ssh/sshd_config.d && echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/99-allow-password.conf'
+
 echo "Creating VM $VM_ID..."
 qm create $VM_ID --name $VM_NAME --memory 2048 --cores 2 --net0 virtio,bridge=vmbr0
 

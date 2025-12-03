@@ -7,7 +7,7 @@ server = false
 
 retry_join = ${server_addresses}
 
-bind_addr = "0.0.0.0"
+bind_addr = "${bind_addr}"
 client_addr = "0.0.0.0"
 
 connect {
