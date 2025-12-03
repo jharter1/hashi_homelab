@@ -23,7 +23,7 @@ graph TD
         Taskfile -->|Builds| Template[VM Templates]
         Template -->|Contains| Consul
         Template -->|Contains| Nomad
-        Template -->|Contains| Docker[Docker (Clients)]
+        Template -->|Contains| Docker[Docker Clients]
     end
     
     subgraph "Deploy Phase (Terraform)"
