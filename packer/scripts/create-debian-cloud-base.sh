@@ -25,6 +25,11 @@ echo "Downloading Debian 12 cloud image..."
 cd /tmp
 wget -O $IMAGE_FILE $IMAGE_URL
 
+echo "Expanding image to 50G with filesystem resize..."
+qemu-img resize $IMAGE_FILE 50G
+virt-resize --expand /dev/sda1 $IMAGE_FILE ${IMAGE_FILE}.resized
+mv ${IMAGE_FILE}.resized $IMAGE_FILE
+
 echo "Installing QEMU Guest Agent into image..."
 virt-customize -a $IMAGE_FILE --install qemu-guest-agent --run-command 'systemctl enable qemu-guest-agent' --run-command 'mkdir -p /etc/ssh/sshd_config.d && echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/99-allow-password.conf'
 

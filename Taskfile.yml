@@ -6,7 +6,7 @@ tasks:
     desc: Build Ubuntu Nomad template
     cmds:
       - |
-        fish -c "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-nomad.pkr.hcl"
+        fish -c "source scripts/set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-nomad.pkr.hcl"
 
   # build:alpine:
   #   desc: Build Alpine Nomad template
@@ -18,13 +18,13 @@ tasks:
     desc: Build Ubuntu base image
     cmds:
       - |
-        fish -c "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-bare-minimum.pkr.hcl"
+        fish -c "source scripts/set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-bare-minimum.pkr.hcl"
 
   build:minimal:
     desc: Build minimal Ubuntu cloud agent template (qga + cloud-init)
     cmds:
       - |
-        fish -c "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-qemu-agent.pkr.hcl"
+        fish -c "source scripts/set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-qemu-agent.pkr.hcl"
 
   build:debian:base:
     desc: Create Debian 12 Cloud Base Template (VM 9400)
@@ -35,13 +35,13 @@ tasks:
     desc: Build Debian Nomad Client template
     cmds:
       - |
-        fish -c "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/debian/debian-nomad-client.pkr.hcl"
+        fish -c "source scripts/set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/debian/debian-nomad-client.pkr.hcl"
 
   build:debian:server:
     desc: Build Debian Nomad Server template
     cmds:
       - |
-        fish -c "source set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/debian/debian-nomad-server.pkr.hcl"
+        fish -c "source scripts/set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/debian/debian-nomad-server.pkr.hcl"
 
   validate:
     desc: Validate all Packer templates
@@ -61,22 +61,44 @@ tasks:
     desc: "Initialize Terraform workspace"
     cmds:
       - |
-        cd terraform && terraform init
+        cd terraform/environments/dev && terraform init
 
   tf:plan:
     desc: "Terraform plan"
     cmds:
       - |
-        cd terraform && terraform plan
+        cd terraform/environments/dev && terraform plan
 
   tf:apply:
     desc: "Terraform apply (will create VMs)"
     cmds:
       - |
-        cd terraform && terraform init && terraform apply -auto-approve
+        cd terraform/environments/dev && terraform init && terraform apply -auto-approve
 
   tf:destroy:
     desc: "Terraform destroy (will tear down VMs created by Terraform)"
     cmds:
       - |
-        cd terraform && terraform init && terraform destroy -auto-approve
+        cd terraform/environments/dev && terraform init && terraform destroy -auto-approve
+
+  setup:volumes:
+    desc: "Create required host volumes on Nomad clients"
+    cmds:
+      - |
+        ssh ubuntu@10.0.0.60 "sudo mkdir -p /mnt/prometheus_data /mnt/grafana_data && sudo chmod 777 /mnt/prometheus_data /mnt/grafana_data"
+      - |
+        ssh ubuntu@10.0.0.61 "sudo mkdir -p /mnt/prometheus_data /mnt/grafana_data && sudo chmod 777 /mnt/prometheus_data /mnt/grafana_data"
+      - echo "Host volumes created on both clients"
+
+  deploy:
+    desc: "Deploy all Nomad jobs in correct order"
+    cmds:
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/system/traefik.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/prometheus.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/grafana.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/whoami.nomad.hcl
+      - echo "All jobs deployed successfully"

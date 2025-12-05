@@ -3,11 +3,11 @@
 
 terraform {
   required_version = ">= 1.5.0"
-  
+
   required_providers {
     proxmox = {
       source  = "bpg/proxmox"
-      version = "~> 0.50"
+      version = "~> 0.88"
     }
   }
 }
@@ -26,7 +26,7 @@ locals {
   server_nodes = [for i in range(var.server_count) :
     local.proxmox_nodes[i % length(local.proxmox_nodes)]
   ]
-  
+
   # Template IDs per node (use same template if only one provided)
   template_ids = length(var.template_ids) > 0 ? var.template_ids : [var.template_name]
   server_templates = [for i in range(var.server_count) :
@@ -54,6 +54,7 @@ module "nomad_servers" {
   disk_size = var.disk_size
 
   storage_pool   = var.storage_pool
+  vm_storage_pool = var.vm_storage_pool
   network_bridge = var.network_bridge
   vlan_tag       = var.vlan_tag
 
@@ -77,7 +78,7 @@ module "nomad_servers" {
     consul_retry_join = jsonencode(local.consul_retry_join)
   })
 
-  cloud_init_user_data = ""  # Not used anymore
+  cloud_init_user_data = "" # Not used anymore
 
   proxmox_ssh_user = var.proxmox_ssh_user
   proxmox_host_ip  = var.proxmox_host_ip
@@ -99,7 +100,7 @@ resource "null_resource" "wait_for_servers" {
   provisioner "local-exec" {
     command = <<-EOT
       echo "Waiting for server ${count.index + 1} at ${split("/", local.server_ips[count.index])[0]} to be ready..."
-      timeout 900 bash -c 'until nc -z ${split("/", local.server_ips[count.index])[0]} 22; do echo "Still waiting for SSH..."; sleep 10; done'
+      timeout 120 bash -c 'until nc -z ${split("/", local.server_ips[count.index])[0]} 22; do sleep 2; done'
       echo "Server ${count.index + 1} is ready!"
     EOT
   }

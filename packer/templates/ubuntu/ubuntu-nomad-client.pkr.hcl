@@ -83,7 +83,7 @@ source "proxmox-iso" "ubuntu-nomad-client" {
   # Storage - More disk space for containers
   scsi_controller = "virtio-scsi-single"
   disks {
-    disk_size    = "40G"
+    disk_size    = "20G"
     storage_pool = var.storage_pool
     type         = "scsi"
     format       = "raw"

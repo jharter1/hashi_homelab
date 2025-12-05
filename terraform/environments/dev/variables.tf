@@ -78,6 +78,12 @@ variable "storage_pool" {
   type        = string
 }
 
+variable "vm_storage_pool" {
+  description = "VM Storage pool name"
+  type        = string
+  default    = ""
+}
+
 # Network Configuration
 variable "network_bridge" {
   description = "Network bridge"
@@ -127,7 +133,7 @@ variable "nomad_server_memory" {
 }
 
 variable "nomad_server_disk_size" {
-  description = "Disk size per server"
+  description = "Disk size per server (must be larger than template)"
   type        = string
   default     = "20G"
 }
@@ -158,9 +164,9 @@ variable "nomad_client_memory" {
 }
 
 variable "nomad_client_disk_size" {
-  description = "Disk size per client"
+  description = "Disk size per client (must be larger than template)"
   type        = string
-  default     = "30G"
+  default     = "20G"
 }
 
 variable "nomad_client_ip_start" {

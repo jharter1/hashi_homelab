@@ -14,6 +14,21 @@ server {
   }
 }
 
+plugin "docker" {
+  config {
+    allow_privileged = false
+    volumes {
+      enabled = true
+    }
+  }
+}
+
+plugin "raw_exec" {
+  config {
+    enabled = true
+  }
+}
+
 consul {
   address = "127.0.0.1:8500"
   server_service_name = "nomad"

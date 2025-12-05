@@ -1,0 +1,229 @@
+#!/bin/bash
+set -x
+set -e
+
+# Variables passed from Terraform
+ROLE="${role}"
+
+echo "=== Starting VM Configuration ==="
+
+# Fix DNS (Debian cloud-init sometimes fails to set this correctly)
+echo "Configuring DNS..."
+sudo tee /etc/resolv.conf > /dev/null <<EOF
+nameserver 10.0.0.10
+nameserver 1.1.1.1
+EOF
+
+# Ensure Prometheus host volume exists for Nomad
+sudo mkdir -p /mnt/prometheus_data
+sudo chmod 777 /mnt/prometheus_data
+
+# Ensure Grafana host volume exists for Nomad
+sudo mkdir -p /mnt/grafana_data
+sudo chmod 777 /mnt/grafana_data
+
+# Wait for cloud-init to finish
+if [ -f /var/lib/cloud/instance/boot-finished ]; then
+  echo "Cloud-init already finished."
+else
+  echo "Waiting for cloud-init..."
+  cloud-init status --wait || echo "Cloud-init wait returned non-zero status"
+fi
+
+echo "VM ready for configuration"
+
+# Expand root filesystem
+echo "Waiting for disk to be available..."
+sleep 10
+echo "Expanding root filesystem..."
+# Detect the root device dynamically
+ROOT_DEV=$(df / | tail -1 | awk '{print $1}' | sed 's/[0-9]*$//')
+ROOT_PART=$(df / | tail -1 | awk '{print $1}' | grep -o '[0-9]*$')
+echo "Root device: $ROOT_DEV, partition: $ROOT_PART"
+sudo growpart $ROOT_DEV $ROOT_PART 2>/dev/null || echo "Partition already at max size"
+ROOT_FS=$(df / | tail -1 | awk '{print $1}')
+sudo resize2fs $ROOT_FS 2>/dev/null || true
+df -h /
+
+# Install configuration files
+echo "Installing configuration files..."
+sudo mkdir -p /etc/consul.d /etc/nomad.d
+
+# Create Consul Service
+echo "Creating Consul Service..."
+sudo tee /etc/systemd/system/consul.service > /dev/null <<EOF
+[Unit]
+Description=HashiCorp Consul - A Service Mesh Solution
+Documentation=https://www.consul.io/
+Requires=network-online.target
+After=network-online.target
+ConditionFileNotEmpty=/etc/consul.d/consul.hcl
+
+[Service]
+Type=notify
+User=consul
+Group=consul
+ExecStart=/usr/local/bin/consul agent -config-dir=/etc/consul.d/
+ExecReload=/bin/kill --signal HUP \$MAINPID
+KillMode=process
+KillSignal=SIGTERM
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Create Nomad Service
+echo "Creating Nomad Service..."
+sudo tee /etc/systemd/system/nomad.service > /dev/null <<EOF
+[Unit]
+Description=Nomad
+Documentation=https://www.nomadproject.io/docs/
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecReload=/bin/kill -HUP \$MAINPID
+ExecStart=/usr/local/bin/nomad agent -config /etc/nomad.d
+KillMode=process
+KillSignal=SIGINT
+LimitNOFILE=65536
+LimitNPROC=infinity
+Restart=on-failure
+RestartSec=2
+StartLimitBurst=3
+StartLimitIntervalSec=10
+TasksMax=infinity
+OOMScoreAdjust=-1000
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Create Vault Service (only if role is nomad-server)
+if [ "$ROLE" = "nomad-server" ]; then
+  echo "Creating Vault Service..."
+  sudo tee /etc/systemd/system/vault.service > /dev/null <<EOF
+[Unit]
+Description=HashiCorp Vault - A tool for managing secrets
+Documentation=https://www.vaultproject.io/docs/
+Requires=network-online.target
+After=network-online.target
+ConditionFileNotEmpty=/etc/vault.d/vault.hcl
+
+[Service]
+User=vault
+Group=vault
+ProtectSystem=full
+ProtectHome=read-only
+PrivateTmp=yes
+PrivateDevices=yes
+SecureBits=keep-caps
+AmbientCapabilities=CAP_IPC_LOCK
+Capabilities=CAP_IPC_LOCK+ep
+CapabilityBoundingSet=CAP_SYSLOG CAP_IPC_LOCK
+NoNewPrivileges=yes
+ExecStart=/usr/local/bin/vault server -config=/etc/vault.d/vault.hcl
+ExecReload=/bin/kill --signal HUP \$MAINPID
+KillMode=process
+KillSignal=SIGINT
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+StartLimitInterval=60
+StartLimitIntervalSec=60
+StartLimitBurst=3
+LimitNOFILE=65536
+LimitMEMLOCK=infinity
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  sudo systemctl enable vault || true
+  sudo systemctl start vault || true
+fi
+
+# Enable Docker if client
+if [ "$ROLE" = "nomad-client" ]; then
+  echo "Enabling Docker..."
+  sudo systemctl enable docker || true
+  sudo systemctl start docker || true
+fi
+
+# Install Node Exporter (Runs on ALL nodes)
+echo "Installing Node Exporter..."
+NODE_EXPORTER_VERSION="1.7.0"
+cd /tmp
+curl -LO https://github.com/prometheus/node_exporter/releases/download/v$${NODE_EXPORTER_VERSION}/node_exporter-$${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz
+tar xvfz node_exporter-$${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz
+sudo mv node_exporter-$${NODE_EXPORTER_VERSION}.linux-amd64/node_exporter /usr/local/bin/
+rm -rf node_exporter-$${NODE_EXPORTER_VERSION}.linux-amd64*
+
+echo "Creating Node Exporter Service..."
+sudo tee /etc/systemd/system/node_exporter.service > /dev/null <<EOF
+[Unit]
+Description=Node Exporter
+After=network.target
+
+[Service]
+User=nobody
+ExecStart=/usr/local/bin/node_exporter
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl enable node_exporter
+sudo systemctl start node_exporter
+
+# Register Node Exporter in Consul
+echo "Registering Node Exporter in Consul..."
+sudo tee /etc/consul.d/node-exporter.hcl > /dev/null <<EOF
+service {
+  name = "node-exporter"
+  port = 9100
+  tags = ["monitoring", "node-exporter"]
+  check {
+    http     = "http://localhost:9100/metrics"
+    interval = "10s"
+    timeout  = "1s"
+  }
+}
+EOF
+
+# Write Config Files
+echo "Installing configuration files..."
+sudo cp /tmp/consul.hcl /etc/consul.d/consul.hcl
+sudo cp /tmp/nomad.hcl /etc/nomad.d/nomad.hcl
+
+sudo chown -R consul:consul /etc/consul.d
+sudo chown -R nomad:nomad /etc/nomad.d
+sudo chmod 640 /etc/consul.d/*.hcl /etc/nomad.d/*.hcl
+
+echo "Starting services..."
+sudo systemctl daemon-reload
+sudo systemctl enable consul
+sudo systemctl enable nomad
+
+echo "Restarting Consul..."
+sudo systemctl restart consul
+if ! systemctl is-active --quiet consul; then
+  echo "Consul failed to start. Logs:"
+  sudo journalctl -u consul --no-pager -n 20
+fi
+echo "Consul status: $(systemctl is-active consul)"
+
+echo "Waiting 5 seconds..."
+sleep 5
+
+echo "Restarting Nomad..."
+sudo systemctl restart nomad
+if ! systemctl is-active --quiet nomad; then
+  echo "Nomad failed to start. Logs:"
+  sudo journalctl -u nomad --no-pager -n 20
+fi
+echo "Nomad status: $(systemctl is-active nomad)"
+
+echo "Configuration complete"

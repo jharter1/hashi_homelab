@@ -28,7 +28,6 @@ variable "proxmox_password" {
   type        = string
   description = "ProxMox API password"
   sensitive   = true
-  default     = ""
 }
 
 # Storage Configuration

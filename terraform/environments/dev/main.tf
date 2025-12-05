@@ -7,7 +7,7 @@ terraform {
   required_providers {
     proxmox = {
       source  = "bpg/proxmox"
-      version = "~> 0.50"
+      version = "~> 0.88"
     }
     null = {
       source = "hashicorp/null"
@@ -30,7 +30,7 @@ provider "proxmox" {
   username = var.proxmox_username
   password = var.proxmox_password
   insecure = var.proxmox_tls_insecure
-  
+
   ssh {
     agent = true
   }
@@ -52,6 +52,7 @@ module "nomad_servers" {
   disk_size = var.nomad_server_disk_size
 
   storage_pool   = var.storage_pool
+  vm_storage_pool = var.vm_storage_pool
   network_bridge = var.network_bridge
   vlan_tag       = var.vlan_tag
 
@@ -82,7 +83,8 @@ module "nomad_servers" {
 module "nomad_clients" {
   source = "../../modules/nomad-client"
 
-  depends_on = [module.nomad_servers]
+  # Note: Removed depends_on to allow parallel creation with servers
+  # Clients only need server IP addresses (variables), not running servers
 
   client_count = var.nomad_client_count
   name_prefix  = "${var.environment}-nomad-client"
@@ -96,6 +98,7 @@ module "nomad_clients" {
   disk_size = var.nomad_client_disk_size
 
   storage_pool   = var.storage_pool
+  vm_storage_pool = var.vm_storage_pool
   network_bridge = var.network_bridge
   vlan_tag       = var.vlan_tag
 

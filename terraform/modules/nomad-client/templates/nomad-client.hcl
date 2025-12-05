@@ -8,9 +8,26 @@ client {
   enabled = true
   node_class = "${node_class}"
   
+  # Reserve minimal system resources, leaving more available for jobs
+  reserved {
+    cpu      = 250   # MHz - minimal overhead
+    memory   = 256   # MB - minimal overhead
+    disk     = 1000  # MB - minimal overhead for task directories (1GB safe margin)
+  }
+  
   server_join {
     retry_join = ${server_addresses}
     retry_interval = "15s"
+  }
+  
+  host_volume "prometheus_data" {
+    path = "/mnt/prometheus_data"
+    read_only = false
+  }
+
+  host_volume "grafana_data" {
+    path = "/mnt/grafana_data"
+    read_only = false
   }
 }
 
@@ -20,6 +37,12 @@ plugin "docker" {
     volumes {
       enabled = true
     }
+  }
+}
+
+plugin "raw_exec" {
+  config {
+    enabled = true
   }
 }
 

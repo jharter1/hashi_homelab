@@ -63,6 +63,11 @@ variable "storage_pool" {
   type        = string
 }
 
+variable "vm_storage_pool" {
+  description = "VM storage pool name"
+  type        = string
+}
+
 variable "network_bridge" {
   description = "Network bridge"
   type        = string

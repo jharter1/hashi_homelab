@@ -70,6 +70,12 @@ variable "storage_pool" {
   default     = "local-lvm"
 }
 
+variable "vm_storage_pool" {
+  description = "VM Storage pool name"
+  type        = string
+}
+
+
 variable "network_bridge" {
   description = "Network bridge"
   type        = string

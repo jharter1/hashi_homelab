@@ -70,14 +70,9 @@ source "proxmox-clone" "debian-nomad-client" {
   sockets  = 1
   cpu_type = "x86-64-v2-AES"
 
-  # Storage - More disk space for containers
+  # Storage - Disk size inherited from base template (50G)
+  # The disks block doesn't work with proxmox-clone, only with proxmox-iso
   scsi_controller = "virtio-scsi-single"
-  disks {
-    disk_size    = "40G"
-    storage_pool = var.storage_pool
-    type         = "scsi"
-    format       = "raw"
-  }
 
   # Network
   network_adapters {

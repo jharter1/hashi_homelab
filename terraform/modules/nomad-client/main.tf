@@ -3,11 +3,11 @@
 
 terraform {
   required_version = ">= 1.5.0"
-  
+
   required_providers {
     proxmox = {
       source  = "bpg/proxmox"
-      version = "~> 0.50"
+      version = "~> 0.88"
     }
   }
 }
@@ -26,7 +26,7 @@ locals {
   client_nodes = [for i in range(var.client_count) :
     local.proxmox_nodes[i % length(local.proxmox_nodes)]
   ]
-  
+
   # Template IDs per node (use same template if only one provided)
   template_ids = length(var.template_ids) > 0 ? var.template_ids : [var.template_name]
   client_templates = [for i in range(var.client_count) :
@@ -49,6 +49,7 @@ module "nomad_clients" {
   disk_size = var.disk_size
 
   storage_pool   = var.storage_pool
+  vm_storage_pool = var.vm_storage_pool
   network_bridge = var.network_bridge
   vlan_tag       = var.vlan_tag
 
@@ -72,7 +73,7 @@ module "nomad_clients" {
     server_addresses = jsonencode(var.server_addresses)
   })
 
-  cloud_init_user_data = ""  # Not used anymore
+  cloud_init_user_data = "" # Not used anymore
 
   proxmox_ssh_user = var.proxmox_ssh_user
   proxmox_host_ip  = var.proxmox_host_ip
@@ -93,7 +94,7 @@ resource "null_resource" "wait_for_clients" {
 
   provisioner "local-exec" {
     command = <<-EOT
-      timeout 300 bash -c 'until nc -z ${split("/", local.client_ips[count.index])[0]} 22; do sleep 5; done'
+      timeout 120 bash -c 'until nc -z ${split("/", local.client_ips[count.index])[0]} 22; do sleep 2; done'
     EOT
   }
 }
