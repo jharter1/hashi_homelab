@@ -89,6 +89,8 @@ EOH
         tags = [
           "monitoring",
           "prometheus",
+          "traefik.enable=true",
+          "traefik.http.routers.prometheus.rule=Host(`prometheus.home`)",
         ]
       }
     }

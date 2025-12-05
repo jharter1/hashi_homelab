@@ -82,19 +82,23 @@ tasks:
         cd terraform/environments/dev && terraform init && terraform destroy -auto-approve
 
   setup:volumes:
-    desc: "Create required host volumes on Nomad clients"
+    desc: "Create required host volumes on Nomad clients (NAS-based)"
     cmds:
       - |
-        ssh ubuntu@10.0.0.60 "sudo mkdir -p /mnt/prometheus_data /mnt/grafana_data && sudo chmod 777 /mnt/prometheus_data /mnt/grafana_data"
+        echo "Volumes are auto-created on NAS during VM provisioning"
+        echo "Verifying NAS mount on clients..."
+        ssh ubuntu@10.0.0.60 "df -h /mnt/nas && ls -la /mnt/nas/"
       - |
-        ssh ubuntu@10.0.0.61 "sudo mkdir -p /mnt/prometheus_data /mnt/grafana_data && sudo chmod 777 /mnt/prometheus_data /mnt/grafana_data"
-      - echo "Host volumes created on both clients"
+        ssh ubuntu@10.0.0.61 "df -h /mnt/nas && ls -la /mnt/nas/"
+      - echo "NAS storage verified on both clients"
 
   deploy:
     desc: "Deploy all Nomad jobs in correct order"
     cmds:
       - |
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/system/traefik.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/minio.nomad.hcl
       - |
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/prometheus.nomad.hcl
       - |

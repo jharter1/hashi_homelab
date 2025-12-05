@@ -22,6 +22,25 @@ sudo chmod 777 /mnt/prometheus_data
 sudo mkdir -p /mnt/grafana_data
 sudo chmod 777 /mnt/grafana_data
 
+# Setup NFS mount for persistent storage on clients
+if [ "$ROLE" = "nomad-client" ]; then
+  echo "Setting up NFS mount for persistent storage..."
+  sudo apt-get update
+  sudo apt-get install -y nfs-common
+  
+  sudo mkdir -p /mnt/nas
+  
+  # Mount NAS
+  sudo mount -t nfs 10.0.0.220:/mnt/HD/HD_a2/PVE-VM-Storage /mnt/nas
+  
+  # Add to fstab for persistence
+  echo "10.0.0.220:/mnt/HD/HD_a2/PVE-VM-Storage /mnt/nas nfs defaults 0 0" | sudo tee -a /etc/fstab
+  
+  # Create service directories on NAS
+  sudo mkdir -p /mnt/nas/{minio,prometheus,grafana,loki}
+  sudo chmod -R 777 /mnt/nas/{minio,prometheus,grafana,loki}
+fi
+
 # Wait for cloud-init to finish
 if [ -f /var/lib/cloud/instance/boot-finished ]; then
   echo "Cloud-init already finished."

@@ -39,7 +39,7 @@ job "grafana" {
         port = "http"
         tags = [
           "traefik.enable=true",
-          "traefik.http.routers.grafana.rule=Host(`grafana.localhost`)",
+          "traefik.http.routers.grafana.rule=Host(`grafana.home`)",
         ]
         check {
           type     = "http"

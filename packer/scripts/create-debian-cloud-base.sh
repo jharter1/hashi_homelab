@@ -7,9 +7,9 @@ set -e
 PROXMOX_HOST=${1:-"10.0.0.8"}
 VM_ID=9400
 VM_NAME="debian-12-cloud-base"
-STORAGE="local-lvm"
-IMAGE_URL="https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2"
-IMAGE_FILE="/tmp/debian-12-generic-amd64.qcow2"
+# STORAGE="local-lvm"
+# IMAGE_URL="https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2"
+# IMAGE_FILE="/tmp/debian-12-generic-amd64.qcow2"
 
 echo "=== Creating Debian 12 Cloud Image Base VM ==="
 echo "Proxmox Host: $PROXMOX_HOST"
@@ -18,7 +18,7 @@ echo "VM Name: $VM_NAME"
 echo ""
 
 # SSH into Proxmox and create the VM
-ssh root@$PROXMOX_HOST << EOF
+ssh root@"$PROXMOX_HOST" << 'EOF'
 set -e
 
 echo "Downloading Debian 12 cloud image..."

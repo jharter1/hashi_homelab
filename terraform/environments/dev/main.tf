@@ -14,14 +14,14 @@ terraform {
     }
   }
 
-  # Terraform Cloud backend configuration - disabled during provider migration
-  # cloud {
-  #   organization = "pve_homelab_cloud"
-  #
-  #   workspaces {
-  #     name = "hashi-homelab"
-  #   }
-  # }
+# Terraform Cloud backend configuration - disabled during provider migration
+  cloud {
+    organization = "pve_homelab_cloud"
+  
+    workspaces {
+      name = "hashi-homelab"
+    }
+  }
 }
 
 # ProxMox provider configuration (bpg)
@@ -92,6 +92,7 @@ module "nomad_clients" {
   proxmox_nodes = var.proxmox_nodes
   template_name = var.nomad_client_template_name
   template_ids  = var.nomad_client_template_ids
+  
 
   cores     = var.nomad_client_cores
   memory    = var.nomad_client_memory
