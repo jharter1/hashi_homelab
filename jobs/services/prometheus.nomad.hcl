@@ -65,6 +65,30 @@ scrape_configs:
         regex: "(.+);(.*)"
         replacement: "$1:$2"
         target_label: "__address__"
+
+  - job_name: 'nomad-servers'
+    metrics_path: '/v1/metrics'
+    params:
+      format: ['prometheus']
+    static_configs:
+      - targets: 
+          - '10.0.0.50:4646'
+          - '10.0.0.51:4646'
+          - '10.0.0.52:4646'
+        labels:
+          job: 'nomad-server'
+
+  - job_name: 'nomad-clients'
+    metrics_path: '/v1/metrics'
+    params:
+      format: ['prometheus']
+    static_configs:
+      - targets:
+          - '10.0.0.60:4646'
+          - '10.0.0.61:4646'
+          - '10.0.0.62:4646'
+        labels:
+          job: 'nomad-client'
 EOH
       }
 

@@ -48,6 +48,32 @@ write_files:
         options = {
           "driver.raw_exec.enable" = "1"
         }
+        
+        # Host volumes
+        host_volume "grafana_data" {
+          path = "/mnt/nas/grafana"
+          read_only = false
+        }
+        
+        host_volume "loki_data" {
+          path = "/mnt/nas/loki"
+          read_only = false
+        }
+        
+        host_volume "minio_data" {
+          path = "/mnt/nas/minio"
+          read_only = false
+        }
+        
+        host_volume "prometheus_data" {
+          path = "/mnt/nas/prometheus"
+          read_only = false
+        }
+        
+        host_volume "registry_data" {
+          path = "/mnt/nas/registry"
+          read_only = false
+        }
       }
       
       bind_addr = "0.0.0.0"
@@ -80,6 +106,8 @@ write_files:
     permissions: '0644'
     content: |
       {
+        "registry-mirrors": ["http://registry.home:5000"],
+        "insecure-registries": ["registry.home:5000", "10.0.0.60:5000", "10.0.0.61:5000", "10.0.0.62:5000"],
         "log-driver": "json-file",
         "log-opts": {
           "max-size": "10m",

@@ -28,6 +28,11 @@ job "grafana" {
         dns_servers  = ["10.0.0.10", "1.1.1.1"]
       }
 
+      volume_mount {
+        volume      = "grafana_data"
+        destination = "/var/lib/grafana"
+      }
+
       env {
         GF_SERVER_HTTP_PORT = "3000"
         GF_AUTH_ANONYMOUS_ENABLED = "true"
