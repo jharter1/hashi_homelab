@@ -35,6 +35,11 @@ client {
     path = "/mnt/nas/registry"
     read_only = false
   }
+
+  host_volume "homepage_data" {
+    path = "/mnt/nas/homepage"
+    read_only = false
+  }
 }
 
 bind_addr = "0.0.0.0"

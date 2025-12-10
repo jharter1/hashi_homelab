@@ -9,6 +9,10 @@ terraform {
       source  = "bpg/proxmox"
       version = "~> 0.88"
     }
+    vault = {
+      source  = "hashicorp/vault"
+      version = "~> 4.5"
+    }
     null = {
       source = "hashicorp/null"
     }

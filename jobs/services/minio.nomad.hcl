@@ -23,6 +23,23 @@ job "minio" {
 
     task "minio" {
       driver = "docker"
+      
+      vault {
+        cluster  = "default"
+        policies = ["access-secrets"]
+      }
+      
+      template {
+        data = <<EOT
+{{ with secret "secret/data/nomad/minio" }}
+MINIO_ROOT_USER="{{ .Data.data.root_user }}"
+MINIO_ROOT_PASSWORD="{{ .Data.data.root_password }}"
+{{ end }}
+MINIO_BROWSER_REDIRECT_URL="http://minio.home:9001"
+EOT
+        destination = "secrets/minio.env"
+        env         = true
+      }
 
       config {
         image        = "minio/minio:RELEASE.2023-09-04T19-57-37Z"
@@ -36,12 +53,6 @@ job "minio" {
           "--console-address",
           ":9001",
         ]
-      }
-
-      env {
-        MINIO_ROOT_USER     = "admin"
-        MINIO_ROOT_PASSWORD = "changeme123"  # Change this!
-        MINIO_BROWSER_REDIRECT_URL = "http://minio.home:9001"
       }
 
       volume_mount {
@@ -62,6 +73,8 @@ job "minio" {
           "s3",
           "traefik.enable=true",
           "traefik.http.routers.minio-api.rule=Host(`s3.home`)",
+          "traefik.http.routers.minio-api.entrypoints=websecure",
+          "traefik.http.routers.minio-api.tls=true",
         ]
         check {
           type     = "tcp"
@@ -78,6 +91,8 @@ job "minio" {
           "minio",
           "traefik.enable=true",
           "traefik.http.routers.minio-console.rule=Host(`minio.home`)",
+          "traefik.http.routers.minio-console.entrypoints=websecure",
+          "traefik.http.routers.minio-console.tls=true",
         ]
         check {
           type     = "http"

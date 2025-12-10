@@ -96,7 +96,14 @@ EOH
       service {
         name = "alloy"
         port = "http"
-        tags = ["logging", "telemetry"]
+        tags = [
+          "logging",
+          "telemetry",
+          "traefik.enable=true",
+          "traefik.http.routers.alloy.rule=Host(`alloy.home`)",
+          "traefik.http.routers.alloy.entrypoints=websecure",
+          "traefik.http.routers.alloy.tls=true",
+        ]
         check {
           type     = "http"
           path     = "/ready"

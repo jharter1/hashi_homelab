@@ -1,0 +1,37 @@
+---
+# Vault version to install
+vault_version: "1.18.3"
+
+# Vault configuration
+vault_data_dir: "/opt/vault/data"
+vault_config_dir: "/etc/vault.d"
+vault_log_dir: "/var/log/vault"
+vault_tls_dir: "/opt/vault/tls"
+
+# Vault service configuration
+vault_user: "vault"
+vault_group: "vault"
+
+# Vault server configuration
+vault_address: "http://127.0.0.1:8200"
+vault_cluster_address: "http://{{ ansible_default_ipv4.address }}:8201"
+
+# Vault UI
+vault_ui: true
+
+# Disable mlock (set to false in production with proper capabilities)
+vault_disable_mlock: true
+
+# Consul integration for HA
+vault_consul_integration: true
+vault_consul_address: "127.0.0.1:8500"
+vault_consul_path: "vault/"
+
+# Raft storage (alternative to Consul)
+vault_use_raft_storage: false
+vault_raft_node_id: "{{ ansible_hostname }}"
+
+# TLS configuration
+vault_tls_disable: true  # Set to false when you have proper certs
+vault_tls_cert_file: "{{ vault_tls_dir }}/vault.crt"
+vault_tls_key_file: "{{ vault_tls_dir }}/vault.key"

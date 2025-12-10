@@ -1,0 +1,30 @@
+[Unit]
+Description=Vault
+Documentation=https://www.vaultproject.io/docs/
+Requires=network-online.target
+After=network-online.target
+ConditionFileNotEmpty={{ vault_config_dir }}/vault.hcl
+
+[Service]
+Type=notify
+User={{ vault_user }}
+Group={{ vault_group }}
+ExecStart=/usr/local/bin/vault server -config={{ vault_config_dir }}/vault.hcl
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+KillSignal=SIGINT
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+LimitNOFILE=65536
+LimitMEMLOCK=infinity
+
+{% if not vault_disable_mlock %}
+SecureBits=keep-caps
+AmbientCapabilities=CAP_IPC_LOCK
+Capabilities=CAP_IPC_LOCK+ep
+CapabilityBoundingSet=CAP_SYSLOG CAP_IPC_LOCK
+{% endif %}
+
+[Install]
+WantedBy=multi-user.target

@@ -45,3 +45,19 @@ telemetry {
   publish_allocation_metrics = true
   publish_node_metrics = true
 }
+
+vault {
+  enabled = true
+  
+  default_identity {
+    aud = ["vault.io"]
+    env = false
+    file = false
+    ttl = "1h"
+  }
+  
+  cluster "default" {
+    address = "http://10.0.0.50:8200"
+    jwt_auth_backend_path = "jwt-nomad"
+  }
+}

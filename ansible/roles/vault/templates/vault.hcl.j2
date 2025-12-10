@@ -1,0 +1,43 @@
+ui = {{ vault_ui | lower }}
+disable_mlock = {{ vault_disable_mlock | lower }}
+
+{% if vault_use_raft_storage %}
+storage "raft" {
+  path    = "{{ vault_data_dir }}"
+  node_id = "{{ vault_raft_node_id }}"
+}
+{% elif vault_consul_integration %}
+storage "consul" {
+  address = "{{ vault_consul_address }}"
+  path    = "{{ vault_consul_path }}"
+}
+{% else %}
+storage "file" {
+  path = "{{ vault_data_dir }}"
+}
+{% endif %}
+
+listener "tcp" {
+  address     = "0.0.0.0:8200"
+{% if vault_tls_disable %}
+  tls_disable = 1
+{% else %}
+  tls_cert_file = "{{ vault_tls_cert_file }}"
+  tls_key_file  = "{{ vault_tls_key_file }}"
+  tls_disable   = 0
+{% endif %}
+}
+
+api_addr = "{{ vault_address }}"
+cluster_addr = "{{ vault_cluster_address }}"
+
+{% if vault_consul_integration %}
+service_registration "consul" {
+  address = "{{ vault_consul_address }}"
+}
+{% endif %}
+
+telemetry {
+  disable_hostname = true
+  prometheus_retention_time = "12h"
+}

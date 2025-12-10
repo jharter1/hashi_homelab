@@ -1,0 +1,53 @@
+---
+- name: Install and configure Vault
+  hosts: nomad_servers[0]  # Install on first server initially
+  become: yes
+  roles:
+    - vault
+
+- name: Configure Vault with Terraform
+  hosts: localhost
+  connection: local
+  become: false
+  tasks:
+    - name: Check if vault credentials file exists
+      stat:
+        path: "{{ playbook_dir }}/../.vault-credentials"
+      register: vault_creds_file
+
+    - name: Display Terraform instructions
+      debug:
+        msg:
+          - "✅ Vault has been installed and initialized!"
+          - ""
+          - "🔐 Credentials saved to: ansible/.vault-credentials"
+          - ""
+          - "📋 Next: Configure Vault with Terraform"
+          - ""
+          - "cd terraform/environments/dev"
+          - "source ../../ansible/.vault-credentials"
+          - "export TF_VAR_vault_token=$VAULT_ROOT_TOKEN"
+          - "export TF_VAR_vault_address=$VAULT_ADDR"
+          - "terraform init"
+          - "terraform apply -target=module.vault_config"
+          - ""
+          - "Or use the helper script:"
+          - "./scripts/setup-vault.sh"
+      when: vault_creds_file.stat.exists
+
+    - name: Manual instructions if no credentials file
+      debug:
+        msg:
+          - "⚠️  Vault credentials file not found."
+          - "This means Vault was already initialized."
+          - ""
+          - "To configure with Terraform, you need:"
+          - "1. Your Vault root token"
+          - "2. Vault address (e.g., http://10.0.0.151:8200)"
+          - ""
+          - "Then run:"
+          - "cd terraform/environments/dev"
+          - "export TF_VAR_vault_token='your-root-token'"
+          - "export TF_VAR_vault_address='http://your-server-ip:8200'"
+          - "terraform apply -target=module.vault_config"
+      when: not vault_creds_file.stat.exists

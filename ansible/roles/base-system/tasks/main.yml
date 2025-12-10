@@ -72,4 +72,5 @@
     - { name: 'minio', mode: '0755' }
     - { name: 'prometheus', owner: '65534', group: '65534', mode: '0777' }
     - { name: 'registry', mode: '0755' }
+    - { name: 'homepage', mode: '0755' }
   when: node_type == 'client' and nas_mount_source is defined

@@ -2,6 +2,12 @@ datacenter = "{{ datacenter }}"
 region = "{{ region }}"
 data_dir = "/opt/nomad"
 
+telemetry {
+  publish_allocation_metrics = true
+  publish_node_metrics       = true
+  prometheus_metrics         = true
+}
+
 client {
   enabled = true
   node_class = "{{ node_class }}"
@@ -35,6 +41,11 @@ client {
     path = "{{ nas_mount_point }}/registry"
     read_only = false
   }
+
+  host_volume "homepage_data" {
+    path = "{{ nas_mount_point }}/homepage"
+    read_only = false
+  }
 }
 
 bind_addr = "0.0.0.0"
@@ -59,4 +70,9 @@ plugin "docker" {
       enabled = true
     }
   }
+}
+
+vault {
+  enabled = true
+  address = "http://10.0.0.50:8200"
 }

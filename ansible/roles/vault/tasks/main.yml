@@ -1,0 +1,173 @@
+---
+- name: Create Vault system user
+  user:
+    name: "{{ vault_user }}"
+    system: yes
+    shell: /bin/false
+    home: "{{ vault_data_dir }}"
+    create_home: no
+
+- name: Create Vault directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ vault_user }}"
+    group: "{{ vault_group }}"
+    mode: "0755"
+  loop:
+    - "{{ vault_config_dir }}"
+    - "{{ vault_data_dir }}"
+    - "{{ vault_log_dir }}"
+    - "{{ vault_tls_dir }}"
+
+- name: Check if Vault binary exists
+  stat:
+    path: /usr/local/bin/vault
+  register: vault_binary
+
+- name: Download Vault binary
+  shell: |
+    curl -L -o /tmp/vault_{{ vault_version }}_linux_amd64.zip \
+      https://releases.hashicorp.com/vault/{{ vault_version }}/vault_{{ vault_version }}_linux_amd64.zip
+  args:
+    creates: /tmp/vault_{{ vault_version }}_linux_amd64.zip
+  when: not vault_binary.stat.exists
+
+- name: Extract Vault binary
+  unarchive:
+    src: "/tmp/vault_{{ vault_version }}_linux_amd64.zip"
+    dest: /usr/local/bin
+    remote_src: yes
+    creates: /usr/local/bin/vault
+  when: not vault_binary.stat.exists
+
+- name: Set Vault binary capabilities
+  capabilities:
+    path: /usr/local/bin/vault
+    capability: cap_ipc_lock=+ep
+    state: present
+  when: not vault_disable_mlock
+
+- name: Generate Vault server configuration
+  template:
+    src: vault.hcl.j2
+    dest: "{{ vault_config_dir }}/vault.hcl"
+    owner: "{{ vault_user }}"
+    group: "{{ vault_group }}"
+    mode: "0640"
+  notify: restart vault
+
+- name: Create Vault systemd service
+  template:
+    src: vault.service.j2
+    dest: /etc/systemd/system/vault.service
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart vault
+
+- name: Enable and start Vault service
+  systemd:
+    name: vault
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Wait for Vault to be ready
+  wait_for:
+    port: 8200
+    delay: 5
+    timeout: 60
+
+- name: Set Vault address environment variable
+  lineinfile:
+    path: /etc/environment
+    line: 'VAULT_ADDR={{ vault_address }}'
+    create: yes
+
+- name: Check if Vault is initialized
+  shell: vault status -format=json | jq -r '.initialized'
+  environment:
+    VAULT_ADDR: "{{ vault_address }}"
+  register: vault_initialized
+  changed_when: false
+  failed_when: false
+
+- name: Initialize Vault (first time only)
+  shell: vault operator init -key-shares=1 -key-threshold=1 -format=json
+  environment:
+    VAULT_ADDR: "{{ vault_address }}"
+  register: vault_init_output
+  when: vault_initialized.stdout == 'false'
+  no_log: false  # We need to see this output
+
+- name: Parse Vault initialization output
+  set_fact:
+    vault_unseal_key: "{{ (vault_init_output.stdout | from_json).unseal_keys_b64[0] }}"
+    vault_root_token: "{{ (vault_init_output.stdout | from_json).root_token }}"
+  when: vault_init_output is changed
+  no_log: true
+
+- name: Save Vault credentials locally (SECURE THIS FILE!)
+  delegate_to: localhost
+  become: false
+  copy:
+    content: |
+      VAULT_UNSEAL_KEY={{ vault_unseal_key }}
+      VAULT_ROOT_TOKEN={{ vault_root_token }}
+      VAULT_ADDR={{ vault_address }}
+    dest: "/tmp/.vault-credentials-{{ inventory_hostname }}"
+    mode: '0600'
+  when: vault_init_output is changed
+  no_log: true
+
+- name: Move credentials to ansible directory
+  delegate_to: localhost
+  become: false
+  shell: |
+    mv /tmp/.vault-credentials-{{ inventory_hostname }} {{ playbook_dir | dirname }}/.vault-credentials
+  when: vault_init_output is changed
+  no_log: true
+
+- name: Display initialization message
+  debug:
+    msg:
+      - "⚠️  IMPORTANT: Vault has been initialized!"
+      - "Unseal key and root token saved to: ansible/.vault-credentials"
+      - "KEEP THIS FILE SECURE - it contains sensitive credentials!"
+      - "Consider moving it to a password manager and deleting the file."
+  when: vault_init_output is changed
+
+- name: Unseal Vault
+  shell: vault operator unseal {{ vault_unseal_key }}
+  environment:
+    VAULT_ADDR: "{{ vault_address }}"
+  when: vault_init_output is changed
+  no_log: true
+
+- name: Check if Vault needs unsealing (for existing installations)
+  shell: vault status -format=json | jq -r '.sealed'
+  environment:
+    VAULT_ADDR: "{{ vault_address }}"
+  register: vault_sealed_status
+  changed_when: false
+  failed_when: false
+  when: vault_initialized.stdout == 'true'
+
+- name: Prompt for unseal key if Vault is sealed
+  pause:
+    prompt: "Vault is sealed. Please enter the unseal key"
+    echo: no
+  register: manual_unseal_key
+  when: 
+    - vault_initialized.stdout == 'true'
+    - vault_sealed_status.stdout == 'true'
+
+- name: Unseal Vault with provided key
+  shell: vault operator unseal {{ manual_unseal_key.user_input }}
+  environment:
+    VAULT_ADDR: "{{ vault_address }}"
+  when: 
+    - vault_initialized.stdout == 'true'
+    - vault_sealed_status.stdout == 'true'
+  no_log: true

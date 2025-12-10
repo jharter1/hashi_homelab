@@ -35,6 +35,21 @@
     creates: /usr/local/bin/nomad
     mode: '0755'
 
+- name: Download Vault binary
+  shell: |
+    curl -L -o /tmp/vault_{{ vault_version }}_linux_amd64.zip \
+      https://releases.hashicorp.com/vault/{{ vault_version }}/vault_{{ vault_version }}_linux_amd64.zip
+  args:
+    creates: /tmp/vault_{{ vault_version }}_linux_amd64.zip
+
+- name: Extract Vault binary
+  unarchive:
+    src: "/tmp/vault_{{ vault_version }}_linux_amd64.zip"
+    dest: /usr/local/bin
+    remote_src: yes
+    creates: /usr/local/bin/vault
+    mode: '0755'
+
 - name: Clean up downloaded archives
   file:
     path: "{{ item }}"
@@ -42,6 +57,7 @@
   loop:
     - "/tmp/consul_{{ consul_version }}_linux_amd64.zip"
     - "/tmp/nomad_{{ nomad_version }}_linux_amd64.zip"
+    - "/tmp/vault_{{ vault_version }}_linux_amd64.zip"
 
 - name: Create log directories
   file:

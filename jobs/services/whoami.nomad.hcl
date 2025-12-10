@@ -17,6 +17,8 @@ job "whoami" {
       tags = [
         "traefik.enable=true",
         "traefik.http.routers.whoami.rule=Host(`whoami.home`)",
+        "traefik.http.routers.whoami.entrypoints=websecure",
+        "traefik.http.routers.whoami.tls=true",
       ]
     }
 

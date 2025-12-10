@@ -20,6 +20,29 @@ job "grafana" {
 
     task "grafana" {
       driver = "docker"
+      
+      vault {
+        cluster  = "default"
+        policies = ["access-secrets"]
+      }
+      
+      template {
+        data = <<EOT
+{{ with secret "secret/data/nomad/grafana" }}
+GF_SECURITY_ADMIN_PASSWORD="{{ .Data.data.admin_password }}"
+{{ end }}
+EOT
+        destination = "secrets/grafana.env"
+        env         = true
+      }
+
+      # Fetch the Vault CA chain for trusting internal HTTPS services
+      # Using artifact instead of template since CA endpoints are public
+      artifact {
+        source      = "http://10.0.0.50:8200/v1/pki_int/ca/pem"
+        destination = "local/homelab-ca-chain.crt"
+        mode        = "file"
+      }
 
       config {
         image        = "grafana/grafana:latest"
@@ -35,8 +58,8 @@ job "grafana" {
 
       env {
         GF_SERVER_HTTP_PORT = "3000"
-        GF_AUTH_ANONYMOUS_ENABLED = "true"
-        GF_AUTH_ANONYMOUS_ORG_ROLE = "Admin"
+        # Disable anonymous access now that we have secure admin credentials
+        GF_AUTH_ANONYMOUS_ENABLED = "false"
       }
 
       service {
@@ -45,6 +68,8 @@ job "grafana" {
         tags = [
           "traefik.enable=true",
           "traefik.http.routers.grafana.rule=Host(`grafana.home`)",
+          "traefik.http.routers.grafana.entrypoints=websecure",
+          "traefik.http.routers.grafana.tls=true",
         ]
         check {
           type     = "http"

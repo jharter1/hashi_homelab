@@ -61,10 +61,10 @@ scrape_configs:
       - server: "127.0.0.1:8500"
         services: ["node-exporter"]
     relabel_configs:
-      - source_labels: ["__meta_consul_service_address", "__meta_consul_service_port"]
-        regex: "(.+);(.*)"
-        replacement: "$1:$2"
-        target_label: "__address__"
+      # Use node address if service address is empty
+      - source_labels: [__meta_consul_address]
+        target_label: __address__
+        replacement: '$1:9100'
 
   - job_name: 'nomad-servers'
     metrics_path: '/v1/metrics'
@@ -89,6 +89,24 @@ scrape_configs:
           - '10.0.0.62:4646'
         labels:
           job: 'nomad-client'
+
+  - job_name: 'loki'
+    consul_sd_configs:
+      - server: "127.0.0.1:8500"
+        services: ["loki"]
+    relabel_configs:
+      - source_labels: [__meta_consul_address]
+        target_label: __address__
+        replacement: '$1:3100'
+
+  - job_name: 'alloy'
+    consul_sd_configs:
+      - server: "127.0.0.1:8500"
+        services: ["alloy"]
+    relabel_configs:
+      - source_labels: [__meta_consul_address]
+        target_label: __address__
+        replacement: '$1:12345'
 EOH
       }
 
@@ -115,6 +133,8 @@ EOH
           "prometheus",
           "traefik.enable=true",
           "traefik.http.routers.prometheus.rule=Host(`prometheus.home`)",
+          "traefik.http.routers.prometheus.entrypoints=websecure",
+          "traefik.http.routers.prometheus.tls=true",
         ]
       }
     }
