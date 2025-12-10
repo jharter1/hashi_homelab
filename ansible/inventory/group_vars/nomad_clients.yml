@@ -1,0 +1,3 @@
+---
+# Consul client configuration (servers use defaults from nomad_cluster.yml)
+consul_server: false

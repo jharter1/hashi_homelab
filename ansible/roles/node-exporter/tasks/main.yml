@@ -1,0 +1,43 @@
+---
+# Install and configure Prometheus Node Exporter
+- name: Check if Node Exporter is already installed
+  stat:
+    path: /usr/local/bin/node_exporter
+  register: node_exporter_binary
+
+- name: Download and install Node Exporter
+  shell: |
+    cd /tmp
+    curl -LO https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+    tar xvfz node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+    mv node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter /usr/local/bin/
+    chmod 755 /usr/local/bin/node_exporter
+    rm -rf node_exporter-{{ node_exporter_version }}.linux-amd64*
+  args:
+    creates: /usr/local/bin/node_exporter
+  when: not node_exporter_binary.stat.exists
+
+- name: Create Node Exporter systemd service
+  copy:
+    dest: /etc/systemd/system/node_exporter.service
+    content: |
+      [Unit]
+      Description=Node Exporter
+      After=network.target
+
+      [Service]
+      User=nobody
+      ExecStart=/usr/local/bin/node_exporter
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: '0644'
+  notify: restart node_exporter
+
+- name: Enable and start Node Exporter service
+  systemd:
+    name: node_exporter
+    enabled: yes
+    state: started
+    daemon_reload: yes

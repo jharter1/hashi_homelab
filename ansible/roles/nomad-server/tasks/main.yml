@@ -1,5 +1,5 @@
 ---
-# Install and configure Nomad client
+# Install and configure Nomad server
 - name: Create Nomad system user
   user:
     name: nomad
@@ -18,9 +18,9 @@
     - /etc/nomad.d
     - /opt/nomad
 
-- name: Install Nomad client configuration
-  ansible.builtin.template:
-    src: nomad-client.hcl.j2
+- name: Install Nomad server configuration
+  template:
+    src: nomad-server.hcl.j2
     dest: /etc/nomad.d/nomad.hcl
     owner: nomad
     group: nomad
@@ -56,14 +56,8 @@
     mode: '0644'
   notify: restart nomad
 
-- name: Enable and start Docker service
-  systemd:
-    name: docker
-    enabled: yes
-    state: started
-
 - name: Enable and start Nomad service
-  ansible.builtin.systemd:
+  systemd:
     name: nomad
     enabled: yes
     state: started

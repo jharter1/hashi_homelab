@@ -1,0 +1,30 @@
+datacenter = "{{ datacenter }}"
+data_dir = "/opt/consul"
+log_file = "/var/log/consul/consul.log"
+log_level = "INFO"
+
+{% if consul_server | default(false) %}
+server = true
+bootstrap_expect = {{ consul_bootstrap_expect }}
+{% else %}
+server = false
+{% endif %}
+
+retry_join = [{% for addr in consul_retry_join %}"{{ addr }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+
+bind_addr = "{{ ansible_default_ipv4.address }}"
+client_addr = "0.0.0.0"
+
+connect {
+  enabled = true
+}
+
+{% if consul_server | default(false) %}
+ui_config {
+  enabled = true
+}
+{% endif %}
+
+performance {
+  raft_multiplier = 1
+}

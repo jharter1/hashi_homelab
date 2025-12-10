@@ -1,0 +1,81 @@
+---
+# Install and configure Consul
+- name: Create Consul system user
+  user:
+    name: consul
+    system: yes
+    shell: /bin/false
+    create_home: no
+
+- name: Create Consul directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: consul
+    group: consul
+    mode: '0755'
+  loop:
+    - /etc/consul.d
+    - /opt/consul
+
+- name: Install Consul configuration
+  template:
+    src: consul.hcl.j2
+    dest: /etc/consul.d/consul.hcl
+    owner: consul
+    group: consul
+    mode: '0640'
+  notify: restart consul
+
+- name: Create Consul systemd service
+  copy:
+    dest: /etc/systemd/system/consul.service
+    content: |
+      [Unit]
+      Description=HashiCorp Consul - A Service Mesh Solution
+      Documentation=https://www.consul.io/
+      Requires=network-online.target
+      After=network-online.target
+      ConditionFileNotEmpty=/etc/consul.d/consul.hcl
+
+      [Service]
+      Type=notify
+      User=consul
+      Group=consul
+      ExecStart=/usr/local/bin/consul agent -config-dir=/etc/consul.d/
+      ExecReload=/bin/kill --signal HUP $MAINPID
+      KillMode=process
+      KillSignal=SIGTERM
+      Restart=on-failure
+      LimitNOFILE=65536
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: '0644'
+  notify: restart consul
+
+- name: Register Node Exporter service in Consul
+  copy:
+    dest: /etc/consul.d/node-exporter.hcl
+    content: |
+      service {
+        name = "node-exporter"
+        port = 9100
+        tags = ["monitoring", "node-exporter"]
+        check {
+          http     = "http://localhost:9100/metrics"
+          interval = "10s"
+          timeout  = "1s"
+        }
+      }
+    owner: consul
+    group: consul
+    mode: '0640'
+  notify: restart consul
+
+- name: Enable and start Consul service
+  systemd:
+    name: consul
+    enabled: yes
+    state: started
+    daemon_reload: yes

@@ -1,0 +1,9 @@
+---
+# Consul configuration for all nodes
+consul_retry_join:
+  - "10.0.0.50"
+  - "10.0.0.51"
+  - "10.0.0.52"
+
+# Node Exporter version
+node_exporter_version: "1.7.0"

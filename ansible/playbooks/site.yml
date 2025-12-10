@@ -3,6 +3,14 @@
   hosts: nomad_cluster
   roles:
     - base-system
+    - hashicorp-binaries
+    - node-exporter
+    - consul
+
+- name: Configure Nomad servers
+  hosts: nomad_servers
+  roles:
+    - nomad-server
 
 - name: Configure Nomad clients
   hosts: nomad_clients
