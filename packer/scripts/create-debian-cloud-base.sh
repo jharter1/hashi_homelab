@@ -7,9 +7,9 @@ set -e
 PROXMOX_HOST=${1:-"10.0.0.8"}
 VM_ID=9400
 VM_NAME="debian-12-cloud-base"
-# STORAGE="local-lvm"
-# IMAGE_URL="https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2"
-# IMAGE_FILE="/tmp/debian-12-generic-amd64.qcow2"
+STORAGE="local-lvm"
+IMAGE_URL="https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2"
+IMAGE_FILE="/tmp/debian-12-generic-amd64.qcow2"
 
 echo "=== Creating Debian 12 Cloud Image Base VM ==="
 echo "Proxmox Host: $PROXMOX_HOST"
@@ -18,48 +18,58 @@ echo "VM Name: $VM_NAME"
 echo ""
 
 # SSH into Proxmox and create the VM
-ssh root@"$PROXMOX_HOST" << 'EOF'
+ssh root@"$PROXMOX_HOST" << EOF
 set -e
+
+STORAGE="$STORAGE"
+IMAGE_URL="$IMAGE_URL"
+IMAGE_FILE="$IMAGE_FILE"
+VM_ID=$VM_ID
+VM_NAME="$VM_NAME"
 
 echo "Downloading Debian 12 cloud image..."
 cd /tmp
-wget -O $IMAGE_FILE $IMAGE_URL
+wget -O \$IMAGE_FILE \$IMAGE_URL
+
+echo "Downloading Debian 12 cloud image..."
+cd /tmp
+wget -O \$IMAGE_FILE \$IMAGE_URL
 
 echo "Expanding image to 50G with filesystem resize..."
-qemu-img resize $IMAGE_FILE 50G
-virt-resize --expand /dev/sda1 $IMAGE_FILE ${IMAGE_FILE}.resized
-mv ${IMAGE_FILE}.resized $IMAGE_FILE
+qemu-img resize \$IMAGE_FILE 50G
+virt-resize --expand /dev/sda1 \$IMAGE_FILE \${IMAGE_FILE}.resized
+mv \${IMAGE_FILE}.resized \$IMAGE_FILE
 
 echo "Installing QEMU Guest Agent into image..."
-virt-customize -a $IMAGE_FILE --install qemu-guest-agent --run-command 'systemctl enable qemu-guest-agent' --run-command 'mkdir -p /etc/ssh/sshd_config.d && echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/99-allow-password.conf'
+virt-customize -a \$IMAGE_FILE --install qemu-guest-agent --run-command 'systemctl enable qemu-guest-agent' --run-command 'mkdir -p /etc/ssh/sshd_config.d && echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/99-allow-password.conf'
 
-echo "Creating VM $VM_ID..."
-qm create $VM_ID --name $VM_NAME --memory 2048 --cores 2 --net0 virtio,bridge=vmbr0
+echo "Creating VM \$VM_ID..."
+qm create \$VM_ID --name \$VM_NAME --memory 2048 --cores 2 --net0 virtio,bridge=vmbr0
 
 echo "Importing disk from cloud image..."
-qm importdisk $VM_ID $IMAGE_FILE $STORAGE
+qm importdisk \$VM_ID \$IMAGE_FILE \$STORAGE
 
 echo "Configuring VM to use imported disk..."
-qm set $VM_ID --scsihw virtio-scsi-single --scsi0 $STORAGE:vm-$VM_ID-disk-0
-qm set $VM_ID --boot order=scsi0
-qm set $VM_ID --ide2 $STORAGE:cloudinit
+qm set \$VM_ID --scsihw virtio-scsi-single --scsi0 \$STORAGE:vm-\$VM_ID-disk-0
+qm set \$VM_ID --boot order=scsi0
+qm set \$VM_ID --ide2 \$STORAGE:cloudinit
 
 echo "Setting cloud-init defaults..."
-qm set $VM_ID --ciuser packer
-qm set $VM_ID --cipassword packer
-qm set $VM_ID --ipconfig0 ip=dhcp
+qm set \$VM_ID --ciuser packer
+qm set \$VM_ID --cipassword packer
+qm set \$VM_ID --ipconfig0 ip=dhcp
 
 echo "Installing QEMU guest agent..."
-qm set $VM_ID --agent enabled=1
+qm set \$VM_ID --agent enabled=1
 
 echo "Setting CPU type..."
-qm set $VM_ID --cpu x86-64-v2-AES
+qm set \$VM_ID --cpu x86-64-v2-AES
 
 echo "Converting to template..."
-qm template $VM_ID
+qm template \$VM_ID
 
 echo "Cleaning up..."
-rm -f $IMAGE_FILE
+rm -f \$IMAGE_FILE
 
 echo ""
 echo "=== Base VM created successfully ==="

@@ -1,0 +1,15 @@
+---
+- name: Install Nomad configuration
+  ansible.builtin.template:
+    src: nomad-client.hcl.j2
+    dest: /etc/nomad.d/nomad.hcl
+    owner: nomad
+    group: nomad
+    mode: '0644'
+  notify: restart nomad
+
+- name: Ensure Nomad service is enabled and running
+  ansible.builtin.systemd:
+    name: nomad
+    enabled: yes
+    state: started

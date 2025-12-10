@@ -1,0 +1,62 @@
+datacenter = "{{ datacenter }}"
+region = "{{ region }}"
+data_dir = "/opt/nomad"
+
+client {
+  enabled = true
+  node_class = "{{ node_class }}"
+  
+  server_join {
+    retry_join = {{ nomad_server_addresses | to_json }}
+    retry_interval = "15s"
+  }
+  
+  host_volume "grafana_data" {
+    path = "{{ nas_mount_point }}/grafana"
+    read_only = false
+  }
+  
+  host_volume "loki_data" {
+    path = "{{ nas_mount_point }}/loki"
+    read_only = false
+  }
+  
+  host_volume "minio_data" {
+    path = "{{ nas_mount_point }}/minio"
+    read_only = false
+  }
+  
+  host_volume "prometheus_data" {
+    path = "{{ nas_mount_point }}/prometheus"
+    read_only = false
+  }
+  
+  host_volume "registry_data" {
+    path = "{{ nas_mount_point }}/registry"
+    read_only = false
+  }
+}
+
+bind_addr = "0.0.0.0"
+
+advertise {
+  http = "{% raw %}{{ GetInterfaceIP \"ens18\" }}{% endraw %}"
+  rpc  = "{% raw %}{{ GetInterfaceIP \"ens18\" }}{% endraw %}"
+  serf = "{% raw %}{{ GetInterfaceIP \"ens18\" }}{% endraw %}"
+}
+
+consul {
+  address = "127.0.0.1:8500"
+  auto_advertise = true
+  client_service_name = "nomad-client"
+  client_auto_join = true
+}
+
+plugin "docker" {
+  config {
+    allow_privileged = false
+    volumes {
+      enabled = true
+    }
+  }
+}

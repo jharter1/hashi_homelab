@@ -1,0 +1,67 @@
+---
+- name: Install base packages
+  ansible.builtin.apt:
+    name:
+      - nfs-common
+      - curl
+      - wget
+      - vim
+      - htop
+      - jq
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Check if systemd-resolved is used
+  ansible.builtin.stat:
+    path: /etc/systemd/resolved.conf
+  register: resolved_conf
+
+- name: Configure DNS servers in resolved.conf
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/resolved.conf
+    regexp: '^#?DNS='
+    line: 'DNS=10.0.0.1 1.1.1.1 1.0.0.1'
+    state: present
+  notify: restart systemd-resolved
+  when: resolved_conf.stat.exists
+
+- name: Configure FallbackDNS servers
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/resolved.conf
+    regexp: '^#?FallbackDNS='
+    line: 'FallbackDNS=8.8.8.8 8.8.4.4'
+    state: present
+  notify: restart systemd-resolved
+  when: resolved_conf.stat.exists
+
+- name: Create NAS mount point
+  ansible.builtin.file:
+    path: "{{ nas_mount_point }}"
+    state: directory
+    mode: '0755'
+  when: nas_mount_source is defined
+
+- name: Mount NAS storage
+  ansible.posix.mount:
+    path: "{{ nas_mount_point }}"
+    src: "{{ nas_mount_source }}"
+    fstype: nfs
+    opts: defaults,nofail
+    state: mounted
+  when: nas_mount_source is defined
+
+- name: Create host volume directories
+  ansible.builtin.file:
+    path: "{{ nas_mount_point }}/{{ item.name }}"
+    state: directory
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0755') }}"
+  loop:
+    - { name: 'grafana', owner: '472', group: '472', mode: '0755' }
+    - { name: 'loki', owner: '10001', group: '10001', mode: '0755' }
+    - { name: 'minio', mode: '0755' }
+    - { name: 'prometheus', owner: '65534', group: '65534', mode: '0777' }
+    - { name: 'registry', mode: '0755' }
+  when: node_type == 'client' and nas_mount_source is defined

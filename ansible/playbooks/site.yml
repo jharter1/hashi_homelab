@@ -1,0 +1,10 @@
+---
+- name: Apply base system configuration
+  hosts: nomad_cluster
+  roles:
+    - base-system
+
+- name: Configure Nomad clients
+  hosts: nomad_clients
+  roles:
+    - nomad-client

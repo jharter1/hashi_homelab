@@ -92,6 +92,108 @@ tasks:
         ssh ubuntu@10.0.0.61 "df -h /mnt/nas && ls -la /mnt/nas/"
       - echo "NAS storage verified on both clients"
 
+  ansible:configure:
+    desc: "Configure all nodes with Ansible (Docker, Nomad, base system)"
+    cmds:
+      - |
+        cd ansible && ansible-playbook playbooks/site.yml
+
+  ansible:docker:
+    desc: "Configure Docker registry mirror on clients only"
+    cmds:
+      - |
+        cd ansible && ansible-playbook playbooks/configure-docker.yml
+
+  ansible:test:
+    desc: "Test Ansible connectivity to all nodes"
+    cmds:
+      - |
+        cd ansible && ansible-playbook playbooks/test-connectivity.yml
+
+  deploy:system:
+    desc: "Deploy system jobs (Traefik, Alloy)"
+    cmds:
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/system/traefik.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/system/alloy.nomad.hcl
+
+  deploy:services:
+    desc: "Deploy service jobs (monitoring stack, registry, apps)"
+    cmds:
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/loki.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/minio.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/prometheus.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/grafana.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/docker-registry.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/whoami.nomad.hcl
+      - echo "All service jobs deployed successfully"
+
+  deploy:all:
+    desc: "Deploy all Nomad jobs in correct order"
+    cmds:
+      - task: deploy:system
+      - task: deploy:services
+
+  bootstrap:check:
+    desc: "Validate bootstrap prerequisites without executing"
+    cmds:
+      - |
+        echo "🔍 Validating bootstrap prerequisites..."
+        echo ""
+      - |
+        echo "✓ Checking Proxmox templates..."
+        ssh root@10.0.0.21 "qm list | grep -E '(9500|9501)'" && echo "  Templates found: 9500 (server), 9501 (client)" || (echo "  ❌ ERROR: Required templates not found" && exit 1)
+      - |
+        echo "✓ Checking Terraform configuration..."
+        cd terraform/environments/dev && terraform validate && echo "  Terraform config valid"
+      - |
+        echo "✓ Checking Ansible connectivity..."
+        cd ansible && ansible all -m ping -o | head -10 || echo "  ⚠️  Some nodes may be unreachable (expected if VMs not yet provisioned)"
+      - |
+        echo ""
+        echo "✅ Prerequisites validated!"
+        echo "Run 'task bootstrap' to execute full deployment"
+
+  bootstrap:
+    desc: "🚀 Complete infrastructure bootstrap from scratch"
+    cmds:
+      - |
+        echo "==== Step 1/5: Building Packer templates ===="
+        echo "Note: Requires Proxmox host to have DNS configured"
+        echo "Skipping base template - using existing templates 9500/9501"
+      - |
+        echo "Verifying templates exist..."
+      - |
+        ssh root@10.0.0.21 "qm list | grep -E '(9500|9501)'" || (echo "ERROR: Required templates not found. Run 'task build:debian:server' and 'task build:debian:client' first." && exit 1)
+      - |
+        echo "==== Step 2/5: Provisioning VMs with Terraform ===="
+      - task: tf:apply
+      - |
+        echo "==== Step 3/5: Waiting for VMs to boot (60s) ===="
+        sleep 60
+      - |
+        echo "==== Step 4/5: Configuring nodes with Ansible ===="
+      - task: ansible:configure
+      - |
+        echo "==== Step 5/5: Deploying Nomad jobs ===="
+      - task: deploy:all
+      - |
+        echo ""
+        echo "✅ Bootstrap complete! Access services at:"
+        echo "   - Nomad UI:       http://10.0.0.50:4646"
+        echo "   - Consul UI:      http://10.0.0.50:8500"
+        echo "   - Grafana:        http://grafana.home"
+        echo "   - Prometheus:     http://prometheus.home"
+        echo "   - Registry UI:    http://registry-ui.home"
+        echo "   - Traefik:        http://traefik.home"
+
   deploy:
     desc: "Deploy all Nomad jobs in correct order"
     cmds:

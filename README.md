@@ -1,6 +1,6 @@
 # HashiCorp Homelab on Proxmox
 
-A production-ready infrastructure-as-code solution for deploying containerized workloads on Proxmox VE using HashiCorp Nomad. Build VM templates with Packer, deploy clusters with Terraform, and run services at scale.
+A production-ready infrastructure-as-code solution for deploying containerized workloads on Proxmox VE using HashiCorp Nomad. Build VM templates with Packer, deploy clusters with Terraform, configure with Ansible, and run services at scale.
 
 > **⚠️ SECURITY NOTICE**: This project is designed for homelab and development environments. For production use, implement proper secrets management, mTLS, and security hardening.
 
@@ -10,23 +10,27 @@ This project provides everything needed to deploy a complete container orchestra
 
 - **Multi-node Nomad cluster** with automatic failover and scheduling
 - **Service discovery** via Consul with health checking
-- **Secrets management** using HashiCorp Vault
 - **Automatic service routing** with Traefik reverse proxy
-- **Metrics and monitoring** with Prometheus and Grafana
-- **Persistent storage** supporting NFS and local volumes
-- **Reproducible infrastructure** using Packer and Terraform
+- **Metrics and monitoring** with Prometheus, Grafana, and Loki
+- **Log aggregation** with Grafana Alloy and Loki
+- **Docker registry** with pull-through cache for faster deployments
+- **Persistent storage** using NFS mounts for high availability
+- **Reproducible infrastructure** using Packer, Terraform, and Ansible
+- **Configuration management** with Ansible for maintainable operations
 
 ## Features
 
-- 🚀 **Automated VM Templates** - Packer builds optimized Debian/Ubuntu images with HashiCorp tools pre-installed
-- 🔧 **Complete HashiCorp Stack** - Consul, Nomad, and Vault configured and ready to use
-- 🐳 **Container-Native** - Docker pre-configured with Nomad driver integration
+- 🚀 **Automated VM Templates** - Packer builds optimized Debian images with HashiCorp tools pre-installed
+- 🔧 **HashiCorp Stack** - Consul and Nomad configured for container orchestration
+- 🐳 **Container-Native** - Docker pre-configured with Nomad driver integration and registry caching
 - 🏗️ **Infrastructure as Code** - Terraform modules for repeatable multi-node deployments
+- ⚙️ **Configuration Management** - Ansible roles for maintainable, idempotent configuration
 - 📦 **Incremental Builds** - Templates layer on each other for fast iteration
 - 🏠 **Homelab Optimized** - Efficient resource usage for multi-node Proxmox clusters
 - 🌐 **Service Discovery** - Traefik with Consul Catalog for automatic routing
-- 💾 **Flexible Storage** - Support for NFS mounts, local volumes, and CSI plugins
-- 📊 **Observability Built-in** - Node Exporter on all hosts, ready for monitoring
+- 💾 **High Availability Storage** - NFS-backed volumes accessible from all nodes
+- 📊 **Full Observability** - Metrics (Prometheus), logs (Loki), and dashboards (Grafana)
+- 🐋 **Local Registry** - Docker Registry 2 with pull-through cache for faster image pulls
 
 ## Architecture
 
@@ -144,8 +148,9 @@ Note: this takes a long time (20+ minutes per template image), or at least it di
 
 ```bash
 # Using Task (recommended)
-task build:debian:server
-task build:debian:client
+task build:debian:base      # Base Debian cloud image
+task build:debian:server    # Nomad server template
+task build:debian:client    # Nomad client template
 
 # Or manually
 cd packer
@@ -156,26 +161,97 @@ packer build \
   templates/debian/debian-nomad-server.pkr.hcl
 ```
 
-This creates optimized VM templates (IDs: 9100, 9101) with all HashiCorp tools pre-installed.
+This creates optimized VM templates with HashiCorp tools pre-installed.
 
 #### 3. Deploy Cluster with Terraform
 
 ```bash
-cd terraform/environments/dev
+# Using Task
+task tf:apply
 
+# Or manually
+cd terraform/environments/dev
 terraform init
 terraform plan -out=tfplan
 terraform apply tfplan
 ```
 
 This provisions:
+- 3 Nomad servers with Consul
+- 3 Nomad clients with Docker
+- All networking and VM configuration
+- NFS mounts for shared storage
 
-- 3 Nomad servers with Consul and Vault
-- 2+ Nomad clients with Docker
-- All networking and firewall rules
-- Automatic cluster formation
+#### 4. Configure Nodes with Ansible
 
-#### 4. Verify Deployment
+After VMs boot, configure all services with Ansible:
+
+```bash
+# Using Task
+task ansible:configure
+
+# Or manually
+cd ansible
+ansible-playbook playbooks/site.yml
+```
+
+This configures:
+- Docker daemon with registry mirror
+- Nomad client configuration and host volumes
+- NFS mounts and base system packages
+- DNS and networking
+
+#### 5. Deploy Services
+
+```bash
+# Deploy everything
+task deploy:all
+
+# Or deploy individually
+task deploy:system    # Traefik, Alloy
+task deploy:services  # Monitoring stack, registry, apps
+
+# Or manually
+export NOMAD_ADDR=http://10.0.0.50:4646
+nomad job run jobs/system/traefik.nomad.hcl
+nomad job run jobs/services/grafana.nomad.hcl
+```
+
+### 🚀 Bootstrap from Scratch
+
+#### Prerequisites Check
+
+Validate your environment before running the full bootstrap:
+
+```bash
+task bootstrap:check
+```
+
+This verifies:
+- Packer templates exist on Proxmox (9500, 9501)
+- Terraform configuration is valid
+- Ansible can reach nodes (or confirms they don't exist yet)
+
+#### Full Bootstrap
+
+Run the complete setup in one command:
+
+```bash
+task bootstrap
+```
+
+This executes all steps:
+1. Verifies Packer templates exist (requires DNS on Proxmox for initial creation)
+2. Provisions VMs with Terraform (6 VMs: 3 servers, 3 clients)
+3. Waits for VMs to boot (60 seconds)
+4. Configures nodes with Ansible (Docker, Nomad, NFS, etc.)
+5. Deploys all Nomad jobs (Traefik, monitoring, registry, apps)
+
+Total time: ~10-15 minutes (assuming templates already exist)
+
+**Note**: Initial Packer template creation requires ~45-60 minutes and DNS resolution on the Proxmox host. Once templates are created, subsequent bootstraps are much faster.
+
+#### 6. Verify Deployment
 
 ```bash
 # SSH to any server
@@ -185,90 +261,135 @@ ssh ubuntu@10.0.0.50
 consul members
 nomad server members
 nomad node status
+
+# View deployed jobs
+nomad job status
 ```
 
-#### 5. Deploy Services
+### Access Your Services
 
-```bash
-# Set Nomad address
-export NOMAD_ADDR=http://10.0.0.50:4646
+After deployment, access the web interfaces:
 
-# Deploy example services
-nomad job run jobs/system/traefik.nomad.hcl
-nomad job run jobs/services/prometheus.nomad.hcl
-nomad job run jobs/services/grafana.nomad.hcl
+- **Nomad UI**: `http://10.0.0.50:4646`
+- **Consul UI**: `http://10.0.0.50:8500`
+- **Grafana**: `http://grafana.home` (add to /etc/hosts or use Traefik IP)
+- **Prometheus**: `http://prometheus.home`
+- **Docker Registry UI**: `http://registry-ui.home`
+- **Traefik Dashboard**: `http://traefik.home`
 
-# Or use Task
-task deploy
-```
-
-### Access Your Cluster
-
-- **Nomad UI**: `http://[server-ip]:4646`
-- **Consul UI**: `http://[server-ip]:8500`
-- **Vault UI**: `http://[server-ip]:8200` (requires initialization)
-
-See the [example services](jobs/) directory for reference implementations of Traefik, Prometheus, Grafana, and more.
+See the [example services](jobs/) directory for reference implementations.
 
 ## Directory Structure
 
 ```plaintext
 hashi_homelab/
+├── ansible/                             # Configuration management
+│   ├── inventory/
+│   │   └── hosts.yml                   # All cluster nodes
+│   ├── playbooks/
+│   │   ├── site.yml                    # Main playbook
+│   │   ├── configure-docker.yml        # Docker configuration
+│   │   └── test-connectivity.yml       # Connection testing
+│   ├── roles/
+│   │   ├── base-system/                # DNS, NFS, packages
+│   │   └── nomad-client/               # Nomad client config
+│   └── README.md                        # Ansible documentation
 ├── jobs/
-│   ├── system/                          # System jobs (run on every client node)
-│   │   └── traefik.nomad.hcl           # Reverse proxy with Consul Catalog
-│   └── services/                        # Service jobs (run on specific nodes)
-│       ├── grafana.nomad.hcl           # Visualization dashboards
-│       ├── prometheus.nomad.hcl        # Metrics collection
-│       ├── minio.nomad.hcl             # S3-compatible object storage
+│   ├── system/                          # System jobs (run on every client)
+│   │   ├── traefik.nomad.hcl           # Reverse proxy
+│   │   └── alloy.nomad.hcl             # Log collection
+│   └── services/                        # Service jobs
+│       ├── grafana.nomad.hcl           # Visualization
+│       ├── prometheus.nomad.hcl        # Metrics
+│       ├── loki.nomad.hcl              # Log aggregation
+│       ├── minio.nomad.hcl             # Object storage
+│       ├── docker-registry.nomad.hcl   # Docker registry + UI
 │       └── whoami.nomad.hcl            # Test service
 ├── packer/
 │   ├── templates/
-│   │   ├── debian/                      # Debian templates (currently deployed)
-│   │   │   ├── debian-nomad-server.pkr.hcl
-│   │   │   └── debian-nomad-client.pkr.hcl
-│   │   └── ubuntu/                      # Ubuntu templates (legacy/alternative)
-│   │       ├── ubuntu-bare-minimum.pkr.hcl
-│   │       ├── ubuntu-qemu-agent.pkr.hcl
-│   │       ├── ubuntu-consul.pkr.hcl
-│   │       ├── ubuntu-nomad.pkr.hcl
-│   │       ├── ubuntu-hashicorp-full.pkr.hcl
-│   │       ├── ubuntu-nomad-server.pkr.hcl
-│   │       ├── ubuntu-nomad-client.pkr.hcl
-│   │       └── http*/                   # Cloud-init configurations
+│   │   └── debian/                      # Debian templates (primary)
+│   │       ├── debian-nomad-server.pkr.hcl
+│   │       └── debian-nomad-client.pkr.hcl
 │   ├── scripts/
-│   │   └── create-debian-cloud-base.sh  # Debian base image creation
+│   │   └── create-debian-cloud-base.sh  # Base image creation
 │   └── variables/
 │       ├── common.pkrvars.hcl           # Shared variables (versions, etc)
 │       └── proxmox-host1.pkrvars.hcl   # Proxmox-specific config
 ├── terraform/
 │   ├── environments/
-│   │   └── dev/                         # Dev environment configuration
+│   │   └── dev/                         # Dev environment
 │   │       ├── main.tf
 │   │       ├── variables.tf
 │   │       ├── outputs.tf
 │   │       └── terraform.tfvars
 │   └── modules/
 │       ├── proxmox-vm/                  # Base VM module
-│       │   ├── main.tf
-│       │   ├── variables.tf
-│       │   └── templates/
-│       │       └── configure-vm.sh.tftpl  # VM provisioning script
 │       ├── nomad-server/                # Nomad server cluster
 │       │   └── templates/
-│       │       ├── consul-server.hcl
-│       │       └── nomad-server.hcl
+│       │       └── server-cloud-init.yaml  # Minimal cloud-init
 │       └── nomad-client/                # Nomad client nodes
 │           └── templates/
-│               ├── consul-client.hcl
-│               └── nomad-client.hcl
+│               └── client-cloud-init.yaml  # Minimal cloud-init
+├── scripts/                             # Helper scripts
+│   ├── connect-to-nomad.fish           # Connection helper
+│   └── setup_*.sh                       # Volume setup scripts
 ├── docs/                                # Documentation
-├── configs/                             # Example configurations
+│   ├── DOCKER_REGISTRY_SETUP.md        # Registry guide
+│   └── PROMETHEUS_SOLUTION.md          # Monitoring guide
 ├── Taskfile.yml                         # Task automation
-├── set-proxmox-password.fish           # Helper script for env vars
 ├── .gitignore                           # Excludes secrets
 ├── LICENSE
 └── README.md                            # This file
+```
+
+## Common Operations
+
+### Using Task (Recommended)
+
+```bash
+# Complete bootstrap from scratch
+task bootstrap
+
+# Infrastructure operations
+task tf:apply                   # Provision VMs
+task tf:destroy                 # Tear down VMs
+
+# Configuration management
+task ansible:configure          # Configure all nodes
+task ansible:docker            # Update Docker config only
+task ansible:test              # Test connectivity
+
+# Service deployment
+task deploy:all                # Deploy all jobs
+task deploy:system             # Deploy system jobs only
+task deploy:services           # Deploy service jobs only
+
+# Packer builds
+task build:debian:base         # Build base image
+task build:debian:server       # Build server template
+task build:debian:client       # Build client template
+```
+
+### Manual Operations
+
+```bash
+# Check cluster status
+export NOMAD_ADDR=http://10.0.0.50:4646
+nomad node status
+nomad job status
+
+# Update a job
+nomad job run jobs/services/grafana.nomad.hcl
+
+# Stop a job
+nomad job stop grafana
+
+# View logs
+nomad alloc logs -f <alloc-id>
+
+# SSH to nodes
+ssh ubuntu@10.0.0.50  # Server
+ssh ubuntu@10.0.0.60  # Client
 ```
 
 ## Prerequisites (Detailed)
