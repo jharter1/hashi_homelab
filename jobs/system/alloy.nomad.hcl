@@ -16,10 +16,10 @@ job "alloy" {
       driver = "docker"
 
       config {
-        image = "grafana/alloy:latest"
+        image        = "grafana/alloy:latest"
         network_mode = "host"
         # The 'ports' list is mainly for the service stanza below when using host network.
-        ports = ["http"] 
+        ports = ["http"]
 
         args = [
           "run",
@@ -36,7 +36,7 @@ job "alloy" {
           "/var/run/docker.sock:/var/run/docker.sock:ro",
           "/var/lib/docker/containers:/var/lib/docker/containers:ro",
           # For file log scraping (e.g., /var/log/*.log)
-          "/var/log:/var/log:ro", 
+          "/var/log:/var/log:ro",
         ]
       }
 
@@ -44,8 +44,8 @@ job "alloy" {
       template {
         # Destination inside the task's allocation directory.
         # Nomad automatically creates a volume named "local" for this directory.
-        destination = "local/config.alloy" 
-        data = <<EOH
+        destination = "local/config.alloy"
+        data        = <<EOH
 logging {
   level = "info"
 }

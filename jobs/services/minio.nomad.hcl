@@ -23,14 +23,14 @@ job "minio" {
 
     task "minio" {
       driver = "docker"
-      
+
       vault {
         cluster  = "default"
         policies = ["access-secrets"]
       }
-      
+
       template {
-        data = <<EOT
+        data        = <<EOT
 {{ with secret "secret/data/nomad/minio" }}
 MINIO_ROOT_USER="{{ .Data.data.root_user }}"
 MINIO_ROOT_PASSWORD="{{ .Data.data.root_password }}"

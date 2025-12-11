@@ -38,7 +38,7 @@ job "docker-registry" {
       # Configuration for pull-through cache
       template {
         destination = "local/config.yml"
-        data = <<EOH
+        data        = <<EOH
 version: 0.1
 log:
   fields:
@@ -108,13 +108,13 @@ EOH
       }
 
       env {
-        REGISTRY_TITLE = "Homelab Docker Registry"
-        REGISTRY_URL = "http://localhost:5000"
-        DELETE_IMAGES = "true"
-        SHOW_CONTENT_DIGEST = "true"
-        SINGLE_REGISTRY = "true"
+        REGISTRY_TITLE       = "Homelab Docker Registry"
+        REGISTRY_URL         = "http://localhost:5000"
+        DELETE_IMAGES        = "true"
+        SHOW_CONTENT_DIGEST  = "true"
+        SINGLE_REGISTRY      = "true"
         NGINX_PROXY_PASS_URL = "http://localhost:5000"
-        NGINX_LISTEN_PORT = "5001"
+        NGINX_LISTEN_PORT    = "5001"
       }
 
       resources {

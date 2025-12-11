@@ -46,7 +46,11 @@ client {
     path = "{{ nas_mount_point }}/homepage"
     read_only = false
   }
-}
+
+  host_volume "calibre_data" {
+    path = "{{ nas_mount_point }}/calibre"
+    read_only = false
+  }
 
 bind_addr = "0.0.0.0"
 

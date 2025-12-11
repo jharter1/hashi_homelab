@@ -7,7 +7,7 @@ job "homepage" {
 
     network {
       port "http" {
-        static = 8080
+        static = 3000
       }
     }
 
@@ -45,9 +45,16 @@ job "homepage" {
         read_only   = false
       }
 
+      env {
+        HOMEPAGE_VAR_TITLE     = "Homelab Dashboard"
+        LOG_LEVEL              = "debug"
+        HOMEPAGE_ALLOWED_HOSTS = "home.home"
+      }
+
       config {
-        image = "gethomepage/homepage:latest"
-        ports = ["http"]
+        image    = "gethomepage/homepage:latest"
+        ports    = ["http"]
+        hostname = "home.home"
       }
 
       resources {
@@ -58,7 +65,7 @@ job "homepage" {
       service {
         name = "homepage"
         port = "http"
-        
+
         tags = [
           "traefik.enable=true",
           "traefik.http.routers.homepage.rule=Host(`home.home`)",

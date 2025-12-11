@@ -46,7 +46,7 @@ job "prometheus" {
 
       template {
         destination = "local/prometheus.yml"
-        data = <<EOH
+        data        = <<EOH
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
@@ -116,8 +116,8 @@ EOH
       }
 
       service {
-        name = "prometheus"
-        port = "http"
+        name         = "prometheus"
+        port         = "http"
         address_mode = "host"
 
         check {

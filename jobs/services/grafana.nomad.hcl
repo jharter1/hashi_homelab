@@ -20,14 +20,14 @@ job "grafana" {
 
     task "grafana" {
       driver = "docker"
-      
+
       vault {
         cluster  = "default"
         policies = ["access-secrets"]
       }
-      
+
       template {
-        data = <<EOT
+        data        = <<EOT
 {{ with secret "secret/data/nomad/grafana" }}
 GF_SECURITY_ADMIN_PASSWORD="{{ .Data.data.admin_password }}"
 {{ end }}

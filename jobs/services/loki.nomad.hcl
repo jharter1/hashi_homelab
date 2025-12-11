@@ -41,7 +41,7 @@ job "loki" {
 
       template {
         destination = "local/local-config.yaml"
-        data = <<EOH
+        data        = <<EOH
 auth_enabled: false
 
 server:

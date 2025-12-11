@@ -17,7 +17,7 @@ job "traefik" {
 
     # Vault integration for workload identity
     vault {
-      cluster = "default"
+      cluster  = "default"
       policies = ["access-secrets"]
     }
 
@@ -47,7 +47,7 @@ job "traefik" {
       config {
         image        = "traefik:v2.10"
         network_mode = "host"
-        
+
         volumes = [
           "local:/certs"
         ]
@@ -88,7 +88,7 @@ job "traefik" {
 
       # Traefik dynamic TLS configuration
       template {
-        data = <<EOT
+        data        = <<EOT
 [tls.stores]
   [tls.stores.default]
     [tls.stores.default.defaultCertificate]
