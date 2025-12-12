@@ -54,6 +54,10 @@ http:
   addr: :5000
   headers:
     X-Content-Type-Options: [nosniff]
+    Access-Control-Allow-Origin: ['*']
+    Access-Control-Allow-Methods: ['HEAD', 'GET', 'OPTIONS', 'DELETE']
+    Access-Control-Allow-Headers: ['Authorization', 'Accept', 'Content-Type']
+    Access-Control-Expose-Headers: ['Docker-Content-Digest']
 health:
   storagedriver:
     enabled: true
@@ -84,9 +88,14 @@ EOH
           "docker",
           "traefik.enable=true",
           "traefik.http.routers.registry.rule=Host(`registry.home`)",
+          # CORS middleware for registry UI
+          "traefik.http.middlewares.registry-cors.headers.accesscontrolallowmethods=GET,HEAD,OPTIONS,DELETE",
+          "traefik.http.middlewares.registry-cors.headers.accesscontrolalloworiginlist=http://registry-ui.home,http://10.0.0.60:5001",
+          "traefik.http.middlewares.registry-cors.headers.accesscontrolallowheaders=Authorization,Accept,Content-Type",
+          "traefik.http.middlewares.registry-cors.headers.accesscontrolexposeheaders=Docker-Content-Digest",
           # Allow larger uploads for Docker images
           "traefik.http.middlewares.registry-buffering.buffering.maxRequestBodyBytes=2147483648",
-          "traefik.http.routers.registry.middlewares=registry-buffering",
+          "traefik.http.routers.registry.middlewares=registry-cors,registry-buffering",
         ]
         check {
           type     = "http"
@@ -109,12 +118,13 @@ EOH
 
       env {
         REGISTRY_TITLE       = "Homelab Docker Registry"
-        REGISTRY_URL         = "http://localhost:5000"
+        REGISTRY_URL         = "http://registry.home"
         DELETE_IMAGES        = "true"
         SHOW_CONTENT_DIGEST  = "true"
         SINGLE_REGISTRY      = "true"
-        NGINX_PROXY_PASS_URL = "http://localhost:5000"
+        NGINX_PROXY_PASS_URL = "http://registry.home"
         NGINX_LISTEN_PORT    = "5001"
+        CORS_ALLOWED_ORIGINS = "*"
       }
 
       resources {

@@ -42,6 +42,16 @@ client {
     read_only = false
   }
 
+  host_volume "artifactory_data" {
+    path = "/opt/nomad-volumes/artifactory_data"
+    read_only = false
+  }
+
+  host_volume "jenkins_home" {
+    path = "{{ nas_mount_point }}/jenkins"
+    read_only = false
+  }
+
   host_volume "homepage_data" {
     path = "{{ nas_mount_point }}/homepage"
     read_only = false

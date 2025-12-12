@@ -10,6 +10,25 @@ job "calibre" {
       }
     }
 
+    service {
+      name = "calibre-web"
+      port = "http"
+      
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.calibre.rule=Host(`calibre.home`)",
+        "traefik.http.routers.calibre.entrypoints=web",
+      ]
+
+      check {
+        name     = "calibre-health"
+        type     = "http"
+        path     = "/"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+
     task "calibre-web" {
       driver = "docker"
       config {
@@ -19,13 +38,13 @@ job "calibre" {
           "local/calibre/config:/config",
           "local/calibre/books:/books"
         ]
-        restart {
-          attempts = 3
-          interval = "5m"
-          delay    = "25s"
-          mode     = "fail"
-        }
       }
+    restart {
+      attempts = 3
+      interval = "5m"
+      delay    = "25s"
+      mode     = "fail"
+    }
       resources {
         cpu    = 500
         memory = 1024
