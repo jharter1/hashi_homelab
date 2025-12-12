@@ -1,8 +1,16 @@
 # Quick Start Guide
 
-Get a HashiCorp-powered VM running in under 30 minutes.
+> **⚠️ NOTE**: This guide is outdated. For the current production workflow, see the main [README.md](../README.md) and use the Taskfile-based approach.
 
-## Prerequisites
+This guide shows a minimal single-node setup for learning. For production multi-node clusters, use:
+- `task bootstrap` - Full automated deployment
+- Packer templates for consistent VM images  
+- Terraform for infrastructure provisioning
+- Ansible for configuration management
+
+---
+
+## Manual Single-Node Setup (Learning Only)
 
 - Proxmox VE host with SSH access
 - VM with Ubuntu 24.04 (or create one from template)
@@ -44,23 +52,25 @@ qm start 200
 
 Wait 2-3 minutes for cloud-init to complete.
 
-## Step 3: Install HashiCorp Tools
+## Step 3: Use Production Approach
 
-From your local machine:
+**Instead of manual installation, use the automated approach:**
 
 ```bash
-# Clone this repo
+# From your local machine
 git clone <repo-url>
 cd hashi_homelab
 
-# Copy and run installation script
-scp scripts/install_hashicorp.sh packer@10.0.0.170:/tmp/
-ssh packer@10.0.0.170 "chmod +x /tmp/install_hashicorp.sh && sudo /tmp/install_hashicorp.sh"
+# Follow main README for:
+# 1. Build Packer templates
+# 2. Deploy with Terraform  
+# 3. Configure with Ansible
+# 4. Deploy jobs with Taskfile
 ```
 
-This installs Consul, Vault, and Nomad (takes ~5 minutes).
+HashiCorp tools are pre-installed in Packer templates and configured via Ansible.
 
-## Step 4: Configure Services
+## Step 4: Configure Services (Automated)
 
 ```bash
 # Copy configurations

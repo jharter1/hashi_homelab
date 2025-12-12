@@ -1,0 +1,17 @@
+---
+all:
+  children:
+    vault_servers:
+      hosts:
+        hub-vault-1:
+          ansible_host: 10.0.0.30
+          ansible_user: ubuntu
+          ansible_python_interpreter: /usr/bin/python3
+        hub-vault-2:
+          ansible_host: 10.0.0.31
+          ansible_user: ubuntu
+          ansible_python_interpreter: /usr/bin/python3
+        hub-vault-3:
+          ansible_host: 10.0.0.32
+          ansible_user: ubuntu
+          ansible_python_interpreter: /usr/bin/python3

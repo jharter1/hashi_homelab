@@ -34,66 +34,78 @@ This project provides everything needed to deploy a complete container orchestra
 
 ## Architecture
 
-This project deploys a multi-tier HashiCorp stack on Proxmox VE:
+This project deploys a multi-tier HashiCorp stack on Proxmox VE.
+
+### Cluster Topology
 
 ```mermaid
 graph TD
-    User[User] -->|HTTP/HTTPS| Traefik[Traefik Reverse Proxy]
+    Server1[Nomad Server 1<br/>10.0.0.50]
+    Server2[Nomad Server 2<br/>10.0.0.51]
+    Server3[Nomad Server 3<br/>10.0.0.52]
+    Client1[Nomad Client 1<br/>10.0.0.60]
+    Client2[Nomad Client 2<br/>10.0.0.61]
     
-    subgraph "Control Plane"
-        Server1[Nomad Server 1]
-        Server2[Nomad Server 2]
-        Server3[Nomad Server 3]
-        Server1 <-->|Raft Consensus| Server2
-        Server2 <-->|Raft Consensus| Server3
-        Server3 <-->|Raft Consensus| Server1
-    end
-    
-    subgraph "Worker Nodes"
-        Client1[Nomad Client 1<br/>+ Docker]
-        Client2[Nomad Client 2<br/>+ Docker]
-        Storage[(NFS Storage<br/>Optional)]
-    end
-    
-    subgraph "Services"
-        Traefik
-        Prometheus[Prometheus]
-        Grafana[Grafana]
-        App1[Your Apps]
-        App2[...]
-    end
-    
-    Client1 -->|Hosts| Traefik
-    Client1 -->|Hosts| Prometheus
-    Client2 -->|Hosts| Grafana
-    Client2 -->|Hosts| App1
-    Client1 -->|Hosts| App2
+    Server1 <-->|Raft Consensus| Server2
+    Server2 <-->|Raft Consensus| Server3
+    Server3 <-->|Raft Consensus| Server1
     
     Client1 -->|Register| Server1
     Client2 -->|Register| Server2
     
-    Traefik -->|Service Discovery| Server1
-    Client1 -.->|Mount| Storage
-    Client2 -.->|Mount| Storage
-
-    %% Styling
     style Server1 fill:#60ac39,stroke:#333,stroke-width:2px,color:white
     style Server2 fill:#60ac39,stroke:#333,stroke-width:2px,color:white
     style Server3 fill:#60ac39,stroke:#333,stroke-width:2px,color:white
     style Client1 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
     style Client2 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
+```
+
+### Service Flow
+
+```mermaid
+graph LR
+    User[User] -->|HTTP/HTTPS| Traefik[Traefik]
+    Traefik -->|Service Discovery| Consul[Consul]
+    Traefik -->|Route to| Services[Services]
+    
+    Services -->|Metrics| Prometheus[Prometheus]
+    Services -->|Logs| Loki[Loki]
+    Prometheus -->|Visualize| Grafana[Grafana]
+    Loki -->|Visualize| Grafana
+    
     style Traefik fill:#37abc8,stroke:#333,stroke-width:2px,color:white
-    style Storage fill:#ff6b35,stroke:#333,stroke-width:2px,color:white
+    style Consul fill:#e03875,stroke:#333,stroke-width:2px,color:white
+    style Prometheus fill:#e6522c,stroke:#333,stroke-width:2px,color:white
+    style Grafana fill:#f46800,stroke:#333,stroke-width:2px,color:white
+```
+
+### Storage Architecture
+
+```mermaid
+graph TD
+    NAS[(NFS Storage<br/>10.0.0.100)]
+    Client1[Nomad Client 1]
+    Client2[Nomad Client 2]
+    
+    NAS -->|/mnt/nas| Client1
+    NAS -->|/mnt/nas| Client2
+    
+    Client1 -->|Host Volumes| Jobs1[Jobs with<br/>Persistent Data]
+    Client2 -->|Host Volumes| Jobs2[Jobs with<br/>Persistent Data]
+    
+    style NAS fill:#ff6b35,stroke:#333,stroke-width:2px,color:white
+    style Client1 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
+    style Client2 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
 ```
 
 **Key Components:**
 
-- **Nomad Servers (3+)**: Manage cluster state, scheduling decisions, and job placement
+- **Nomad Servers (3)**: Manage cluster state, scheduling decisions, and job placement using Raft consensus
 - **Nomad Clients (2+)**: Run containerized workloads with Docker driver
-- **Consul**: Service discovery, health checking, and KV store (co-located with servers)
-- **Vault**: Secrets management and credential issuing (co-located with servers)
-- **Traefik**: Reverse proxy with automatic service registration via Consul
-- **Storage**: Optional NFS mounts for persistent data across clients
+- **Consul**: Service discovery, health checking, and KV store (co-located with Nomad servers)
+- **Traefik**: Reverse proxy with automatic service registration via Consul catalog
+- **Observability Stack**: Prometheus (metrics), Loki (logs), Grafana (visualization), Alloy (collection)
+- **Storage**: NFS mounts from NAS provide persistent storage via host volumes
 
 ## Quick Start
 
@@ -331,8 +343,10 @@ hashi_homelab/
 │           └── templates/
 │               └── client-cloud-init.yaml  # Minimal cloud-init
 ├── scripts/                             # Helper scripts
-│   ├── connect-to-nomad.fish           # Connection helper
-│   └── setup_*.sh                       # Volume setup scripts
+│   ├── set-proxmox-password.fish       # Used by Taskfile for Packer builds
+│   ├── setup-vault.fish                # Vault setup automation (WIP)
+│   ├── configure-vault-nomad-integration.fish  # Vault-Nomad integration (WIP)
+│   └── migrate-vault-dev-to-hub.fish   # Vault migration helper (WIP)
 ├── docs/                                # Documentation
 │   ├── DOCKER_REGISTRY_SETUP.md        # Registry guide
 │   └── PROMETHEUS_SOLUTION.md          # Monitoring guide

@@ -1,103 +1,161 @@
-# Ansible Migration TODO
+# Ansible Configuration Management Roadmap
 
-## Current State
-- Terraform handles VM provisioning AND configuration
-- Configuration is embedded in cloud-init templates
-- Manual steps required for some services
-- Limited idempotency for configuration changes
+## ✅ Current State (Completed)
 
-## Goal
-- Terraform handles ONLY VM provisioning
-- Ansible handles ALL configuration management
-- Idempotent, repeatable configuration
-- Easy to update running systems
+### Infrastructure Separation
+- ✅ Terraform handles ONLY VM provisioning
+- ✅ Ansible handles ALL configuration management
+- ✅ Idempotent, repeatable configuration
+- ✅ Easy to update running systems
 
-## Migration Tasks
+### Working Playbooks & Roles
+- ✅ `playbooks/site.yml` - Full site configuration
+- ✅ `playbooks/configure-docker.yml` - Docker configuration only
+- ✅ `playbooks/test-connectivity.yml` - Connectivity testing
+- ✅ `roles/base-system/` - DNS, NFS, packages, host volumes
+- ✅ `roles/nomad-client/` - Nomad client configuration with host volumes
+- ✅ `roles/consul/` - Consul installation and configuration
+- ✅ `roles/nomad-server/` - Nomad server configuration
+- ✅ `roles/hashicorp-binaries/` - HashiCorp tool installation
+- ✅ `roles/node-exporter/` - Prometheus node exporter
 
-### 1. Infrastructure Separation
-- [ ] Strip all configuration logic from Terraform cloud-init templates
-- [ ] Keep only minimal cloud-init for basic SSH access and network setup
-- [ ] Terraform outputs should provide inventory information for Ansible
+### Inventory & Organization
+- ✅ Static inventory with groups (nomad_servers, nomad_clients)
+- ✅ Group variables for cluster configuration
+- ✅ Host volumes configured via Ansible templates
 
-### 2. Ansible Inventory Setup
-- [ ] Create dynamic inventory script to read from Nomad/Consul
-- [ ] Or create static inventory with groups (nomad-servers, nomad-clients, etc.)
-- [ ] Set up host variables for IP addresses, roles, etc.
+---
 
-### 3. Base System Configuration (Playbook: `base.yml`)
-- [ ] Configure DNS resolvers
-- [ ] Set up NFS mounts to NAS
-- [ ] Configure system packages and updates
-- [ ] Set up host volumes directories
+## 🚧 Vault Integration Roadmap
 
-### 4. HashiCorp Stack Installation (Playbook: `hashicorp.yml`)
-- [ ] Install Consul (server and client modes)
-- [ ] Install Nomad (server and client modes)
-- [ ] Install Vault (optional, future)
-- [ ] Set up systemd services
-- [ ] Configure for proper startup order
+The Vault integration is partially implemented and ready to be completed. Here's what exists and what's needed:
 
-### 5. Nomad Server Configuration (Playbook: `nomad-servers.yml`)
-- [ ] Deploy server configuration files
-- [ ] Configure bootstrap expect count
-- [ ] Set up telemetry
-- [ ] Configure Consul integration
+### What's Already Built
 
-### 6. Nomad Client Configuration (Playbook: `nomad-clients.yml`)
-- [ ] Deploy client configuration files
-- [ ] Configure host volumes (NAS mounts)
-- [ ] Set up node classes and metadata
-- [ ] Configure Docker plugin settings
-- [ ] Configure resource reservations
+**Infrastructure (Terraform)**:
+- ✅ `terraform/environments/hub/` - Hub environment for Vault cluster
+  - 3-node Vault cluster configuration
+  - Terraform state: `terraform-hub.tfstate`
+  - Outputs for CA certs
+- ✅ `terraform/vault/` - Vault provider configuration module
+- ✅ Vault integration in dev environment (`vault.tf`, `vault-variables.tf`)
 
-### 7. Docker Configuration (Playbook: `docker.yml`)
-- [ ] Install Docker on client nodes
-- [ ] Configure daemon.json with:
-  - [ ] Registry mirrors (local registry)
-  - [ ] Insecure registries
-  - [ ] Log rotation settings
-  - [ ] Storage driver
-- [ ] Restart Docker service
-- [ ] Add nomad user to docker group
+**Ansible Playbooks**:
+- ✅ `playbooks/deploy-hub-consul.yml` - Deploy Consul for Vault cluster
+- ✅ `playbooks/deploy-hub-vault.yml` - Deploy Vault cluster
+- ✅ `playbooks/install-vault.yml` - Install Vault on Nomad servers
+- ✅ `playbooks/unseal-vault.yml` - Unseal Vault instances
+- ✅ `playbooks/update-nomad-client-vault.yml` - Configure Nomad clients for Vault
+- ✅ `playbooks/update-nomad-oidc.yml` - OIDC configuration
 
-### 8. Monitoring Stack (Playbook: `monitoring.yml`)
-- [ ] Install and configure Node Exporter
-- [ ] Register services in Consul
-- [ ] Configure Prometheus scrape configs
-- [ ] Set up Alloy for log collection
+**Inventory**:
+- ✅ `inventory/hub.yml` - Hub cluster inventory (10.0.0.30-32)
+- ✅ `inventory/group_vars/vault_servers.yml` - Vault server configuration
 
-### 9. Service Deployment (Playbook: `services.yml`)
-- [ ] Deploy Traefik job
-- [ ] Deploy MinIO job
-- [ ] Deploy Loki job
-- [ ] Deploy Prometheus job
-- [ ] Deploy Grafana job
-- [ ] Deploy Docker Registry job
-- [ ] Deploy Alloy system job
-- [ ] Or use `nomad job run` directly (decision needed)
+**Helper Scripts**:
+- ✅ `scripts/setup-vault.fish` - Vault setup automation
+- ✅ `scripts/configure-vault-nomad-integration.fish` - Integration helper
+- ✅ `scripts/migrate-vault-dev-to-hub.fish` - Migration script
 
-### 10. Testing & Validation (Playbook: `validate.yml`)
-- [ ] Check Consul cluster health
-- [ ] Check Nomad cluster health
-- [ ] Verify all clients connected
-- [ ] Test service discovery
-- [ ] Verify Docker registry mirror working
-- [ ] Check monitoring stack
+**Roles**:
+- ✅ `roles/vault/` - Vault installation and configuration role
 
-### 11. Ansible Structure
+### What Needs to Be Completed
 
-```
-ansible/
-├── inventory/
-│   ├── hosts.yml              # Static inventory
-│   └── group_vars/
-│       ├── all.yml            # Global vars
-│       ├── nomad_servers.yml
-│       └── nomad_clients.yml
-├── roles/
-│   ├── base/                  # Base system setup
-│   ├── consul/                # Consul installation/config
-│   ├── nomad/                 # Nomad installation/config
+#### Phase 1: Hub Vault Cluster Deployment
+- [ ] **Test and validate hub environment**
+  - [ ] Ensure terraform/environments/hub/ deploys successfully
+  - [ ] Verify 3-node Vault cluster formation
+  - [ ] Document any needed fixes
+  
+- [ ] **Complete Vault initialization workflow**
+  - [ ] Test `playbooks/deploy-hub-consul.yml`
+  - [ ] Test `playbooks/deploy-hub-vault.yml`
+  - [ ] Verify `playbooks/unseal-vault.yml` works across cluster
+  - [ ] Document unseal key management process
+
+- [ ] **Add Taskfile tasks for hub deployment**
+  ```yaml
+  vault:deploy:hub:
+    desc: "Deploy 3-node Vault cluster on hub"
+    cmds:
+      - cd terraform/environments/hub && terraform apply
+      - ansible-playbook -i ansible/inventory/hub.yml playbooks/deploy-hub-consul.yml
+      - ansible-playbook -i ansible/inventory/hub.yml playbooks/deploy-hub-vault.yml
+  ```
+
+#### Phase 2: Vault-Nomad Integration
+- [ ] **Configure Nomad to use Vault for secrets**
+  - [ ] Test `playbooks/update-nomad-client-vault.yml`
+  - [ ] Configure Nomad servers to authenticate with Vault
+  - [ ] Set up Vault policy for Nomad
+  - [ ] Enable Vault token renewal
+  
+- [ ] **Create Vault PKI backend**
+  - [ ] Configure PKI secrets engine
+  - [ ] Generate intermediate CA
+  - [ ] Create role for Nomad workload certificates
+  
+- [ ] **Update job templates to use Vault**
+  - [ ] Add Vault stanza to job specifications
+  - [ ] Document template syntax for secrets
+  - [ ] Create example jobs using Vault secrets
+
+#### Phase 3: OIDC Integration (Optional)
+- [ ] **Configure OIDC authentication**
+  - [ ] Test `playbooks/update-nomad-oidc.yml`
+  - [ ] Set up OIDC provider (e.g., Authentik, Keycloak)
+  - [ ] Configure Nomad ACLs with OIDC
+  - [ ] Document login workflow
+
+#### Phase 4: Documentation & Best Practices
+- [ ] **Update main README**
+  - [ ] Add Vault architecture diagram
+  - [ ] Document Vault deployment process
+  - [ ] Add Vault troubleshooting section
+  
+- [ ] **Create Vault-specific docs**
+  - [ ] `docs/VAULT_DEPLOYMENT.md` - Step-by-step deployment
+  - [ ] `docs/VAULT_NOMAD_INTEGRATION.md` - Integration guide
+  - [ ] Update existing `docs/VAULT_INTEGRATION.md`
+  
+- [ ] **Security hardening**
+  - [ ] Document backup/recovery procedures
+  - [ ] Implement automated unseal (transit backend or cloud KMS)
+  - [ ] Set up audit logging
+  - [ ] Configure Vault policies for least privilege
+
+### Migration Strategy
+
+**Option 1: Separate Vault Cluster (Recommended)**
+- Deploy hub environment with dedicated Vault cluster (10.0.0.30-32)
+- Keep Nomad cluster separate (10.0.0.50-52 servers, 10.0.0.60-62 clients)
+- Nomad workloads authenticate to Vault cluster
+- Better separation of concerns, more HA
+
+**Option 2: Collocated Vault**
+- Install Vault on existing Nomad servers
+- Simpler deployment, fewer VMs
+- Less separation between compute and secrets
+- Good for resource-constrained homelabs
+
+### Testing Checklist
+- [ ] Vault cluster forms correctly
+- [ ] Vault unseals automatically after reboot
+- [ ] Nomad can authenticate to Vault
+- [ ] Jobs can retrieve secrets from Vault
+- [ ] Vault tokens renew automatically
+- [ ] Audit logs are being written
+- [ ] Backup/restore process works
+
+---
+
+## 📚 Reference Links
+
+- [Vault-Nomad Integration](https://developer.hashicorp.com/nomad/docs/integrations/vault)
+- [Vault PKI Secrets Engine](https://developer.hashicorp.com/vault/docs/secrets/pki)
+- [Nomad ACL with OIDC](https://developer.hashicorp.com/nomad/docs/configuration/acl/auth-methods)
+- [Vault Auto-unseal](https://developer.hashicorp.com/vault/docs/concepts/seal#auto-unseal)
 │   ├── docker/                # Docker setup
 │   ├── node_exporter/         # Monitoring agent
 │   └── nfs_client/            # NAS mount setup

@@ -5,6 +5,16 @@ disable_mlock = {{ vault_disable_mlock | lower }}
 storage "raft" {
   path    = "{{ vault_data_dir }}"
   node_id = "{{ vault_raft_node_id }}"
+  
+  retry_join {
+    leader_api_addr = "http://10.0.0.30:8200"
+  }
+  retry_join {
+    leader_api_addr = "http://10.0.0.31:8200"
+  }
+  retry_join {
+    leader_api_addr = "http://10.0.0.32:8200"
+  }
 }
 {% elif vault_consul_integration %}
 storage "consul" {

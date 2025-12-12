@@ -24,18 +24,38 @@ ansible-playbook playbooks/site.yml --check
 
 ```
 ansible/
-├── ansible.cfg              # Ansible configuration
+├── ansible.cfg                  # Ansible configuration
+├── TODO.md                      # Vault integration roadmap
 ├── inventory/
-│   └── hosts.yml           # Inventory of all nodes
+│   ├── hosts.yml               # Dev cluster inventory (10.0.0.50-62)
+│   ├── hub.yml                 # Hub cluster inventory (10.0.0.30-32) for Vault
+│   └── group_vars/
+│       ├── nomad_clients.yml
+│       ├── nomad_cluster.yml
+│       ├── nomad_servers.yml
+│       └── vault_servers.yml
 ├── playbooks/
-│   ├── test-connectivity.yml    # Test connectivity
-│   ├── configure-docker.yml     # Docker configuration only
-│   └── site.yml                 # Full site configuration
+│   ├── site.yml                # Full site configuration
+│   ├── configure-docker.yml    # Docker configuration only
+│   ├── test-connectivity.yml   # Test connectivity
+│   ├── deploy-hub-consul.yml   # Vault cluster: Consul setup (WIP)
+│   ├── deploy-hub-vault.yml    # Vault cluster: Vault setup (WIP)
+│   ├── install-vault.yml       # Vault installation (WIP)
+│   ├── unseal-vault.yml        # Vault unsealing (WIP)
+│   ├── update-nomad-client-vault.yml  # Nomad-Vault integration (WIP)
+│   └── update-nomad-oidc.yml   # OIDC configuration (WIP)
 ├── roles/
-│   ├── base-system/        # Base system setup (DNS, NFS, packages)
-│   └── nomad-client/       # Nomad client configuration
-└── templates/              # Shared templates (if needed)
+│   ├── base-system/            # Base system setup (DNS, NFS, packages)
+│   ├── consul/                 # Consul installation and configuration
+│   ├── hashicorp-binaries/     # HashiCorp tool installation
+│   ├── node-exporter/          # Prometheus node exporter
+│   ├── nomad-client/           # Nomad client configuration
+│   ├── nomad-server/           # Nomad server configuration
+│   └── vault/                  # Vault installation and setup (WIP)
+└── templates/                  # Shared templates
 ```
+
+> **Note**: Playbooks and roles marked (WIP) are part of the Vault integration roadmap. See `TODO.md` for details.
 
 ## Inventory
 
@@ -48,18 +68,59 @@ All nodes use the `ubuntu` user and SSH keys for authentication.
 ## Roles
 
 ### base-system
+
 Configures base system settings for all nodes:
 - Installs essential packages (nfs-common, curl, jq, etc.)
 - Configures DNS (if systemd-resolved exists)
 - Mounts NAS storage (clients only)
 - Creates host volume directories (clients only)
 
+### consul
+
+Installs and configures Consul:
+- Downloads and installs Consul binary
+- Configures server/client mode
+- Sets up systemd service
+- Manages Consul cluster formation
+
+### hashicorp-binaries
+
+Installs HashiCorp tools:
+- Downloads Consul, Nomad, Vault binaries
+- Verifies checksums
+- Creates system users and directories
+- Sets up PATH and permissions
+
+### node-exporter
+
+Prometheus monitoring agent:
+- Installs node-exporter for system metrics
+- Configures systemd service
+- Exposes metrics on port 9100
+
 ### nomad-client
+
 Configures Nomad client nodes:
 - Deploys `/etc/nomad.d/nomad.hcl` from template
 - Defines all host volumes (grafana, loki, minio, prometheus, registry)
 - Configures Docker plugin
 - Manages Nomad service
+
+### nomad-server
+
+Configures Nomad server nodes:
+- Deploys server configuration
+- Sets up Raft consensus
+- Configures Consul integration
+- Manages cluster bootstrap
+
+### vault (WIP)
+
+Vault installation and configuration:
+- Installs Vault binary
+- Configures storage backend
+- Sets up unsealing process
+- Part of Vault integration roadmap (see `TODO.md`)
 
 ## Common Operations
 

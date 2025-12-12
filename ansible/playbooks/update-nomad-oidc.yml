@@ -1,0 +1,20 @@
+---
+- name: Update Nomad server configuration with OIDC discovery
+  hosts: nomad_servers
+  become: yes
+  
+  tasks:
+    - name: Update Nomad server configuration
+      template:
+        src: ../roles/nomad-server/templates/nomad-server.hcl.j2
+        dest: /etc/nomad.d/nomad.hcl
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart nomad
+  
+  handlers:
+    - name: Restart nomad
+      systemd:
+        name: nomad
+        state: restarted

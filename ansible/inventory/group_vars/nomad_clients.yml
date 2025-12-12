@@ -1,3 +1,9 @@
 ---
 # Consul client configuration (servers use defaults from nomad_cluster.yml)
 consul_server: false
+
+# Nomad server addresses for client join
+nomad_server_addresses:
+  - "10.0.0.50"
+  - "10.0.0.51"
+  - "10.0.0.52"

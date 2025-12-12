@@ -1,0 +1,15 @@
+---
+# Vault-specific configuration for hub vault servers
+
+# Enable Consul integration for service registration
+vault_consul_integration: true
+
+# Point to the Consul cluster running on Nomad servers
+# We'll use the first Nomad server as the Consul address
+vault_consul_address: "10.0.0.50:8500"
+
+# Vault service registration path in Consul
+vault_consul_path: "vault/"
+
+# Use Raft storage (not Consul storage)
+vault_use_raft_storage: true

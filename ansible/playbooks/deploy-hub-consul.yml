@@ -1,0 +1,73 @@
+---
+- name: Deploy Consul cluster on hub Vault nodes
+  hosts: vault_servers
+  become: yes
+  vars:
+    datacenter: "dc1"
+    consul_server: true
+    consul_bootstrap_expect: 3
+    consul_retry_join:
+      - "10.0.0.30"
+      - "10.0.0.31"
+      - "10.0.0.32"
+  
+  tasks:
+    - name: Create Consul log directory
+      file:
+        path: /var/log/consul
+        state: directory
+        owner: consul
+        group: consul
+        mode: '0755'
+
+    - name: Install Consul configuration
+      template:
+        src: ../roles/consul/templates/consul.hcl.j2
+        dest: /etc/consul.d/consul.hcl
+        owner: consul
+        group: consul
+        mode: '0640'
+      notify: restart consul
+
+    - name: Enable and start Consul service
+      systemd:
+        name: consul
+        enabled: yes
+        state: started
+        daemon_reload: yes
+
+    - name: Wait for Consul to be ready
+      wait_for:
+        port: 8500
+        delay: 5
+        timeout: 60
+
+  handlers:
+    - name: restart consul
+      systemd:
+        name: consul
+        state: restarted
+        daemon_reload: yes
+
+- name: Verify Consul cluster
+  hosts: vault_servers[0]
+  become: yes
+  tasks:
+    - name: Wait for cluster to form
+      shell: |
+        for i in {1..30}; do
+          consul members 2>/dev/null | grep -c alive | grep -q 3 && exit 0
+          sleep 2
+        done
+        exit 1
+      register: consul_cluster_check
+      changed_when: false
+
+    - name: Display Consul cluster members
+      shell: consul members
+      register: consul_members
+      changed_when: false
+
+    - name: Show cluster status
+      debug:
+        msg: "{{ consul_members.stdout_lines }}"

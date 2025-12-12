@@ -95,8 +95,17 @@ output/
 *.tfvars
 !terraform.tfvars.example
 .terraform.lock.hcl
+tfplan
 
 # Packer
 downloaded_iso_path/
+packer/downloaded_iso_path/
+*.iso
+*.iso.lock
+
+# Ansible
+ansible/.vault-credentials
+ansible/.vault-hub-credentials
+ansible/.vault-*-credentials
 packer/downloaded_iso_path/
 manifest.json

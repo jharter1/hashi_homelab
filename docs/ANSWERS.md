@@ -1,33 +1,29 @@
 # Answers to Your Questions
 
+> **⚠️ NOTE**: This document contains outdated information. See the main [README.md](../README.md) for current procedures using Taskfile, Packer, Terraform, and Ansible.
+
 Direct answers to the questions you asked.
 
 ## 1. How can I rebuild this thing from scratch?
 
-**Full guide:** [docs/REBUILD_FROM_SCRATCH.md](docs/REBUILD_FROM_SCRATCH.md)
-
-**Quick answer:**
+**Modern approach:**
 
 ```bash
-# On Proxmox host - Create base template (one time)
-qm create 8300 --name ubuntu-2404-cloud-template --memory 2048 --cores 2
-qm importdisk 8300 ubuntu-24.04-server-cloudimg-amd64.img local-lvm
-qm set 8300 --scsi0 local-lvm:vm-8300-disk-0
-qm set 8300 --ide2 local-lvm:cloudinit
-qm set 8300 --agent enabled=1
-qm template 8300
+# Build VM templates with Packer
+task build:debian:server
+task build:debian:client
 
-# Clone to create VM
-qm clone 8300 200 --name test-node --full
-qm set 200 --ipconfig0 ip=10.0.0.170/24,gw=10.0.0.1
-qm set 200 --ciuser packer --cipassword your-password
-qm start 200
+# Deploy infrastructure with Terraform and configure with Ansible
+task bootstrap
 
-# From local machine - Install HashiCorp
-scp scripts/install_hashicorp.sh packer@10.0.0.170:/tmp/
-ssh packer@10.0.0.170 "sudo /tmp/install_hashicorp.sh"
+# Or step-by-step:
+task tf:apply           # Provision VMs
+task ansible:configure  # Configure services
+task deploy:all         # Deploy Nomad jobs
+```
 
-# Configure
+**What gets deployed:**
+- 3 Nomad servers with Consul
 scp configs/consul-standalone.hcl packer@10.0.0.170:/tmp/consul.hcl
 scp configs/nomad-dev.hcl packer@10.0.0.170:/tmp/nomad.hcl
 ssh packer@10.0.0.170 "sudo mv /tmp/*.hcl /etc/{consul,nomad}.d/ && sudo chown consul:consul /etc/consul.d/consul.hcl && sudo chown nomad:nomad /etc/nomad.d/nomad.hcl"

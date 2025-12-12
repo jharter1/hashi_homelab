@@ -1,8 +1,19 @@
 # Configuration Files
 
-This directory contains HashiCorp service configuration files for different deployment scenarios.
+> **⚠️ NOTE**: These standalone configuration files are primarily for reference. Production deployments use Ansible templates from `ansible/roles/*/templates/`.
 
-## Files
+This directory contains example HashiCorp service configurations for different deployment scenarios.
+
+## Current Production Approach
+
+Configuration is managed by Ansible:
+- **Consul**: `ansible/roles/consul/templates/consul.hcl.j2`
+- **Nomad Servers**: `ansible/roles/nomad-server/templates/nomad.hcl.j2`
+- **Nomad Clients**: `ansible/roles/nomad-client/templates/nomad.hcl.j2`
+
+Deploy configuration with: `task ansible:configure` or `ansible-playbook playbooks/site.yml`
+
+## Reference Files
 
 ### consul-standalone.hcl
 

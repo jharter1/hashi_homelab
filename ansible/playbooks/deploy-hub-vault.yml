@@ -1,0 +1,112 @@
+---
+- name: Install and configure Vault HA cluster on hub nodes
+  hosts: vault_servers
+  become: yes
+  vars:
+    vault_version: "1.18.3"
+    vault_data_dir: "/opt/vault/data"
+    vault_config_dir: "/etc/vault.d"
+    vault_log_dir: "/var/log/vault"
+    vault_tls_dir: "/opt/vault/tls"
+    vault_user: "vault"
+    vault_group: "vault"
+    vault_ui: true
+    vault_disable_mlock: true
+    # Use Raft integrated storage for HA, but register with Consul for service discovery
+    vault_consul_integration: true
+    vault_consul_address: "10.0.0.50:8500"  # Point to Consul on first Nomad server
+    vault_use_raft_storage: true
+    vault_raft_node_id: "{{ ansible_hostname }}"
+    vault_tls_disable: true
+    # Dynamic variables
+    vault_address: "http://{{ ansible_default_ipv4.address }}:8200"
+    vault_cluster_address: "http://{{ ansible_default_ipv4.address }}:8201"
+
+  tasks:
+    - name: Include vault role
+      include_role:
+        name: vault
+        apply:
+          become: yes
+
+- name: Initialize Vault (first node only)
+  hosts: vault_servers[0]
+  become: yes
+  tasks:
+    - name: Wait for Vault to be ready
+      wait_for:
+        port: 8200
+        delay: 5
+        timeout: 60
+
+    - name: Check if Vault is initialized
+      shell: vault status -format=json 2>/dev/null | jq -r '.initialized'
+      environment:
+        VAULT_ADDR: "http://{{ ansible_default_ipv4.address }}:8200"
+      register: vault_initialized
+      changed_when: false
+      failed_when: false
+
+    - name: Initialize Vault cluster
+      shell: vault operator init -key-shares=5 -key-threshold=3 -format=json
+      environment:
+        VAULT_ADDR: "http://{{ ansible_default_ipv4.address }}:8200"
+      register: vault_init_output
+      when: vault_initialized.stdout == 'false'
+
+    - name: Parse Vault initialization output
+      set_fact:
+        vault_unseal_keys: "{{ (vault_init_output.stdout | from_json).unseal_keys_b64 }}"
+        vault_root_token: "{{ (vault_init_output.stdout | from_json).root_token }}"
+      when: vault_init_output is changed
+
+    - name: Save Vault credentials locally
+      delegate_to: localhost
+      become: false
+      copy:
+        content: |
+          # Vault Hub Cluster Credentials
+          # Generated: {{ ansible_date_time.iso8601 }}
+          # KEEP THIS FILE SECURE!
+          
+          export VAULT_ADDR="http://10.0.0.30:8200"
+          export VAULT_ROOT_TOKEN="{{ vault_root_token }}"
+          
+          # Unseal Keys (need 3 of 5 to unseal)
+          export VAULT_UNSEAL_KEY_1="{{ vault_unseal_keys[0] }}"
+          export VAULT_UNSEAL_KEY_2="{{ vault_unseal_keys[1] }}"
+          export VAULT_UNSEAL_KEY_3="{{ vault_unseal_keys[2] }}"
+          export VAULT_UNSEAL_KEY_4="{{ vault_unseal_keys[3] }}"
+          export VAULT_UNSEAL_KEY_5="{{ vault_unseal_keys[4] }}"
+        dest: "{{ playbook_dir }}/../.vault-hub-credentials"
+        mode: '0600'
+      when: vault_init_output is changed
+
+    - name: Display initialization message
+      debug:
+        msg:
+          - "✅ Vault HA cluster initialized!"
+          - "🔐 Credentials saved to: ansible/.vault-hub-credentials"
+          - "⚠️  KEEP THIS FILE SECURE!"
+          - ""
+          - "Next steps:"
+          - "1. Source the credentials: source ansible/.vault-hub-credentials"
+          - "2. Unseal all 3 Vault nodes (need 3 of 5 keys)"
+      when: vault_init_output is changed
+
+- name: Unseal Vault on all nodes
+  hosts: vault_servers
+  become: yes
+  tasks:
+    - name: Check if manual unseal is needed
+      debug:
+        msg:
+          - "⚠️  Vault nodes need to be unsealed manually"
+          - ""
+          - "On each node (10.0.0.30, 10.0.0.31, 10.0.0.32):"
+          - "  vault operator unseal <key1>"
+          - "  vault operator unseal <key2>"
+          - "  vault operator unseal <key3>"
+          - ""
+          - "Or run the unseal playbook:"
+          - "  ansible-playbook -i inventory/hub.yml playbooks/unseal-vault.yml"

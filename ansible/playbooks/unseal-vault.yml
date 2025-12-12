@@ -1,0 +1,77 @@
+---
+- name: Unseal Vault cluster nodes
+  hosts: vault_servers
+  become: false
+  gather_facts: false
+  vars:
+    vault_port: 8200
+    # These will be loaded from the credentials file
+    unseal_keys:
+      - "+pQw4cTPGA665ul5EDMtejU+fFpeNwxjvTgihk5/GwtB"
+      - "pz2SwSmJHSDAuGmcX56cyBtcdjiA3jLkZd2ZeMxBu5Gh"
+      - "pk6PInubBfRqgdZ4kWElwPoMgYDq/geE+/KbMgeaRdOx"
+
+  tasks:
+    - name: Check Vault seal status
+      uri:
+        url: "http://{{ ansible_host }}:{{ vault_port }}/v1/sys/seal-status"
+        method: GET
+        return_content: true
+        status_code: [200, 503]
+      register: seal_status
+      changed_when: false
+
+    - name: Display current seal status
+      debug:
+        msg: "{{ inventory_hostname }} - Sealed: {{ seal_status.json.sealed }}, Progress: {{ seal_status.json.progress }}/{{ seal_status.json.t }}"
+
+    - name: Unseal Vault with first key
+      uri:
+        url: "http://{{ ansible_host }}:{{ vault_port }}/v1/sys/unseal"
+        method: POST
+        body_format: json
+        body:
+          key: "{{ unseal_keys[0] }}"
+        status_code: 200
+      when: seal_status.json.sealed
+      register: unseal_1
+
+    - name: Unseal Vault with second key
+      uri:
+        url: "http://{{ ansible_host }}:{{ vault_port }}/v1/sys/unseal"
+        method: POST
+        body_format: json
+        body:
+          key: "{{ unseal_keys[1] }}"
+        status_code: 200
+      when: seal_status.json.sealed
+      register: unseal_2
+
+    - name: Unseal Vault with third key
+      uri:
+        url: "http://{{ ansible_host }}:{{ vault_port }}/v1/sys/unseal"
+        method: POST
+        body_format: json
+        body:
+          key: "{{ unseal_keys[2] }}"
+        status_code: 200
+      when: seal_status.json.sealed
+      register: unseal_3
+
+    - name: Verify Vault is unsealed
+      uri:
+        url: "http://{{ ansible_host }}:{{ vault_port }}/v1/sys/seal-status"
+        method: GET
+        return_content: true
+        status_code: 200
+      register: final_status
+      changed_when: false
+
+    - name: Display final seal status
+      debug:
+        msg: "{{ inventory_hostname }} - Sealed: {{ final_status.json.sealed }}, Initialized: {{ final_status.json.initialized }}"
+
+    - name: Fail if still sealed
+      fail:
+        msg: "{{ inventory_hostname }} is still sealed after unseal attempts"
+      when: final_status.json.sealed
