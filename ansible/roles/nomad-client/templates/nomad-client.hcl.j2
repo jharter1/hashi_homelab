@@ -81,12 +81,5 @@ vault {
   enabled = true
   address = "http://10.0.0.30:8200"  # Hub Vault HA cluster (leader)
   
-  default_identity {
-    aud = ["vault.io"]
-    env = false
-    file = false
-    ttl = "1h"
-  }
-  
   jwt_auth_backend_path = "jwt-nomad"
 }

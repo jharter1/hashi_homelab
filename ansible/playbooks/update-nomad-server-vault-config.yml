@@ -1,0 +1,26 @@
+---
+- name: Update Nomad Server Vault Configuration
+  hosts: nomad_servers
+  become: yes
+  vars_files:
+    - ../.nomad-vault-tokens.yml
+  
+  tasks:
+    - name: Get the vault token for this server
+      set_fact:
+        vault_token: "{{ vault_tokens[inventory_hostname] }}"
+    
+    - name: Deploy updated Nomad server configuration
+      template:
+        src: ../roles/nomad-server/templates/nomad-server.hcl.j2
+        dest: /etc/nomad.d/nomad.hcl
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart Nomad
+  
+  handlers:
+    - name: Restart Nomad
+      systemd:
+        name: nomad
+        state: restarted

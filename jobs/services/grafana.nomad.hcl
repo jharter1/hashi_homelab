@@ -37,12 +37,12 @@ EOT
       }
 
       # Fetch the Vault CA chain for trusting internal HTTPS services
-      # Using artifact instead of template since CA endpoints are public
-      artifact {
-        source      = "http://10.0.0.50:8200/v1/pki_int/ca/pem"
-        destination = "local/homelab-ca-chain.crt"
-        mode        = "file"
-      }
+      # TODO: Enable once PKI intermediate CA is generated
+      # artifact {
+      #   source      = "http://10.0.0.30:8200/v1/pki_int/ca/pem"
+      #   destination = "local/homelab-ca-chain.crt"
+      #   mode        = "file"
+      # }
 
       config {
         image        = "grafana/grafana:latest"

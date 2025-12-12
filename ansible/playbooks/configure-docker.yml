@@ -1,6 +1,7 @@
 ---
 - name: Configure Docker with registry mirror
   hosts: nomad_clients
+  become: yes
   gather_facts: yes
 
   tasks:

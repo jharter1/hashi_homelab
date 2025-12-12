@@ -1,6 +1,6 @@
 ---
 # Vault version to install
-vault_version: "1.18.3"
+vault_version: "1.21.1"
 
 # Vault configuration
 vault_data_dir: "/opt/vault/data"

@@ -100,8 +100,8 @@ path "secret/metadata/nomad/*" {
   capabilities = ["read", "list"]
 }
 
-# Allow reading from intermediate PKI for certificate issuance
-path "pki_int/issue/homelab-dot-local" {
+# Allow issuing certificates from the service role
+path "pki_int/issue/service" {
   capabilities = ["create", "update"]
 }
 
@@ -111,6 +111,10 @@ path "pki_int/ca_chain" {
 }
 
 path "pki_int/cert/ca" {
+  capabilities = ["read"]
+}
+
+path "pki_int/ca/pem" {
   capabilities = ["read"]
 }
 EOT
@@ -184,7 +188,7 @@ resource "vault_jwt_auth_backend_role" "nomad_workloads" {
 # Create token role for Nomad servers
 resource "vault_token_auth_backend_role" "nomad_cluster" {
   role_name              = "nomad-cluster"
-  allowed_policies       = ["nomad-server"]
+  allowed_policies       = ["nomad-server", "nomad-workloads"]
   orphan                 = true
   token_period           = "259200" # 72 hours
   renewable              = true
@@ -196,7 +200,7 @@ resource "vault_token" "nomad_server" {
   count = 3 # One for each Nomad server
   
   role_name = vault_token_auth_backend_role.nomad_cluster.role_name
-  policies  = ["nomad-server"]
+  policies  = ["nomad-server", "nomad-workloads"]
   ttl       = "72h"
   renewable = true
   period    = "72h"
