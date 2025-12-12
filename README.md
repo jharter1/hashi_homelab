@@ -10,6 +10,7 @@ This project provides everything needed to deploy a complete container orchestra
 
 - **Multi-node Nomad cluster** with automatic failover and scheduling
 - **Service discovery** via Consul with health checking
+- **Secrets management** with Vault HA cluster (optional, see Vault integration roadmap)
 - **Automatic service routing** with Traefik reverse proxy
 - **Metrics and monitoring** with Prometheus, Grafana, and Loki
 - **Log aggregation** with Grafana Alloy and Loki
@@ -290,6 +291,46 @@ After deployment, access the web interfaces:
 - **Traefik Dashboard**: `http://traefik.home`
 
 See the [example services](jobs/) directory for reference implementations.
+
+## Vault Integration (Optional)
+
+This project includes infrastructure for a dedicated 3-node Vault HA cluster for secrets management.
+
+### Quick Start
+
+```bash
+# Deploy complete Vault cluster
+task vault:deploy:full
+
+# Check cluster status
+task vault:status
+
+# Test Vault
+task vault:test
+```
+
+### What You Get
+
+- 3-node Vault HA cluster (10.0.0.30-32)
+- Raft integrated storage (no external dependencies)
+- Consul service discovery integration
+- Automated initialization and unsealing
+- Ready for Nomad workload identity integration
+
+### Documentation
+
+- **[Vault Deployment Guide](docs/VAULT_DEPLOYMENT.md)** - Complete deployment walkthrough
+- **[Vault Quick Reference](docs/VAULT_QUICK_REFERENCE.md)** - Common commands and tasks
+- **[Vault Integration Roadmap](ansible/TODO.md)** - Phase 2-4 implementation plan
+
+### Current Status
+
+- ✅ **Phase 1**: Hub cluster deployment (infrastructure ready)
+- 🔄 **Phase 2**: Nomad-Vault integration (in progress, see `ansible/TODO.md`)
+- 🔄 **Phase 3**: OIDC authentication (planned)
+- 🔄 **Phase 4**: Production hardening (planned)
+
+See `ansible/TODO.md` for detailed roadmap and implementation tasks.
 
 ## Directory Structure
 

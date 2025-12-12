@@ -1,0 +1,109 @@
+---
+- name: Initialize Vault Raft cluster properly
+  hosts: vault_servers
+  become: yes
+  serial: 1
+  vars:
+    vault_addr: "http://{{ ansible_host }}:8200"
+  
+  tasks:
+    - name: Start Vault service
+      systemd:
+        name: vault
+        state: started
+        enabled: yes
+    
+    - name: Wait for Vault API
+      wait_for:
+        port: 8200
+        delay: 3
+        timeout: 60
+
+    - name: Check if Vault is initialized
+      uri:
+        url: "{{ vault_addr }}/v1/sys/health"
+        method: GET
+        status_code: [200, 429, 472, 473, 501, 503]
+      register: vault_health
+      
+    - name: Initialize first node only
+      shell: vault operator init -key-shares=1 -key-threshold=1 -format=json
+      environment:
+        VAULT_ADDR: "{{ vault_addr }}"
+      register: vault_init
+      when: inventory_hostname == groups['vault_servers'][0]
+      
+    - name: Save init output to file
+      local_action:
+        module: copy
+        content: "{{ vault_init.stdout }}"
+        dest: "/tmp/vault-init-{{ inventory_hostname }}.json"
+      become: no
+      when: inventory_hostname == groups['vault_servers'][0] and vault_init.changed
+      
+    - name: Parse vault init output
+      set_fact:
+        vault_unseal_key: "{{ (vault_init.stdout | from_json).unseal_keys_b64[0] }}"
+        vault_root_token: "{{ (vault_init.stdout | from_json).root_token }}"
+      when: inventory_hostname == groups['vault_servers'][0] and vault_init.changed
+      
+    - name: Unseal first node
+      shell: vault operator unseal {{ vault_unseal_key }}
+      environment:
+        VAULT_ADDR: "{{ vault_addr }}"
+      when: inventory_hostname == groups['vault_servers'][0] and vault_init.changed
+      
+    - name: Wait for leader election
+      pause:
+        seconds: 5
+      when: inventory_hostname == groups['vault_servers'][0]
+      
+    - name: Join additional nodes to Raft cluster
+      shell: vault operator raft join http://{{ groups['vault_servers'][0] }}:8200
+      environment:
+        VAULT_ADDR: "{{ vault_addr }}"
+      when: inventory_hostname != groups['vault_servers'][0]
+      ignore_errors: yes
+      
+    - name: Load credentials for unsealing other nodes
+      set_fact:
+        vault_unseal_key: "{{ hostvars[groups['vault_servers'][0]]['vault_unseal_key'] }}"
+      when: inventory_hostname != groups['vault_servers'][0]
+      
+    - name: Unseal additional nodes
+      shell: vault operator unseal {{ vault_unseal_key }}
+      environment:
+        VAULT_ADDR: "{{ vault_addr }}"
+      when: inventory_hostname != groups['vault_servers'][0]
+
+- name: Save credentials to local file
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Create credentials file
+      copy:
+        dest: "{{ playbook_dir }}/../.vault-hub-credentials"
+        content: |
+          # Vault Hub Cluster Credentials
+          # Source this file with: source .vault-hub-credentials (bash/zsh)
+          # Or for fish shell, run the commands manually
+          
+          # Bash/zsh format
+          export VAULT_UNSEAL_KEY="{{ hostvars[groups['vault_servers'][0]]['vault_unseal_key'] }}"
+          export VAULT_ROOT_TOKEN="{{ hostvars[groups['vault_servers'][0]]['vault_root_token'] }}"
+          export VAULT_ADDR="http://{{ hostvars[groups['vault_servers'][0]]['ansible_host'] }}:8200"
+          
+          # Fish shell format (uncomment and run these instead)
+          # set -x VAULT_UNSEAL_KEY "{{ hostvars[groups['vault_servers'][0]]['vault_unseal_key'] }}"
+          # set -x VAULT_ROOT_TOKEN "{{ hostvars[groups['vault_servers'][0]]['vault_root_token'] }}"
+          # set -x VAULT_ADDR "http://{{ hostvars[groups['vault_servers'][0]]['ansible_host'] }}:8200"
+        mode: '0600'
+      when: hostvars[groups['vault_servers'][0]]['vault_root_token'] is defined
+      
+    - name: Display success message
+      debug:
+        msg:
+          - "✅ Vault Raft cluster initialized successfully!"
+          - "Credentials saved to: ansible/.vault-hub-credentials"
+          - "Leader node: {{ groups['vault_servers'][0] }} ({{ hostvars[groups['vault_servers'][0]]['ansible_host'] }})"
+      when: hostvars[groups['vault_servers'][0]]['vault_root_token'] is defined

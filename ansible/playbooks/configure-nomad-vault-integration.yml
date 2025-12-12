@@ -1,0 +1,89 @@
+---
+- name: Configure Nomad-Vault integration
+  hosts: nomad_servers
+  become: yes
+  vars_files:
+    - ../.nomad-vault-tokens.yml
+  
+  tasks:
+    - name: Set vault_token variable based on inventory hostname
+      set_fact:
+        vault_token: "{{ vault_tokens[inventory_hostname] }}"
+    
+    - name: Deploy updated Nomad server configuration with Vault integration
+      template:
+        src: ../roles/nomad-server/templates/nomad-server.hcl.j2
+        dest: /etc/nomad.d/nomad.hcl
+        owner: nomad
+        group: nomad
+        mode: '0640'
+      notify: restart nomad
+    
+    - name: Verify Nomad configuration
+      command: nomad config validate /etc/nomad.d/nomad.hcl
+      changed_when: false
+      register: nomad_config_check
+    
+    - name: Display config validation result
+      debug:
+        msg: "{{ nomad_config_check.stdout_lines }}"
+  
+  handlers:
+    - name: restart nomad
+      systemd:
+        name: nomad
+        state: restarted
+        daemon_reload: yes
+
+- name: Update Nomad client configuration for Vault
+  hosts: nomad_clients
+  become: yes
+  
+  tasks:
+    - name: Deploy updated Nomad client configuration with Vault integration
+      template:
+        src: ../roles/nomad-client/templates/nomad-client.hcl.j2
+        dest: /etc/nomad.d/nomad.hcl
+        owner: nomad
+        group: nomad
+        mode: '0640'
+      notify: restart nomad
+    
+    - name: Verify Nomad configuration
+      command: nomad config validate /etc/nomad.d/nomad.hcl
+      changed_when: false
+      register: nomad_config_check
+    
+    - name: Display config validation result
+      debug:
+        msg: "{{ nomad_config_check.stdout_lines }}"
+  
+  handlers:
+    - name: restart nomad
+      systemd:
+        name: nomad
+        state: restarted
+        daemon_reload: yes
+
+- name: Verify Nomad-Vault integration
+  hosts: nomad_servers[0]
+  become: yes
+  
+  tasks:
+    - name: Wait for Nomad to be ready after restart
+      wait_for:
+        port: 4646
+        delay: 5
+        timeout: 60
+    
+    - name: Check Vault integration status
+      shell: nomad operator api /v1/operator/vault/config | jq
+      environment:
+        NOMAD_ADDR: "http://127.0.0.1:4646"
+      register: vault_config_status
+      changed_when: false
+      ignore_errors: yes
+    
+    - name: Display Vault integration status
+      debug:
+        msg: "{{ vault_config_status.stdout_lines | default(['Unable to query Vault config']) }}"

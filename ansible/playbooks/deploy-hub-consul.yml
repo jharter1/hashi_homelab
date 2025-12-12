@@ -1,4 +1,10 @@
 ---
+- name: Install HashiCorp binaries on hub Vault nodes
+  hosts: vault_servers
+  become: yes
+  roles:
+    - hashicorp-binaries
+
 - name: Deploy Consul cluster on hub Vault nodes
   hosts: vault_servers
   become: yes
@@ -11,24 +17,10 @@
       - "10.0.0.31"
       - "10.0.0.32"
   
+  roles:
+    - consul
+  
   tasks:
-    - name: Create Consul log directory
-      file:
-        path: /var/log/consul
-        state: directory
-        owner: consul
-        group: consul
-        mode: '0755'
-
-    - name: Install Consul configuration
-      template:
-        src: ../roles/consul/templates/consul.hcl.j2
-        dest: /etc/consul.d/consul.hcl
-        owner: consul
-        group: consul
-        mode: '0640'
-      notify: restart consul
-
     - name: Enable and start Consul service
       systemd:
         name: consul
@@ -41,13 +33,6 @@
         port: 8500
         delay: 5
         timeout: 60
-
-  handlers:
-    - name: restart consul
-      systemd:
-        name: consul
-        state: restarted
-        daemon_reload: yes
 
 - name: Verify Consul cluster
   hosts: vault_servers[0]

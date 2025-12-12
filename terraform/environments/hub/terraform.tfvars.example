@@ -1,0 +1,27 @@
+# Proxmox Configuration
+proxmox_host     = "https://10.0.0.21:8006"
+proxmox_username = "root@pam"
+# Set PROXMOX_PASSWORD environment variable or use set-proxmox-password.fish
+
+# SSH Key for VMs
+ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBhQ8xPx0ycV0VqF8fJMjE5qV0Kx4W2w4c8z9Z8z9Z8z your-key-comment"
+
+# Vault Cluster Configuration
+vault_cluster_size = 3
+
+# ProxMox Node Distribution
+proxmox_nodes = ["pve1"] # Add more nodes if you have them: ["pve1", "pve2", "pve3"]
+
+# Template IDs per node (adjust based on your Packer builds)
+# These should be the debian-nomad-server template IDs on each node
+vault_template_ids = ["9500"] # Add more if multi-node: ["9500", "9502", "9504"]
+
+# Vault VM Settings
+vault_vm_config = {
+  cores        = 2
+  memory       = 2048
+  disk_size    = 10
+  vm_id_start  = 200  # Hub cluster uses 200-202
+  ip_start     = 30   # Hub cluster uses 10.0.0.30-32
+  storage_pool = "local-lvm"
+}

@@ -1,0 +1,6 @@
+---
+- name: Configure base system on hub Vault nodes
+  hosts: vault_servers
+  become: yes
+  roles:
+    - base-system

@@ -194,6 +194,116 @@ tasks:
         echo "   - Registry UI:    http://registry-ui.home"
         echo "   - Traefik:        http://traefik.home"
 
+  # ======================================
+  # Vault Hub Cluster Tasks
+  # ======================================
+  
+  vault:tf:init:
+    desc: "Initialize Terraform for Vault hub cluster"
+    cmds:
+      - |
+        cd terraform/environments/hub && terraform init
+
+  vault:tf:plan:
+    desc: "Plan Vault hub cluster infrastructure"
+    cmds:
+      - |
+        cd terraform/environments/hub && terraform plan
+
+  vault:tf:apply:
+    desc: "Deploy Vault hub cluster VMs (3 nodes at 10.0.0.30-32)"
+    cmds:
+      - |
+        cd terraform/environments/hub && terraform init && terraform apply -auto-approve
+
+  vault:tf:destroy:
+    desc: "Destroy Vault hub cluster infrastructure"
+    cmds:
+      - |
+        cd terraform/environments/hub && terraform destroy -auto-approve
+
+  vault:deploy:consul:
+    desc: "Deploy Consul on hub Vault cluster for service discovery"
+    cmds:
+      - |
+        cd ansible && ansible-playbook -i inventory/hub.yml playbooks/deploy-hub-consul.yml
+
+  vault:deploy:vault:
+    desc: "Deploy Vault HA cluster on hub nodes"
+    cmds:
+      - |
+        cd ansible && ansible-playbook -i inventory/hub.yml playbooks/deploy-hub-vault.yml
+
+  vault:unseal:
+    desc: "Unseal Vault cluster nodes (requires credentials)"
+    cmds:
+      - |
+        echo "⚠️  Make sure you have sourced credentials first:"
+        echo "   source ansible/.vault-hub-credentials"
+        echo ""
+        cd ansible && ansible-playbook -i inventory/hub.yml playbooks/unseal-vault.yml
+
+  vault:deploy:full:
+    desc: "🔐 Complete Vault hub cluster deployment"
+    cmds:
+      - |
+        echo "==== Step 1/4: Deploying Vault cluster VMs ===="
+      - task: vault:tf:apply
+      - |
+        echo ""
+        echo "==== Step 2/4: Waiting for VMs to boot (60s) ===="
+        sleep 60
+      - |
+        echo ""
+        echo "==== Step 3/4: Deploying Consul for service discovery ===="
+      - task: vault:deploy:consul
+      - |
+        echo ""
+        echo "==== Step 4/4: Deploying Vault HA cluster ===="
+      - task: vault:deploy:vault
+      - |
+        echo ""
+        echo "✅ Vault hub cluster deployed!"
+        echo ""
+        echo "📋 Next steps:"
+        echo "   1. Save credentials from ansible/.vault-hub-credentials"
+        echo "   2. Source credentials: source ansible/.vault-hub-credentials"
+        echo "   3. Check status: vault status"
+        echo "   4. Access UI: http://10.0.0.30:8200"
+        echo ""
+        echo "⚠️  IMPORTANT: Back up your unseal keys and root token!"
+
+  vault:status:
+    desc: "Check Vault cluster status (all nodes)"
+    cmds:
+      - |
+        for i in 30 31 32; do
+          echo "=== Vault Node 10.0.0.$i ==="
+          VAULT_ADDR=http://10.0.0.$i:8200 vault status || echo "  ❌ Not accessible"
+          echo ""
+        done
+
+  vault:test:
+    desc: "Test Vault cluster - write and read a secret"
+    cmds:
+      - |
+        echo "Testing Vault cluster functionality..."
+        export VAULT_ADDR=http://10.0.0.30:8200
+        echo ""
+        echo "1. Enabling KV secrets engine..."
+        vault secrets enable -path=test kv-v2 || echo "  Already enabled"
+        echo ""
+        echo "2. Writing test secret..."
+        vault kv put test/hello foo=world created_by=taskfile
+        echo ""
+        echo "3. Reading test secret..."
+        vault kv get test/hello
+        echo ""
+        echo "4. Deleting test secret..."
+        vault kv delete test/hello
+        echo ""
+        echo "✅ Vault cluster test complete!"
+
   deploy:
     desc: "Deploy all Nomad jobs in correct order"
     cmds:
