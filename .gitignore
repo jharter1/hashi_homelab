@@ -109,5 +109,7 @@ ansible/.vault-hub-credentials
 ansible/.vault-*-credentials
 ansible/.nomad-vault-tokens
 ansible/.nomad-vault-tokens.yml
+ansible/*.snap
+ansible/vault-snapshot-*.snap
 packer/downloaded_iso_path/
 manifest.json

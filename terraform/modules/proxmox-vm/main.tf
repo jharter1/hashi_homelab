@@ -97,6 +97,8 @@ resource "proxmox_virtual_environment_vm" "vm" {
   lifecycle {
     ignore_changes = [
       network_device,
+      initialization[0].datastore_id, # Ignore cloud-init storage changes (per-node differences)
+      network_device[0].mac_address,  # MAC addresses assigned by Proxmox
     ]
   }
 }

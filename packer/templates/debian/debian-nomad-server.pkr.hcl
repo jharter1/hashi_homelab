@@ -56,13 +56,16 @@ source "proxmox-clone" "debian-nomad-server" {
   clone_vm_id = 9400
   
   # VM Template Settings
-  vm_id                = 9402
-  vm_name              = "debian-nomad-server"
+  vm_id                = 9500
+  vm_name              = "debian12-nomad-server"
   template_description = "Debian 12 - Nomad Server with Consul"
 
   os = "l26"
 
   onboot = false
+
+  # Timeouts
+  task_timeout = "5m"
 
   # Hardware
   memory   = 8192

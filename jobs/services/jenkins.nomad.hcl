@@ -22,6 +22,8 @@ job "jenkins" {
 
     task "jenkins" {
       driver = "docker"
+      
+      user = "root"
 
       config {
         image = "jenkins/jenkins:lts"

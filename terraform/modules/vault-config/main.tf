@@ -1,12 +1,3 @@
-terraform {
-  required_providers {
-    vault = {
-      source  = "hashicorp/vault"
-      version = "~> 4.0"
-    }
-  }
-}
-
 # Enable JWT auth backend for Nomad workload identity
 resource "vault_jwt_auth_backend" "nomad" {
   description        = "JWT auth backend for Nomad workload identity"

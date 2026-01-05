@@ -18,12 +18,12 @@ client {
   }
   
   host_volume "grafana_data" {
-    path = "{{ nas_mount_point }}/grafana"
+    path = "/opt/nomad-volumes/grafana_data"
     read_only = false
   }
   
   host_volume "loki_data" {
-    path = "{{ nas_mount_point }}/loki"
+    path = "/opt/nomad-volumes/loki_data"
     read_only = false
   }
   
@@ -33,7 +33,7 @@ client {
   }
   
   host_volume "prometheus_data" {
-    path = "{{ nas_mount_point }}/prometheus"
+    path = "/opt/nomad-volumes/prometheus_data"
     read_only = false
   }
   

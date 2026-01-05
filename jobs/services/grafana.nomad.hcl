@@ -60,6 +60,12 @@ EOT
         GF_SERVER_HTTP_PORT = "3000"
         # Disable anonymous access now that we have secure admin credentials
         GF_AUTH_ANONYMOUS_ENABLED = "false"
+        # Configure Grafana to work behind a reverse proxy
+        GF_SERVER_ROOT_URL = "http://grafana.home"
+        GF_SERVER_SERVE_FROM_SUB_PATH = "false"
+        GF_SERVER_ENFORCE_DOMAIN = "false"
+        GF_SERVER_PROTOCOL = "http"
+        GF_SERVER_ENABLE_GZIP = "true"
       }
 
       service {
@@ -68,8 +74,7 @@ EOT
         tags = [
           "traefik.enable=true",
           "traefik.http.routers.grafana.rule=Host(`grafana.home`)",
-          "traefik.http.routers.grafana.entrypoints=websecure",
-          "traefik.http.routers.grafana.tls=true",
+          "traefik.http.routers.grafana.entrypoints=web",
         ]
         check {
           type     = "http"

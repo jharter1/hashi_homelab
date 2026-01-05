@@ -56,13 +56,16 @@ source "proxmox-clone" "debian-nomad-client" {
   clone_vm_id = 9400
   
   # VM Template Settings
-  vm_id                = 9401
-  vm_name              = "debian-nomad-client"
+  vm_id                = 9501
+  vm_name              = "debian12-nomad-client"
   template_description = "Debian 12 - Nomad Client with Docker"
 
   os = "l26"
 
   onboot = false
+
+  # Timeouts
+  task_timeout = "5m"
 
   # Hardware - Clients need more resources for running workloads
   memory   = 8192

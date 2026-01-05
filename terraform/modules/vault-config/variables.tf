@@ -44,3 +44,15 @@ variable "nomad_token_policies" {
   type        = list(string)
   default     = ["nomad-workloads", "access-secrets"]
 }
+
+variable "nomad_oidc_discovery_url" {
+  description = "OIDC discovery URL for Nomad workload identity"
+  type        = string
+  default     = "https://nomad.service.consul:4646/.well-known/openid-configuration"
+}
+
+variable "nomad_jwt_issuer" {
+  description = "JWT issuer for Nomad workload identity"
+  type        = string
+  default     = "https://nomad.service.consul:4646"
+}

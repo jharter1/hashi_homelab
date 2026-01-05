@@ -1,0 +1,4 @@
+---
+- hosts: nomad_clients
+  roles:
+    - nomad-client

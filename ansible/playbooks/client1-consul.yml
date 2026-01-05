@@ -1,0 +1,6 @@
+---
+- hosts: nomad-client-1
+  roles:
+    - hashicorp-binaries
+    - node-exporter
+    - consul
