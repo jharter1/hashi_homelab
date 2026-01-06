@@ -49,10 +49,6 @@ job "codeserver" {
     task "codeserver" {
       driver = "docker"
 
-      vault {
-        policies = ["access-secrets"]
-      }
-
       # Mount all the config volumes
       volume_mount {
         volume      = "homepage_data"
@@ -72,21 +68,12 @@ job "codeserver" {
         read_only   = false
       }
 
-      template {
-        data        = <<EOT
-{{ with secret "secret/data/nomad/codeserver" }}
-PASSWORD="{{ .Data.data.password }}"
-{{ end }}
-EOT
-        destination = "secrets/file.env"
-        env         = true
-      }
-
       config {
         image = "codercom/code-server:latest"
         ports = ["http"]
         args = [
           "--bind-addr", "0.0.0.0:8080",
+          "--auth", "none",
           "/workspace"
         ]
       }
@@ -106,9 +93,8 @@ EOT
 
         tags = [
           "traefik.enable=true",
-          "traefik.http.routers.codeserver.rule=Host(`code.home`)",
-          "traefik.http.routers.codeserver.entrypoints=websecure",
-          "traefik.http.routers.codeserver.tls=true",
+          "traefik.http.routers.codeserver.rule=Host(`code.home`) || Host(`codeserver.home`)",
+          "traefik.http.routers.codeserver.entrypoints=web",
         ]
 
         check {

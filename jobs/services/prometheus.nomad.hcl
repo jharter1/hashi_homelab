@@ -133,8 +133,7 @@ EOH
           "prometheus",
           "traefik.enable=true",
           "traefik.http.routers.prometheus.rule=Host(`prometheus.home`)",
-          "traefik.http.routers.prometheus.entrypoints=websecure",
-          "traefik.http.routers.prometheus.tls=true",
+          "traefik.http.routers.prometheus.entrypoints=web",
         ]
       }
     }

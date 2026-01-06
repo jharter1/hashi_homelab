@@ -24,21 +24,10 @@ job "minio" {
     task "minio" {
       driver = "docker"
 
-      vault {
-        cluster  = "default"
-        policies = ["access-secrets"]
-      }
-
-      template {
-        data        = <<EOT
-{{ with secret "secret/data/nomad/minio" }}
-MINIO_ROOT_USER="{{ .Data.data.root_user }}"
-MINIO_ROOT_PASSWORD="{{ .Data.data.root_password }}"
-{{ end }}
-MINIO_BROWSER_REDIRECT_URL="http://minio.home:9001"
-EOT
-        destination = "secrets/minio.env"
-        env         = true
+      env {
+        MINIO_ROOT_USER = "minioadmin"
+        MINIO_ROOT_PASSWORD = "minioadmin"
+        MINIO_BROWSER_REDIRECT_URL = "http://minio.home:9001"
       }
 
       config {

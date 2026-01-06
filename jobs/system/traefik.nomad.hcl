@@ -23,8 +23,7 @@ job "traefik" {
         "traefik.enable=true",
         "traefik.http.routers.dashboard.rule=Host(`traefik.home`)",
         "traefik.http.routers.dashboard.service=api@internal",
-        "traefik.http.routers.dashboard.entrypoints=websecure",
-        "traefik.http.routers.dashboard.tls=true",
+        "traefik.http.routers.dashboard.entrypoints=web",
       ]
 
       check {

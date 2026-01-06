@@ -21,21 +21,6 @@ job "grafana" {
     task "grafana" {
       driver = "docker"
 
-      vault {
-        cluster  = "default"
-        policies = ["access-secrets"]
-      }
-
-      template {
-        data        = <<EOT
-{{ with secret "secret/data/nomad/grafana" }}
-GF_SECURITY_ADMIN_PASSWORD="{{ .Data.data.admin_password }}"
-{{ end }}
-EOT
-        destination = "secrets/grafana.env"
-        env         = true
-      }
-
       # Fetch the Vault CA chain for trusting internal HTTPS services
       # TODO: Enable once PKI intermediate CA is generated
       # artifact {
@@ -57,6 +42,7 @@ EOT
       }
 
       env {
+        GF_SECURITY_ADMIN_PASSWORD = "admin"
         GF_SERVER_HTTP_PORT = "3000"
         # Disable anonymous access now that we have secure admin credentials
         GF_AUTH_ANONYMOUS_ENABLED = "false"
