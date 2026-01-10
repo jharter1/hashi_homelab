@@ -10,6 +10,12 @@ job "uptime-kuma" {
       }
     }
 
+    volume "uptime_kuma_data" {
+      type      = "host"
+      read_only = false
+      source    = "uptime_kuma_data"
+    }
+
     service {
       name = "uptime-kuma"
       port = "http"
@@ -32,12 +38,21 @@ job "uptime-kuma" {
     task "uptime-kuma" {
       driver = "docker"
       
+      volume_mount {
+        volume      = "uptime_kuma_data"
+        destination = "/app/data"
+        read_only   = false
+      }
+      
+      env {
+        UPTIME_KUMA_DISABLE_FRAME_SAMEORIGIN = "true"
+        DATA_DIR = "/app/data"
+        UPTIME_KUMA_DB_TYPE = "sqlite"
+      }
+      
       config {
         image = "louislam/uptime-kuma:2.0.2"
         ports = ["http"]
-        volumes = [
-          "local/uptime-kuma/data:/app/data"
-        ]
       }
 
       restart {

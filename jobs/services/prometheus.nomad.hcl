@@ -30,6 +30,7 @@ job "prometheus" {
           "--config.file=/etc/prometheus/prometheus.yml",
           "--storage.tsdb.path=/prometheus",
           "--storage.tsdb.retention.time=30d",
+          "--storage.tsdb.no-lockfile",
           "--web.enable-lifecycle",
           "--web.listen-address=:9090",
         ]
@@ -37,6 +38,11 @@ job "prometheus" {
         volumes = [
           "local/prometheus.yml:/etc/prometheus/prometheus.yml",
         ]
+      }
+
+      env {
+        # Dummy env var - queries.active path cannot be overridden
+        # Directory permissions set to 777 to allow query log creation
       }
 
       volume_mount {

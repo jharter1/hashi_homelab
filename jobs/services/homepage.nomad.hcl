@@ -90,10 +90,22 @@ EOH
         widget:
           type: prometheus
           url: http://prometheus.home
+    - Alertmanager:
+        icon: prometheus.png
+        href: http://alertmanager.home
+        description: Alert Routing
     - Loki:
         icon: loki.png
         href: http://loki.home
         description: Log Aggregation
+    - Netdata:
+        icon: netdata.png
+        href: http://netdata.home
+        description: Real-time Performance
+    - Dozzle:
+        icon: dozzle.png
+        href: http://dozzle.home
+        description: Docker Log Viewer
 
 - Services:
     - Docker Registry:
@@ -104,6 +116,10 @@ EOH
         icon: jenkins.png
         href: http://jenkins.home
         description: CI/CD
+    - Gitea:
+        icon: gitea.png
+        href: http://gitea.home
+        description: Self-hosted Git
     - Calibre Web:
         icon: calibre-web.png
         href: http://calibre.home
@@ -123,6 +139,23 @@ EOH
         icon: code.png
         href: http://codeserver.home
         description: VS Code in Browser
+    - Nextcloud:
+        icon: nextcloud.png
+        href: http://nextcloud.home
+        description: File Sync & Share
+    - Bookstack:
+        icon: bookstack.png
+        href: http://bookstack.home
+        description: Documentation Wiki
+- Security:
+    - Vaultwarden:
+        icon: vaultwarden.png
+        href: http://vaultwarden.home
+        description: Password Manager
+    - Authelia:
+        icon: authelia.png
+        href: http://authelia.home
+        description: SSO & Authentication
 EOH
       }
 

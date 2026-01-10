@@ -92,8 +92,7 @@ EOH
         tags = [
           "traefik.enable=true",
           "traefik.http.routers.loki.rule=Host(`loki.home`)",
-          "traefik.http.routers.loki.entrypoints=websecure",
-          "traefik.http.routers.loki.tls=true",
+          "traefik.http.routers.loki.entrypoints=web",
         ]
         check {
           type     = "http"

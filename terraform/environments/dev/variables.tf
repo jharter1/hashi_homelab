@@ -129,13 +129,13 @@ variable "nomad_server_cores" {
 variable "nomad_server_memory" {
   description = "Memory per server (MB)"
   type        = number
-  default     = 2048
+  default     = 4096
 }
 
 variable "nomad_server_disk_size" {
   description = "Disk size per server (must be larger than template)"
   type        = string
-  default     = "20G"
+  default     = "50G"
 }
 
 variable "nomad_server_ip_start" {
@@ -160,13 +160,13 @@ variable "nomad_client_cores" {
 variable "nomad_client_memory" {
   description = "Memory per client (MB)"
   type        = number
-  default     = 4096
+  default     = 8192
 }
 
 variable "nomad_client_disk_size" {
   description = "Disk size per client (must be larger than template)"
   type        = string
-  default     = "20G"
+  default     = "50G"
 }
 
 variable "nomad_client_ip_start" {

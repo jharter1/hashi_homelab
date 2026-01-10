@@ -1,0 +1,130 @@
+---
+- name: Migrate Nomad client volumes to NAS storage
+  hosts: nomad_clients
+  become: yes
+  
+  vars:
+    nas_mount: /mnt/nas
+    old_volume_path: /opt/nomad-volumes
+    services_to_migrate:
+      - name: grafana
+        old_dir: grafana_data
+        new_dir: grafana
+      - name: prometheus
+        old_dir: prometheus_data
+        new_dir: prometheus
+      - name: loki
+        old_dir: loki_data
+        new_dir: loki
+      - name: uptime-kuma
+        old_dir: null  # No old data to migrate
+        new_dir: uptime-kuma
+  
+  tasks:
+    - name: Ensure NAS is mounted
+      command: mountpoint -q {{ nas_mount }}
+      register: nas_mounted
+      failed_when: false
+      changed_when: false
+    
+    - name: Fail if NAS is not mounted
+      fail:
+        msg: "NAS is not mounted at {{ nas_mount }}. Please mount it before running this playbook."
+      when: nas_mounted.rc != 0
+    
+    - name: Check if NAS directories exist
+      stat:
+        path: "{{ nas_mount }}/{{ item.new_dir }}"
+      register: nas_dirs
+      loop: "{{ services_to_migrate }}"
+    
+    - name: Create missing NAS directories (uptime-kuma only)
+      file:
+        path: "{{ nas_mount }}/{{ item.item.new_dir }}"
+        state: directory
+        mode: '0755'
+      loop: "{{ nas_dirs.results }}"
+      when: 
+        - not item.stat.exists
+        - item.item.new_dir == 'uptime-kuma'
+      delegate_to: localhost
+      become: no
+    
+    - name: Note existing directories will keep their permissions
+      debug:
+        msg: "Directory {{ nas_mount }}/{{ item.item.new_dir }} already exists with UID {{ item.stat.uid | default('unknown') }}, keeping existing permissions"
+      loop: "{{ nas_dirs.results }}"
+      when: item.stat.exists
+    
+    - name: Check if old volume directories exist
+      stat:
+        path: "{{ old_volume_path }}/{{ item.old_dir }}"
+      register: old_dirs
+      loop: "{{ services_to_migrate }}"
+      when: item.old_dir is not none
+    
+    - name: Stop Nomad client to prevent data corruption during migration
+      systemd:
+        name: nomad
+        state: stopped
+    
+    - name: Migrate existing data from old volumes to NAS (skip if already symlinked)
+      shell: |
+        if [ ! -L "{{ old_volume_path }}/{{ item.item.old_dir }}" ] && [ -d "{{ old_volume_path }}/{{ item.item.old_dir }}" ]; then
+          cp -a "{{ old_volume_path }}/{{ item.item.old_dir }}/." "{{ nas_mount }}/{{ item.item.new_dir }}/"
+          echo "Migrated {{ item.item.old_dir }}"
+        else
+          echo "Skipped {{ item.item.old_dir }} (already symlinked or doesn't exist)"
+        fi
+      loop: "{{ old_dirs.results }}"
+      when: 
+        - item.item.old_dir is not none
+      register: migration_results
+    
+    - name: Deploy updated Nomad client configuration
+      template:
+        src: ../roles/nomad-client/templates/nomad-client.hcl.j2
+        dest: /etc/nomad.d/nomad.hcl
+        owner: root
+        group: root
+        mode: '0644'
+      notify: restart nomad
+    
+    - name: Start Nomad client with new configuration
+      systemd:
+        name: nomad
+        state: started
+        enabled: yes
+    
+    - name: Wait for Nomad client to be ready
+      command: nomad node status
+      register: nomad_status
+      until: nomad_status.rc == 0
+      retries: 10
+      delay: 5
+      changed_when: false
+    
+    - name: Display migration summary
+      debug:
+        msg: |
+          Migration complete for {{ inventory_hostname }}
+          
+          Migrated data from {{ old_volume_path }} to {{ nas_mount }}:
+          {% for item in services_to_migrate %}
+          {% if item.old_dir %}
+          - {{ item.name }}: {{ item.old_dir }} -> {{ item.new_dir }}
+          {% else %}
+          - {{ item.name }}: New directory created at {{ item.new_dir }}
+          {% endif %}
+          {% endfor %}
+          
+          NEXT STEPS:
+          1. Redeploy affected services: grafana, prometheus, loki, uptime-kuma
+          2. Verify services start successfully and data is intact
+          3. Optional: Remove old volume directories from {{ old_volume_path }}
+  
+  handlers:
+    - name: restart nomad
+      systemd:
+        name: nomad
+        state: restarted

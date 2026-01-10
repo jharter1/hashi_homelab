@@ -18,12 +18,12 @@ client {
   }
   
   host_volume "grafana_data" {
-    path = "/opt/nomad-volumes/grafana_data"
+    path = "{{ nas_mount_point }}/grafana"
     read_only = false
   }
   
   host_volume "loki_data" {
-    path = "/opt/nomad-volumes/loki_data"
+    path = "{{ nas_mount_point }}/loki"
     read_only = false
   }
   
@@ -33,7 +33,12 @@ client {
   }
   
   host_volume "prometheus_data" {
-    path = "/opt/nomad-volumes/prometheus_data"
+    path = "{{ nas_mount_point }}/prometheus"
+    read_only = false
+  }
+  
+  host_volume "uptime_kuma_data" {
+    path = "{{ nas_mount_point }}/uptime-kuma"
     read_only = false
   }
   
@@ -59,6 +64,21 @@ client {
 
   host_volume "calibre_data" {
     path = "{{ nas_mount_point }}/calibre"
+    read_only = false
+  }
+
+  host_volume "nextcloud_data" {
+    path = "{{ nas_mount_point }}/nextcloud/data"
+    read_only = false
+  }
+
+  host_volume "nextcloud_config" {
+    path = "{{ nas_mount_point }}/nextcloud/config"
+    read_only = false
+  }
+
+  host_volume "alertmanager_data" {
+    path = "{{ nas_mount_point }}/alertmanager"
     read_only = false
   }
 }

@@ -56,6 +56,29 @@
     mode: '0644'
   notify: restart nomad
 
+- name: Configure Docker daemon for automatic cleanup
+  copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "10m",
+          "max-file": "3"
+        },
+        "storage-driver": "overlay2"
+      }
+    mode: '0644'
+  notify: restart docker
+
+- name: Configure systemd journal size limits
+  lineinfile:
+    path: /etc/systemd/journald.conf
+    regexp: '^#?SystemMaxUse='
+    line: 'SystemMaxUse=500M'
+    state: present
+  notify: restart journald
+
 - name: Enable and start Docker service
   systemd:
     name: docker
