@@ -81,6 +81,25 @@ client {
     path = "{{ nas_mount_point }}/alertmanager"
     read_only = false
   }
+  host_volume "bookstack_data" {
+    path = "{{ nas_mount_point }}/bookstack/data"
+    read_only = false
+  }
+
+  host_volume "bookstack_config" {
+    path = "{{ nas_mount_point }}/bookstack/config"
+    read_only = false
+  }
+
+  host_volume "bookstack_db_data" {
+    path = "{{ nas_mount_point }}/bookstack/db"
+    read_only = false
+  }
+
+  host_volume "gollum_data" {
+    path = "{{ nas_mount_point }}/gollum"
+    read_only = false
+  }
 }
 
 bind_addr = "0.0.0.0"

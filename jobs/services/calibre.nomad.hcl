@@ -10,6 +10,12 @@ job "calibre" {
       }
     }
 
+    volume "calibre_data" {
+      type      = "host"
+      read_only = false
+      source    = "calibre_data"
+    }
+
     service {
       name = "calibre-web"
       port = "http"
@@ -25,7 +31,7 @@ job "calibre" {
         type     = "http"
         path     = "/"
         interval = "10s"
-        timeout  = "2s"
+        timeout  = "10s"
       }
     }
 
@@ -35,11 +41,24 @@ job "calibre" {
         image = "linuxserver/calibre-web:latest"
         ports = ["http"]
         volumes = [
-          "local/calibre/config:/config",
-          "local/calibre/books:/books"
+          "local/calibre-config:/config"
         ]
       }
-    restart {
+
+      volume_mount {
+        volume      = "calibre_data"
+        destination = "/books"
+        read_only   = false
+      }
+
+      env {
+        PUID = "1000"
+        PGID = "1000"
+        TZ   = "America/Chicago"
+        DOCKER_MODS = "linuxserver/mods:universal-calibre"
+      }
+
+      restart {
       attempts = 3
       interval = "5m"
       delay    = "25s"
