@@ -83,13 +83,6 @@ EOH
         icon: grafana.png
         href: http://grafana.home
         description: Metrics Visualization
-    - Prometheus:
-        icon: prometheus.png
-        href: http://prometheus.home
-        description: Metrics Collection
-        widget:
-          type: prometheus
-          url: http://prometheus.home
     - Alertmanager:
         icon: prometheus.png
         href: http://alertmanager.home
@@ -106,6 +99,13 @@ EOH
         icon: dozzle.png
         href: http://dozzle.home
         description: Docker Log Viewer
+    - Prometheus:
+        icon: prometheus.png
+        href: http://prometheus.home
+        description: Metrics Collection
+        widget:
+          type: prometheus
+          url: http://prometheus.home
 
 - Services:
     - Docker Registry:
@@ -120,6 +120,14 @@ EOH
         icon: gitea.png
         href: http://gitea.home
         description: Self-hosted Git
+    - Code Server:
+        icon: code.png
+        href: http://codeserver.home
+        description: VS Code in Browser
+    - Nextcloud:
+        icon: nextcloud.png
+        href: http://nextcloud.home
+        description: File Sync & Share
     - Calibre Web:
         icon: calibre-web.png
         href: http://calibre.home
@@ -135,18 +143,7 @@ EOH
           type: uptimekuma
           url: http://uptime-kuma.home
           slug: default
-    - Code Server:
-        icon: code.png
-        href: http://codeserver.home
-        description: VS Code in Browser
-    - Nextcloud:
-        icon: nextcloud.png
-        href: http://nextcloud.home
-        description: File Sync & Share
-    - Bookstack:
-        icon: bookstack.png
-        href: http://bookstack.home
-        description: Documentation Wiki
+
 - Security:
     - Vaultwarden:
         icon: vaultwarden.png
