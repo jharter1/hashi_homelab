@@ -100,6 +100,26 @@ client {
     path = "{{ nas_mount_point }}/gollum"
     read_only = false
   }
+
+  host_volume "audiobookshelf_config" {
+    path = "{{ nas_mount_point }}/audiobookshelf/config"
+    read_only = false
+  }
+
+  host_volume "audiobookshelf_metadata" {
+    path = "{{ nas_mount_point }}/audiobookshelf/metadata"
+    read_only = false
+  }
+
+  host_volume "audiobookshelf_audiobooks" {
+    path = "{{ nas_mount_point }}/audiobookshelf/audiobooks"
+    read_only = false
+  }
+
+  host_volume "audiobookshelf_podcasts" {
+    path = "{{ nas_mount_point }}/audiobookshelf/podcasts"
+    read_only = false
+  }
 }
 
 bind_addr = "0.0.0.0"
