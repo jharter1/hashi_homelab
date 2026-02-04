@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "nomad": {
+      "command": "node",
+      "args": [
+        "/Users/jackharter/Developer/hashi_homelab/mcp-servers/nomad/dist/index.js"
+      ],
+      "env": {
+        "NOMAD_ADDR": "http://10.0.0.50:4646"
+      }
+    }
+  }
+}

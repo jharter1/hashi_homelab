@@ -24,6 +24,9 @@ job "gitea" {
     task "gitea" {
       driver = "docker"
 
+      # Enable Vault workload identity for secrets access
+      vault {}
+
       config {
         image        = "gitea/gitea:latest"
         network_mode = "host"
@@ -35,11 +38,30 @@ job "gitea" {
         destination = "/data"
       }
 
+      # Vault template for database password and PostgreSQL host from Consul
+      template {
+        destination = "secrets/db.env"
+        env         = true
+        data        = <<EOH
+GITEA__database__PASSWD={{ with secret "secret/data/postgres/gitea" }}{{ .Data.data.password }}{{ end }}
+{{ range service "postgresql" }}
+GITEA__database__HOST={{ .Address }}:{{ .Port }}
+{{ end }}
+EOH
+      }
+
       env {
         USER_UID = "1000"
         USER_GID = "1000"
-        GITEA__database__DB_TYPE = "sqlite3"
-        GITEA__database__PATH = "/data/gitea/gitea.db"
+        
+        # PostgreSQL database configuration
+        # GITEA__database__HOST and PASSWD come from template above
+        GITEA__database__DB_TYPE = "postgres"
+        GITEA__database__NAME = "gitea"
+        GITEA__database__USER = "gitea"
+        GITEA__database__SSL_MODE = "disable"
+        
+        # Server configuration
         GITEA__server__DOMAIN = "gitea.home"
         GITEA__server__SSH_DOMAIN = "gitea.home"
         GITEA__server__SSH_PORT = "2222"

@@ -5,3 +5,6 @@ consul_bootstrap_expect: 3
 
 # Nomad server configuration
 nomad_bootstrap_expect: 3
+
+# Vault integration via JWT/Workload Identity
+# No token needed - using jwt-nomad auth backend

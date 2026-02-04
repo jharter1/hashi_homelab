@@ -22,8 +22,9 @@ job "homepage" {
     update {
       max_parallel     = 1
       health_check     = "checks"
-      min_healthy_time = "10s"
-      healthy_deadline = "5m"
+      min_healthy_time = "5s"
+      healthy_deadline = "30s"
+      progress_deadline = "1m"
       auto_revert      = true
     }
 
@@ -202,9 +203,9 @@ EOH
         ping: http://10.0.0.61:9001
     - NFS Storage:
         icon: mdi-F08F3.png
-        href: nfs://10.0.0.194/mnt/storage
-        description: Network File System (10.0.0.194)
-        ping: 10.0.0.194
+        href: nfs://10.0.0.220/mnt/storage
+        description: Network File System (10.0.0.220)
+        ping: 10.0.0.220
 
 - Security:
     - Vaultwarden:
@@ -240,7 +241,7 @@ EOH
     longitude: -87.6298
     units: imperial
     provider: openweathermap
-    apiKey: $${OPENWEATHER_API_KEY:-demo}
+    apiKey: 8cff25cca0e4cf3dcf9aca5b8ca3f378
     cache: 5
 
 # Search functionality
@@ -269,11 +270,11 @@ EOH
         destination = "local/config/docker.yaml"
         data = <<EOH
 ---
-# Docker integration to show container stats
-# Requires Docker socket or API access
-my-docker:
-  host: 10.0.0.60
-  port: 2375
+# Docker integration disabled - not available in rootless setup
+# Uncomment below if Docker TCP API is enabled on port 2375
+# my-docker:
+#   host: 10.0.0.60
+#   port: 2375
 EOH
       }
 
@@ -418,9 +419,7 @@ EOH
       config {
         image    = "gethomepage/homepage:latest"
         network_mode = "host"
-                # Use Pi-hole for DNS resolution
-        dns_servers = ["10.0.0.10", "1.1.1.1"]
-                # Mount local config files into container
+        # Mount local config files into container
         volumes = [
           "local/config:/app/config"
         ]
@@ -444,7 +443,7 @@ EOH
         check {
           type     = "http"
           path     = "/"
-          interval = "10s"
+          interval = "5s"
           timeout  = "2s"
         }
       }

@@ -304,6 +304,28 @@ tasks:
         echo ""
         echo "✅ Vault cluster test complete!"
 
+  # ======================================
+  # MCP Server Tasks
+  # ======================================
+  
+  mcp:build:nomad:
+    desc: "Build Nomad MCP server"
+    cmds:
+      - |
+        cd mcp-servers/nomad && npm install && npm run build
+
+  mcp:dev:nomad:
+    desc: "Run Nomad MCP server in dev mode"
+    cmds:
+      - |
+        cd mcp-servers/nomad && npm run dev
+
+  mcp:test:nomad:
+    desc: "Test Nomad MCP server with inspector"
+    cmds:
+      - |
+        cd mcp-servers/nomad && npx @modelcontextprotocol/inspector node dist/index.js
+
   deploy:
     desc: "Deploy all Nomad jobs in correct order"
     cmds:

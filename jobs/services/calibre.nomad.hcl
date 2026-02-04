@@ -16,6 +16,12 @@ job "calibre" {
       source    = "calibre_data"
     }
 
+    volume "calibre_config" {
+      type      = "host"
+      read_only = false
+      source    = "calibre_config"
+    }
+
     service {
       name = "calibre-web"
       port = "http"
@@ -40,9 +46,12 @@ job "calibre" {
       config {
         image = "linuxserver/calibre-web:latest"
         ports = ["http"]
-        volumes = [
-          "local/calibre-config:/config"
-        ]
+      }
+
+      volume_mount {
+        volume      = "calibre_config"
+        destination = "/config"
+        read_only   = false
       }
 
       volume_mount {

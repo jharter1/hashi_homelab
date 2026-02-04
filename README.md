@@ -32,6 +32,7 @@ This project provides everything needed to deploy a complete container orchestra
 - 💾 **High Availability Storage** - NFS-backed volumes accessible from all nodes
 - 📊 **Full Observability** - Metrics (Prometheus), logs (Loki), and dashboards (Grafana)
 - 🐋 **Local Registry** - Docker Registry 2 with pull-through cache for faster image pulls
+- 🤖 **AI Integration** - MCP server for managing Nomad clusters through AI assistants
 
 ## Architecture
 
@@ -287,6 +288,52 @@ After deployment, access the web interfaces:
 - **Consul UI**: `http://10.0.0.50:8500`
 - **Grafana**: `http://grafana.home` (add to /etc/hosts or use Traefik IP)
 - **Prometheus**: `http://prometheus.home`
+- **Docker Registry UI**: `http://registry-ui.home`
+- **Traefik Dashboard**: `http://traefik.home`
+
+See the [example services](jobs/) directory for reference implementations.
+
+## AI Integration (MCP Server)
+
+Interact with your Nomad cluster through AI assistants using the Model Context Protocol (MCP) server.
+
+### Quick Setup
+
+```bash
+# Build the MCP server
+task mcp:build:nomad
+
+# Test connectivity
+cd mcp-servers/nomad && node test-connection.mjs
+```
+
+### Configure Your AI Assistant
+
+Add to your MCP settings:
+
+```json
+{
+  "mcpServers": {
+    "nomad": {
+      "command": "node",
+      "args": [
+        "/Users/jackharter/Developer/hashi_homelab/mcp-servers/nomad/dist/index.js"
+      ],
+      "env": {
+        "NOMAD_ADDR": "http://10.0.0.50:4646"
+      }
+    }
+  }
+}
+```
+
+Then ask your AI:
+- "What jobs are running in Nomad?"
+- "Show me the status of the grafana job"
+- "Get logs from the prometheus allocation"
+- "Is my Nomad cluster healthy?"
+
+**See [mcp-servers/nomad/QUICKSTART.md](mcp-servers/nomad/QUICKSTART.md) for complete setup instructions.**
 - **Docker Registry UI**: `http://registry-ui.home`
 - **Traefik Dashboard**: `http://traefik.home`
 

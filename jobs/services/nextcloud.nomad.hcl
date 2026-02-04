@@ -26,6 +26,9 @@ job "nextcloud" {
     task "nextcloud" {
       driver = "docker"
 
+      # Enable Vault workload identity for secrets access
+      vault {}
+
       config {
         image = "nextcloud:latest"
         ports = ["http"]
@@ -41,9 +44,25 @@ job "nextcloud" {
         destination = "/var/www/html/config"
       }
 
+      # Vault template for database password
+      template {
+        destination = "secrets/db.env"
+        env         = true
+        data        = <<EOH
+POSTGRES_PASSWORD={{ with secret "secret/data/postgres/nextcloud" }}{{ .Data.data.password }}{{ end }}
+EOH
+      }
+
       env {
-        # Use SQLite for simplicity (can be changed to PostgreSQL/MySQL later)
-        # Nextcloud will auto-detect SQLite if no database is configured
+        # PostgreSQL database configuration
+        POSTGRES_HOST = "postgresql.service.consul"
+        POSTGRES_DB   = "nextcloud"
+        POSTGRES_USER = "nextcloud"
+        # POSTGRES_PASSWORD comes from Vault template above
+
+        # Nextcloud configuration
+        NEXTCLOUD_TRUSTED_DOMAINS = "nextcloud.home 10.0.0.60 10.0.0.61 10.0.0.62"
+        
         # Optional: Configure MinIO as object storage backend
         # NEXTCLOUD_OBJECTSTORE_S3_HOST = "s3.home"
         # NEXTCLOUD_OBJECTSTORE_S3_BUCKET = "nextcloud"
