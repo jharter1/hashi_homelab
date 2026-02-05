@@ -1,0 +1,12 @@
+# Traefik Route 53 SSL - terraform.tfvars
+# Homelab-specific configuration for hartr.net domain
+
+# AWS region for Route 53 (us-east-1 is typical for Route 53)
+aws_region = "us-east-1"
+
+# IP address of your Traefik server
+# Your homelab setup:
+# - Traefik runs as system job on 3 nodes: 10.0.0.60, 10.0.0.61, 10.0.0.62
+# - Home DNS points *.lab.hartr.net → 10.0.0.60
+# - Route 53 should match your home DNS for consistency
+traefik_server_ip = "10.0.0.60"  # Primary Traefik endpoint

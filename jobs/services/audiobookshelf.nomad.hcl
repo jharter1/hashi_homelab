@@ -101,7 +101,7 @@ job "audiobookshelf" {
 
       resources {
         cpu    = 1000
-        memory = 2048
+        memory = 512
       }
 
       service {
@@ -110,8 +110,10 @@ job "audiobookshelf" {
 
         tags = [
           "traefik.enable=true",
-          "traefik.http.routers.audiobookshelf.rule=Host(`audiobookshelf.home`)",
-          "traefik.http.routers.audiobookshelf.entrypoints=web",
+          "traefik.http.routers.audiobookshelf.rule=Host(`audiobookshelf.lab.hartr.net`)",
+          "traefik.http.routers.audiobookshelf.entrypoints=websecure",
+          "traefik.http.routers.audiobookshelf.tls=true",
+          "traefik.http.routers.audiobookshelf.tls.certresolver=letsencrypt",
         ]
 
         check {

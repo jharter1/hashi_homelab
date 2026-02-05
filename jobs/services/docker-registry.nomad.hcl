@@ -87,10 +87,13 @@ EOH
           "registry",
           "docker",
           "traefik.enable=true",
-          "traefik.http.routers.registry.rule=Host(`registry.home`)",
+          "traefik.http.routers.registry.rule=Host(`registry.lab.hartr.net`)",
+          "traefik.http.routers.registry.entrypoints=websecure",
+          "traefik.http.routers.registry.tls=true",
+          "traefik.http.routers.registry.tls.certresolver=letsencrypt",
           # CORS middleware for registry UI
           "traefik.http.middlewares.registry-cors.headers.accesscontrolallowmethods=GET,HEAD,OPTIONS,DELETE",
-          "traefik.http.middlewares.registry-cors.headers.accesscontrolalloworiginlist=http://registry-ui.home,http://10.0.0.60:5001",
+          "traefik.http.middlewares.registry-cors.headers.accesscontrolalloworiginlist=https://registry-ui.lab.hartr.net",
           "traefik.http.middlewares.registry-cors.headers.accesscontrolallowheaders=Authorization,Accept,Content-Type",
           "traefik.http.middlewares.registry-cors.headers.accesscontrolexposeheaders=Docker-Content-Digest",
           # Allow larger uploads for Docker images
@@ -139,7 +142,10 @@ EOH
           "registry",
           "ui",
           "traefik.enable=true",
-          "traefik.http.routers.registry-ui.rule=Host(`registry-ui.home`)",
+          "traefik.http.routers.registry-ui.rule=Host(`registry-ui.lab.hartr.net`)",
+          "traefik.http.routers.registry-ui.entrypoints=websecure",
+          "traefik.http.routers.registry-ui.tls=true",
+          "traefik.http.routers.registry-ui.tls.certresolver=letsencrypt",
         ]
         check {
           type     = "tcp"

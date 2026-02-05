@@ -2,6 +2,11 @@ job "postgresql" {
   datacenters = ["dc1"]
   type        = "service"
 
+  constraint {
+    attribute = "${node.unique.name}"
+    value     = "dev-nomad-client-1"
+  }
+
   group "postgres" {
     count = 1
 
@@ -157,7 +162,7 @@ EOH
 
       resources {
         cpu    = 1000
-        memory = 2048
+        memory = 512
       }
 
       service {

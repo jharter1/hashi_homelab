@@ -1,0 +1,70 @@
+---
+- name: Check if Tailscale is already installed
+  ansible.builtin.command: which tailscale
+  register: tailscale_installed
+  failed_when: false
+  changed_when: false
+
+- name: Download Tailscale installation script
+  ansible.builtin.get_url:
+    url: https://tailscale.com/install.sh
+    dest: /tmp/tailscale-install.sh
+    mode: '0755'
+  when: tailscale_installed.rc != 0
+
+- name: Install Tailscale
+  ansible.builtin.shell: sh /tmp/tailscale-install.sh
+  args:
+    creates: /usr/bin/tailscale
+  when: tailscale_installed.rc != 0
+
+- name: Remove installation script
+  ansible.builtin.file:
+    path: /tmp/tailscale-install.sh
+    state: absent
+
+- name: Check if Tailscale is authenticated
+  ansible.builtin.command: tailscale status
+  register: tailscale_status
+  failed_when: false
+  changed_when: false
+
+- name: Display Tailscale authentication URL (if needed)
+  block:
+    - name: Start Tailscale and get auth URL
+      ansible.builtin.shell: |
+        timeout 10 tailscale up \
+        {% if tailscale_advertise_routes is defined %}--advertise-routes={{ tailscale_advertise_routes }} \{% endif %}
+        {% if tailscale_accept_dns is defined %}--accept-dns={{ tailscale_accept_dns | lower }} \{% endif %}
+        {% if tailscale_hostname is defined %}--hostname={{ tailscale_hostname }} \{% endif %}
+        {% if tailscale_auth_key is defined %}--authkey={{ tailscale_auth_key }}{% endif %} 2>&1 || true
+      register: tailscale_up_result
+      failed_when: false
+      changed_when: "'Success' in tailscale_up_result.stdout or tailscale_up_result.rc == 0"
+
+    - name: Show authentication URL
+      ansible.builtin.debug:
+        msg: |
+          ⚠️  TAILSCALE AUTHENTICATION REQUIRED ⚠️
+          
+          Node: {{ inventory_hostname }}
+          
+          {{ tailscale_up_result.stdout }}
+          
+          Please authenticate this device in your Tailscale admin panel.
+          Open the URL above in your browser to authenticate.
+          
+          {% if tailscale_advertise_routes is defined %}
+          ⚠️  After authenticating, approve subnet routes at:
+          https://login.tailscale.com/admin/machines
+          {% endif %}
+      when: 
+        - "'To authenticate' in tailscale_up_result.stdout or 'login.tailscale.com' in tailscale_up_result.stdout"
+
+  when: "'Logged out' in tailscale_status.stdout or tailscale_status.rc != 0"
+
+- name: Enable Tailscale service
+  ansible.builtin.systemd:
+    name: tailscaled
+    enabled: yes
+    state: started

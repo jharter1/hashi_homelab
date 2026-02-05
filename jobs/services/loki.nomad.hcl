@@ -91,8 +91,10 @@ EOH
         port = "http"
         tags = [
           "traefik.enable=true",
-          "traefik.http.routers.loki.rule=Host(`loki.home`)",
-          "traefik.http.routers.loki.entrypoints=web",
+          "traefik.http.routers.loki.rule=Host(`loki.lab.hartr.net`)",
+          "traefik.http.routers.loki.entrypoints=websecure",
+          "traefik.http.routers.loki.tls=true",
+          "traefik.http.routers.loki.tls.certresolver=letsencrypt",
         ]
         check {
           type     = "http"

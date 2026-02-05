@@ -113,6 +113,15 @@ scrape_configs:
       - source_labels: [__meta_consul_address]
         target_label: __address__
         replacement: '$1:12345'
+
+  - job_name: 'cadvisor'
+    consul_sd_configs:
+      - server: "127.0.0.1:8500"
+        services: ["cadvisor"]
+    relabel_configs:
+      - source_labels: [__meta_consul_address]
+        target_label: __address__
+        replacement: '$1:8081'
 EOH
       }
 
@@ -138,8 +147,10 @@ EOH
           "monitoring",
           "prometheus",
           "traefik.enable=true",
-          "traefik.http.routers.prometheus.rule=Host(`prometheus.home`)",
-          "traefik.http.routers.prometheus.entrypoints=web",
+          "traefik.http.routers.prometheus.rule=Host(`prometheus.lab.hartr.net`)",
+          "traefik.http.routers.prometheus.entrypoints=websecure",
+          "traefik.http.routers.prometheus.tls=true",
+          "traefik.http.routers.prometheus.tls.certresolver=letsencrypt",
         ]
       }
     }

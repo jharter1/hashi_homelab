@@ -33,6 +33,7 @@ This project provides everything needed to deploy a complete container orchestra
 - 📊 **Full Observability** - Metrics (Prometheus), logs (Loki), and dashboards (Grafana)
 - 🐋 **Local Registry** - Docker Registry 2 with pull-through cache for faster image pulls
 - 🤖 **AI Integration** - MCP server for managing Nomad clusters through AI assistants
+- 🔐 **Remote Access** - Tailscale VPN for secure access to homelab services from anywhere
 
 ## Architecture
 
@@ -293,18 +294,33 @@ After deployment, access the web interfaces:
 
 See the [example services](jobs/) directory for reference implementations.
 
-## AI Integration (MCP Server)
+## AI Integration (MCP Servers)
 
-Interact with your Nomad cluster through AI assistants using the Model Context Protocol (MCP) server.
+Interact with your entire homelab infrastructure through AI assistants using Model Context Protocol (MCP) servers.
+
+### Available MCP Servers
+
+We provide **7 MCP servers** with **50 tools** for managing your infrastructure:
+
+- **Nomad** - Job and cluster management (8 tools)
+- **Consul** - Service discovery and KV store (7 tools)
+- **Vault** - Secrets management (7 tools)
+- **Terraform** - Infrastructure inspection (6 tools)
+- **Ansible** - Automation inspection (7 tools)
+- **Proxmox** - Virtualization management (7 tools)
+- **Traefik** - Reverse proxy and routing (8 tools)
 
 ### Quick Setup
 
 ```bash
-# Build the MCP server
-task mcp:build:nomad
+# Build all MCP servers
+task mcp:build:all
 
-# Test connectivity
-cd mcp-servers/nomad && node test-connection.mjs
+# Or build individually
+task mcp:build:nomad
+task mcp:build:consul
+task mcp:build:vault
+# ... etc
 ```
 
 ### Configure Your AI Assistant
@@ -328,12 +344,16 @@ Add to your MCP settings:
 ```
 
 Then ask your AI:
+
 - "What jobs are running in Nomad?"
 - "Show me the status of the grafana job"
 - "Get logs from the prometheus allocation"
 - "Is my Nomad cluster healthy?"
+- "List all services in Consul"
+- "What VMs are running on Proxmox?"
+- "What routers are configured in Traefik?"
 
-**See [mcp-servers/nomad/QUICKSTART.md](mcp-servers/nomad/QUICKSTART.md) for complete setup instructions.**
+**See [mcp-servers/MCP_QUICK_REFERENCE.md](mcp-servers/MCP_QUICK_REFERENCE.md) for complete configuration and all 50 available tools.**
 - **Docker Registry UI**: `http://registry-ui.home`
 - **Traefik Dashboard**: `http://traefik.home`
 
@@ -378,6 +398,39 @@ task vault:test
 - 🔄 **Phase 4**: Production hardening (planned)
 
 See `ansible/TODO.md` for detailed roadmap and implementation tasks.
+
+## Remote Access with Tailscale (Optional)
+
+Access your homelab services from anywhere using Tailscale VPN - same URLs whether you're home or remote.
+
+### Quick Start
+
+```bash
+# Deploy on Traefik node first (recommended)
+task tailscale:deploy:traefik
+
+# Authenticate in browser when prompted
+# Then approve subnet routes at https://login.tailscale.com/admin/machines
+
+# Check status
+task tailscale:status
+```
+
+### What You Get
+
+- **Remote VPN access** to entire homelab network (10.0.0.0/24)
+- **Same service URLs** - `https://*.lab.hartr.net` works from anywhere
+- **Secure WireGuard tunnel** - no exposed ports required
+- **SSL certificates work** - Let's Encrypt certs valid over VPN
+- **Access management UIs** - Nomad, Consul, Traefik from anywhere
+
+### Documentation
+
+See **[docs/TAILSCALE_SETUP.md](docs/TAILSCALE_SETUP.md)** for complete setup guide including:
+- DNS configuration options
+- Subnet routing approval
+- Troubleshooting
+- Security recommendations
 
 ## Directory Structure
 

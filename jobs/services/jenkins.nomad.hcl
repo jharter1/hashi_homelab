@@ -50,8 +50,10 @@ job "jenkins" {
         
         tags = [
           "traefik.enable=true",
-          "traefik.http.routers.jenkins.rule=Host(`jenkins.home`)",
-          "traefik.http.routers.jenkins.entrypoints=web",
+          "traefik.http.routers.jenkins.rule=Host(`jenkins.lab.hartr.net`)",
+          "traefik.http.routers.jenkins.entrypoints=websecure",
+          "traefik.http.routers.jenkins.tls=true",
+          "traefik.http.routers.jenkins.tls.certresolver=letsencrypt",
         ]
 
         check {

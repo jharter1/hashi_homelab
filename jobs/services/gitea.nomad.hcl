@@ -38,15 +38,13 @@ job "gitea" {
         destination = "/data"
       }
 
-      # Vault template for database password and PostgreSQL host from Consul
+      # Vault template for database password
       template {
         destination = "secrets/db.env"
         env         = true
         data        = <<EOH
 GITEA__database__PASSWD={{ with secret "secret/data/postgres/gitea" }}{{ .Data.data.password }}{{ end }}
-{{ range service "postgresql" }}
-GITEA__database__HOST={{ .Address }}:{{ .Port }}
-{{ end }}
+GITEA__database__HOST=postgresql.home:5432
 EOH
       }
 
@@ -72,7 +70,7 @@ EOH
 
       resources {
         cpu    = 500
-        memory = 1024
+        memory = 512
       }
 
       service {
@@ -82,8 +80,10 @@ EOH
           "git",
           "development",
           "traefik.enable=true",
-          "traefik.http.routers.gitea.rule=Host(`gitea.home`)",
-          "traefik.http.routers.gitea.entrypoints=web",
+          "traefik.http.routers.gitea.rule=Host(`gitea.lab.hartr.net`)",
+          "traefik.http.routers.gitea.entrypoints=websecure",
+          "traefik.http.routers.gitea.tls=true",
+          "traefik.http.routers.gitea.tls.certresolver=letsencrypt",
         ]
         check {
           type     = "http"

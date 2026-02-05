@@ -8,7 +8,7 @@ job "freshrss" {
     network {
       mode = "host"
       port "http" {
-        static = 8080
+        static = 8082
       }
     }
 
@@ -20,6 +20,8 @@ job "freshrss" {
 
     task "freshrss" {
       driver = "docker"
+
+      vault {}
 
       config {
         image        = "freshrss/freshrss:latest"
@@ -39,7 +41,7 @@ job "freshrss" {
         data        = <<EOH
 # Database configuration
 DB_BASE=freshrss
-DB_HOST=localhost
+DB_HOST=postgresql.home
 DB_PORT=5432
 DB_USER=freshrss
 DB_PASSWORD={{ with secret "secret/data/postgres/freshrss" }}{{ .Data.data.password }}{{ end }}
@@ -50,6 +52,9 @@ EOH
         # General settings
         CRON_MIN = "*/20"
         TZ       = "America/New_York"
+        
+        # Configure Apache to listen on port 8082
+        LISTEN = "0.0.0.0:8082"
         
         # Database type
         DB_PREFIX = "freshrss_"
@@ -79,8 +84,10 @@ EOH
           "rss",
           "feed-reader",
           "traefik.enable=true",
-          "traefik.http.routers.freshrss.rule=Host(`freshrss.home`)",
-          "traefik.http.routers.freshrss.entrypoints=web",
+          "traefik.http.routers.freshrss.rule=Host(`freshrss.lab.hartr.net`)",
+          "traefik.http.routers.freshrss.entrypoints=websecure",
+          "traefik.http.routers.freshrss.tls=true",
+          "traefik.http.routers.freshrss.tls.certresolver=letsencrypt",
         ]
         check {
           type     = "http"
@@ -94,6 +101,8 @@ EOH
     # Cron task for updating feeds
     task "freshrss-cron" {
       driver = "docker"
+
+      vault {}
 
       lifecycle {
         hook    = "poststart"
@@ -115,7 +124,7 @@ EOH
         env         = true
         data        = <<EOH
 DB_BASE=freshrss
-DB_HOST=localhost
+DB_HOST=postgresql.home
 DB_PORT=5432
 DB_USER=freshrss
 DB_PASSWORD={{ with secret "secret/data/postgres/freshrss" }}{{ .Data.data.password }}{{ end }}

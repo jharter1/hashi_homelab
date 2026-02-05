@@ -67,6 +67,11 @@ client {
     read_only = false
   }
 
+  host_volume "calibre_config" {
+    path = "{{ nas_mount_point }}/calibre"
+    read_only = false
+  }
+
   host_volume "nextcloud_data" {
     path = "{{ nas_mount_point }}/nextcloud/data"
     read_only = false
@@ -120,6 +125,41 @@ client {
     path = "{{ nas_mount_point }}/audiobookshelf/podcasts"
     read_only = false
   }
+
+  host_volume "gitea_data" {
+    path = "{{ nas_mount_point }}/gitea"
+    read_only = false
+  }
+
+  host_volume "vaultwarden_data" {
+    path = "{{ nas_mount_point }}/vaultwarden"
+    read_only = false
+  }
+
+  host_volume "codeserver_data" {
+    path = "{{ nas_mount_point }}/codeserver"
+    read_only = false
+  }
+
+  host_volume "authelia_data" {
+    path = "{{ nas_mount_point }}/authelia"
+    read_only = false
+  }
+
+  host_volume "postgres_data" {
+    path = "{{ nas_mount_point }}/postgres"
+    read_only = false
+  }
+
+  host_volume "freshrss_data" {
+    path = "{{ nas_mount_point }}/freshrss"
+    read_only = false
+  }
+
+  host_volume "traefik_acme" {
+    path = "/opt/traefik/acme"
+    read_only = false
+  }
 }
 
 bind_addr = "0.0.0.0"
@@ -139,7 +179,7 @@ consul {
 
 plugin "docker" {
   config {
-    allow_privileged = false
+    allow_privileged = true
     volumes {
       enabled = true
     }
@@ -148,7 +188,8 @@ plugin "docker" {
 
 vault {
   enabled = true
-  address = "http://10.0.0.30:8200"  # Hub Vault HA cluster (leader)
+  address = "http://10.0.0.30:8200"
   
+  # JWT authentication for workload identity
   jwt_auth_backend_path = "jwt-nomad"
 }

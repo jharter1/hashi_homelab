@@ -48,8 +48,10 @@ job "gollum" {
           "documentation",
           "wiki",
           "traefik.enable=true",
-          "traefik.http.routers.gollum.rule=Host(`wiki.home`)",
-          "traefik.http.routers.gollum.entrypoints=web",
+          "traefik.http.routers.gollum.rule=Host(`wiki.lab.hartr.net`)",
+          "traefik.http.routers.gollum.entrypoints=websecure",
+          "traefik.http.routers.gollum.tls=true",
+          "traefik.http.routers.gollum.tls.certresolver=letsencrypt",
         ]
         check {
           type     = "http"

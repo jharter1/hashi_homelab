@@ -110,8 +110,10 @@ EOH
           "monitoring",
           "alertmanager",
           "traefik.enable=true",
-          "traefik.http.routers.alertmanager.rule=Host(`alertmanager.home`)",
-          "traefik.http.routers.alertmanager.entrypoints=web",
+          "traefik.http.routers.alertmanager.rule=Host(`alertmanager.lab.hartr.net`)",
+          "traefik.http.routers.alertmanager.entrypoints=websecure",
+          "traefik.http.routers.alertmanager.tls=true",
+          "traefik.http.routers.alertmanager.tls.certresolver=letsencrypt",
         ]
       }
     }

@@ -113,3 +113,26 @@ ansible/*.snap
 ansible/vault-snapshot-*.snap
 packer/downloaded_iso_path/
 manifest.json
+
+# Credentials and sensitive files
+.credentials
+**/.credentials
+**/credentials
+**/*credentials*
+!.credentials.example
+!*credentials.example
+SENSITIVE_INFO_ACTUAL.md
+.vault-tokens
+.nomad-tokens
+
+# Terraform state files (comprehensive)
+*.tfstate
+*.tfstate.*
+**/*.tfstate
+**/*.tfstate.*
+
+# AWS and cloud credentials
+.aws/
+**/*aws*credentials*
+!terraform/aws/README.md
+!docs/TRAEFIK_SSL_SETUP.md

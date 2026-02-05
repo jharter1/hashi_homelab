@@ -1,0 +1,91 @@
+---
+- name: Configure Vault JWT Auth for Nomad Workload Identity
+  hosts: localhost
+  connection: local
+  become: false
+  gather_facts: false
+  vars:
+    vault_addr: "http://10.0.0.30:8200"
+    vault_token: "{{ lookup('env', 'VAULT_TOKEN') }}"  # Must be set in environment
+    nomad_server: "http://10.0.0.50:4646"
+
+  pre_tasks:
+    - name: Verify VAULT_TOKEN is set
+      fail:
+        msg: "VAULT_TOKEN environment variable not set. Source credentials first: source .credentials"
+      when: vault_token == ""
+
+  tasks:
+    - name: Check if JWT auth backend is enabled
+      uri:
+        url: "{{ vault_addr }}/v1/sys/auth/jwt-nomad"
+        method: GET
+        headers:
+          X-Vault-Token: "{{ vault_token }}"
+        status_code: [200, 400]
+        validate_certs: false
+      register: jwt_auth_check
+      failed_when: false
+
+    - name: Enable JWT auth backend
+      uri:
+        url: "{{ vault_addr }}/v1/sys/auth/jwt-nomad"
+        method: POST
+        headers:
+          X-Vault-Token: "{{ vault_token }}"
+        body_format: json
+        body:
+          type: "jwt"
+          description: "JWT auth for Nomad workload identity"
+        status_code: [200, 204]
+        validate_certs: false
+      when: jwt_auth_check.status == 400
+
+    - name: Configure JWT auth backend
+      uri:
+        url: "{{ vault_addr }}/v1/auth/jwt-nomad/config"
+        method: POST
+        headers:
+          X-Vault-Token: "{{ vault_token }}"
+        body_format: json
+        body:
+          jwks_url: "{{ nomad_server }}/.well-known/jwks.json"
+          default_role: "nomad-workloads"
+        status_code: [200, 204]
+        validate_certs: false
+
+    - name: Create nomad-workloads JWT role
+      uri:
+        url: "{{ vault_addr }}/v1/auth/jwt-nomad/role/nomad-workloads"
+        method: POST
+        headers:
+          X-Vault-Token: "{{ vault_token }}"
+        body_format: json
+        body:
+          role_type: "jwt"
+          bound_audiences: ["vault.io"]
+          user_claim: "nomad_job_id"
+          claim_mappings:
+            nomad_namespace: "nomad_namespace"
+            nomad_job_id: "nomad_job_id"
+            nomad_task: "nomad_task"
+          token_type: "service"
+          token_policies: ["nomad-workloads"]
+          token_period: "30m"
+          token_explicit_max_ttl: "1h"
+        status_code: [200, 204]
+        validate_certs: false
+
+    - name: Verify JWT auth configuration
+      uri:
+        url: "{{ vault_addr }}/v1/auth/jwt-nomad/role/nomad-workloads"
+        method: GET
+        headers:
+          X-Vault-Token: "{{ vault_token }}"
+        status_code: 200
+        validate_certs: false
+      register: jwt_role_verify
+
+    - name: Display JWT role configuration
+      debug:
+        msg: "JWT role configured successfully with policies: {{ jwt_role_verify.json.data.token_policies }}"

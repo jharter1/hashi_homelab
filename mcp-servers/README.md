@@ -15,6 +15,60 @@ Interact with your Nomad cluster:
 
 [Read the Nomad MCP docs →](nomad/README.md)
 
+### Consul MCP Server
+Location: `consul/`
+
+Service discovery and KV store management:
+- Query service catalog
+- Read/write KV store
+- Check service health
+- Monitor cluster members
+
+### Vault MCP Server
+Location: `vault/`
+
+Secrets management (requires appropriate permissions):
+- Read secrets from KV store
+- Check policy assignments
+- Monitor seal status
+- Token management
+
+### Terraform MCP Server
+Location: `terraform/`
+
+Infrastructure validation and inspection:
+- Validate configurations
+- Run terraform plan
+- Show state
+- List resources
+
+### Ansible MCP Server
+Location: `ansible/`
+
+Automation and configuration inspection:
+- List playbooks and roles
+- Check inventory
+- Dry-run playbooks
+- Test connectivity
+
+### Proxmox MCP Server
+Location: `proxmox/`
+
+Virtualization platform management:
+- Query VM status
+- List cluster resources
+- Monitor node health
+- Check storage
+
+### Traefik MCP Server
+Location: `traefik/`
+
+Reverse proxy and ingress management:
+- List HTTP/TCP routers
+- View service backends
+- Check middleware configuration
+- Monitor entrypoints
+
 ## Quick Start
 
 ### 1. Install Dependencies

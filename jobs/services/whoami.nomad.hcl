@@ -16,9 +16,10 @@ job "whoami" {
       port = "http"
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.whoami.rule=Host(`whoami.home`)",
+        "traefik.http.routers.whoami.rule=Host(`whoami.lab.hartr.net`)",
         "traefik.http.routers.whoami.entrypoints=websecure",
         "traefik.http.routers.whoami.tls=true",
+        "traefik.http.routers.whoami.tls.certresolver=letsencrypt",
       ]
     }
 

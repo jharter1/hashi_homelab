@@ -47,8 +47,8 @@ server:
 log:
   level: info
 
-jwt_secret: CHANGE_ME_GENERATE_RANDOM_STRING
-default_redirection_url: http://home.home
+jwt_secret: CHANGE_ME_GENERATE_RANDOM_STRING_JWT_MIN_32_CHARS
+default_redirection_url: https://authelia.lab.hartr.net
 
 authentication_backend:
   file:
@@ -63,16 +63,16 @@ authentication_backend:
 access_control:
   default_policy: deny
   rules:
-    - domain: "*.home"
+    - domain: "*.lab.hartr.net"
       policy: one_factor
 
 session:
   name: authelia_session
-  secret: CHANGE_ME_GENERATE_RANDOM_STRING
+  secret: CHANGE_ME_GENERATE_RANDOM_STRING_SESSION_MIN_32_CHARS
   expiration: 1h
   inactivity: 5m
   remember_me_duration: 1M
-  domain: home
+  domain: lab.hartr.net
 
 regulation:
   max_retries: 3
@@ -80,6 +80,7 @@ regulation:
   ban_time: 5m
 
 storage:
+  encryption_key: CHANGE_ME_GENERATE_RANDOM_STRING_ENCRYPTION_MIN_20_CHARS
   local:
     path: /data/db.sqlite3
 
@@ -102,14 +103,13 @@ EOH
           "authentication",
           "sso",
           "traefik.enable=true",
-          "traefik.http.routers.authelia.rule=Host(`authelia.home`)",
+          "traefik.http.routers.authelia.rule=Host(`authelia.lab.hartr.net`)",
           "traefik.http.routers.authelia.entrypoints=websecure",
           "traefik.http.routers.authelia.tls=true",
-          # Note: HTTPS certificate configuration needed (see plan for Vault PKI setup)
+          "traefik.http.routers.authelia.tls.certresolver=letsencrypt",
         ]
         check {
-          type     = "http"
-          path     = "/api/verify"
+          type     = "tcp"
           interval = "10s"
           timeout  = "2s"
         }

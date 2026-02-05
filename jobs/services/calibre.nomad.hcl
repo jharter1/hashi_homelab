@@ -28,8 +28,10 @@ job "calibre" {
       
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.calibre.rule=Host(`calibre.home`)",
-        "traefik.http.routers.calibre.entrypoints=web",
+        "traefik.http.routers.calibre.rule=Host(`calibre.lab.hartr.net`)",
+        "traefik.http.routers.calibre.entrypoints=websecure",
+        "traefik.http.routers.calibre.tls=true",
+        "traefik.http.routers.calibre.tls.certresolver=letsencrypt",
       ]
 
       check {

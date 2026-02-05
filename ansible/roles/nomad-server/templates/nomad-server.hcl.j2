@@ -50,17 +50,11 @@ vault {
   enabled = true
   address = "http://10.0.0.30:8200"
   
-  # Token for Nomad server to authenticate with Vault
-  # This token has the 'nomad-server' policy
-  token = "{{ vault_token | default('') }}"
-  
-  # Enable JWT workload identity for jobs
-  default_identity {
-    aud = ["vault.io"]
-    env = false
-    file = true
-    ttl = "1h"
-  }
-  
+  # JWT authentication for workload identity
   jwt_auth_backend_path = "jwt-nomad"
+  
+  default_identity {
+    aud  = ["vault.io"]
+    ttl  = "1h"
+  }
 }

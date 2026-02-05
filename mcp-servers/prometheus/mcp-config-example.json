@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "prometheus": {
+      "command": "node",
+      "args": [
+        "/Users/jackharter/Developer/hashi_homelab/mcp-servers/prometheus/dist/index.js"
+      ],
+      "env": {
+        "PROMETHEUS_ADDR": "http://10.0.0.60:9090"
+      }
+    }
+  }
+}

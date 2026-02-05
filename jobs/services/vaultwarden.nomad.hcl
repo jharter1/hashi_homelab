@@ -8,7 +8,7 @@ job "vaultwarden" {
     network {
       mode = "host"
       port "http" {
-        static = 80
+        static = 8222
       }
     }
 
@@ -23,7 +23,6 @@ job "vaultwarden" {
 
       config {
         image        = "vaultwarden/server:latest"
-        network_mode = "host"
         ports        = ["http"]
       }
 
@@ -40,7 +39,7 @@ job "vaultwarden" {
         # Enable signups (disable in production)
         SIGNUPS_ALLOWED = "true"
         # Domain configuration
-        DOMAIN = "http://vaultwarden.home"
+        DOMAIN = "https://vaultwarden.lab.hartr.net"
         # WebSocket support
         WEBSOCKET_ENABLED = "true"
         # Logging
@@ -57,14 +56,15 @@ job "vaultwarden" {
       service {
         name = "vaultwarden"
         port = "http"
+        address_mode = "host"
         tags = [
           "security",
           "password-manager",
           "traefik.enable=true",
-          "traefik.http.routers.vaultwarden.rule=Host(`vaultwarden.home`)",
+          "traefik.http.routers.vaultwarden.rule=Host(`vaultwarden.lab.hartr.net`)",
           "traefik.http.routers.vaultwarden.entrypoints=websecure",
           "traefik.http.routers.vaultwarden.tls=true",
-          # Note: HTTPS certificate configuration needed (see plan for Vault PKI setup)
+          "traefik.http.routers.vaultwarden.tls.certresolver=letsencrypt",
         ]
         check {
           type     = "http"

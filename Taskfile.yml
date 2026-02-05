@@ -110,6 +110,30 @@ tasks:
       - |
         cd ansible && ansible-playbook playbooks/test-connectivity.yml
 
+  tailscale:deploy:
+    desc: "Deploy Tailscale on Nomad clients for remote access"
+    cmds:
+      - |
+        cd ansible && ansible-playbook playbooks/deploy-tailscale.yml
+
+  tailscale:deploy:traefik:
+    desc: "Deploy Tailscale only on the Traefik node (nomad-client-1)"
+    cmds:
+      - |
+        cd ansible && ansible-playbook playbooks/deploy-tailscale.yml --limit nomad-client-1
+
+  tailscale:status:
+    desc: "Check Tailscale status on all clients"
+    cmds:
+      - |
+        cd ansible && ansible nomad_clients -m command -a "tailscale status" -b
+
+  tailscale:ip:
+    desc: "Get Tailscale IPs for all clients"
+    cmds:
+      - |
+        cd ansible && ansible nomad_clients -m command -a "tailscale ip -4" -b
+
   deploy:system:
     desc: "Deploy system jobs (Traefik, Alloy)"
     cmds:
@@ -308,11 +332,65 @@ tasks:
   # MCP Server Tasks
   # ======================================
   
+  mcp:build:all:
+    desc: "Build all MCP servers"
+    cmds:
+      - task: mcp:build:nomad
+      - task: mcp:build:consul
+      - task: mcp:build:vault
+      - task: mcp:build:terraform
+      - task: mcp:build:ansible
+      - task: mcp:build:proxmox
+      - task: mcp:build:traefik
+      - task: mcp:build:prometheus
+
   mcp:build:nomad:
     desc: "Build Nomad MCP server"
     cmds:
       - |
         cd mcp-servers/nomad && npm install && npm run build
+
+  mcp:build:consul:
+    desc: "Build Consul MCP server"
+    cmds:
+      - |
+        cd mcp-servers/consul && npm install && npm run build
+
+  mcp:build:vault:
+    desc: "Build Vault MCP server"
+    cmds:
+      - |
+        cd mcp-servers/vault && npm install && npm run build
+
+  mcp:build:terraform:
+    desc: "Build Terraform MCP server"
+    cmds:
+      - |
+        cd mcp-servers/terraform && npm install && npm run build
+
+  mcp:build:ansible:
+    desc: "Build Ansible MCP server"
+    cmds:
+      - |
+        cd mcp-servers/ansible && npm install && npm run build
+
+  mcp:build:proxmox:
+    desc: "Build Proxmox MCP server"
+    cmds:
+      - |
+        cd mcp-servers/proxmox && npm install && npm run build
+
+  mcp:build:traefik:
+    desc: "Build Traefik MCP server"
+    cmds:
+      - |
+        cd mcp-servers/traefik && npm install && npm run build
+
+  mcp:build:prometheus:
+    desc: "Build Prometheus MCP server"
+    cmds:
+      - |
+        cd mcp-servers/prometheus && npm install && npm run build
 
   mcp:dev:nomad:
     desc: "Run Nomad MCP server in dev mode"

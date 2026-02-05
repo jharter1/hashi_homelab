@@ -93,8 +93,10 @@ job "codeserver" {
 
         tags = [
           "traefik.enable=true",
-          "traefik.http.routers.codeserver.rule=Host(`code.home`) || Host(`codeserver.home`)",
-          "traefik.http.routers.codeserver.entrypoints=web",
+          "traefik.http.routers.codeserver.rule=Host(`code.lab.hartr.net`)",
+          "traefik.http.routers.codeserver.entrypoints=websecure",
+          "traefik.http.routers.codeserver.tls=true",
+          "traefik.http.routers.codeserver.tls.certresolver=letsencrypt",
         ]
 
         check {

@@ -100,9 +100,10 @@ EOH
           "logging",
           "telemetry",
           "traefik.enable=true",
-          "traefik.http.routers.alloy.rule=Host(`alloy.home`)",
+          "traefik.http.routers.alloy.rule=Host(`alloy.lab.hartr.net`)",
           "traefik.http.routers.alloy.entrypoints=websecure",
           "traefik.http.routers.alloy.tls=true",
+          "traefik.http.routers.alloy.tls.certresolver=letsencrypt",
         ]
         check {
           type     = "http"

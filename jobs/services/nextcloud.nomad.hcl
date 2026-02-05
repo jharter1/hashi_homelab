@@ -55,7 +55,7 @@ EOH
 
       env {
         # PostgreSQL database configuration
-        POSTGRES_HOST = "postgresql.service.consul"
+        POSTGRES_HOST = "postgresql.home"
         POSTGRES_DB   = "nextcloud"
         POSTGRES_USER = "nextcloud"
         # POSTGRES_PASSWORD comes from Vault template above
@@ -74,7 +74,7 @@ EOH
 
       resources {
         cpu    = 1000
-        memory = 1024
+        memory = 1536
       }
 
       service {
@@ -84,8 +84,10 @@ EOH
           "storage",
           "file-sync",
           "traefik.enable=true",
-          "traefik.http.routers.nextcloud.rule=Host(`nextcloud.home`)",
-          "traefik.http.routers.nextcloud.entrypoints=web",
+          "traefik.http.routers.nextcloud.rule=Host(`nextcloud.lab.hartr.net`)",
+          "traefik.http.routers.nextcloud.entrypoints=websecure",
+          "traefik.http.routers.nextcloud.tls=true",
+          "traefik.http.routers.nextcloud.tls.certresolver=letsencrypt",
         ]
         check {
           type     = "http"

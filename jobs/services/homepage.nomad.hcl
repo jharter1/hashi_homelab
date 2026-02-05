@@ -113,7 +113,7 @@ EOH
         description: Secrets Management
     - Traefik:
         icon: traefik.png
-        href: http://traefik.home
+        href: https://traefik.lab.hartr.net
         description: Reverse Proxy
         widget:
           type: traefik
@@ -122,83 +122,87 @@ EOH
 - Monitoring:
     - Grafana:
         icon: grafana.png
-        href: http://grafana.home
+        href: https://grafana.lab.hartr.net
         description: Metrics Visualization
     - Alertmanager:
-        icon: prometheus.png
-        href: http://alertmanager.home
+        icon: alertmanager.png
+        href: https://alertmanager.lab.hartr.net
         description: Alert Routing
     - Loki:
         icon: loki.png
-        href: http://loki.home
+        href: https://loki.lab.hartr.net
         description: Log Aggregation
     - Netdata:
         icon: netdata.png
-        href: http://netdata.home
+        href: https://netdata.lab.hartr.net
         description: Real-time Performance
     - Dozzle:
         icon: dozzle.png
-        href: http://dozzle.home
+        href: https://dozzle.lab.hartr.net
         description: Docker Log Viewer
     - Prometheus:
         icon: prometheus.png
-        href: http://prometheus.home
+        href: https://prometheus.lab.hartr.net
         description: Metrics Collection
         widget:
           type: prometheus
-          url: http://prometheus.home
+          url: https://prometheus.lab.hartr.net
 
 - Services:
     - Docker Registry:
         icon: docker.png
-        href: http://registry-ui.home
+        href: https://registry-ui.lab.hartr.net
         description: Container Registry
     - Jenkins:
         icon: jenkins.png
-        href: http://jenkins.home
+        href: https://jenkins.lab.hartr.net
         description: CI/CD
     - Gitea:
         icon: gitea.png
-        href: http://gitea.home
+        href: https://gitea.lab.hartr.net
         description: Self-hosted Git
     - Code Server:
         icon: code.png
-        href: http://codeserver.home
+        href: https://code.lab.hartr.net
         description: VS Code in Browser
+    - Gollum Wiki:
+        icon: gollum.png
+        href: https://wiki.lab.hartr.net
+        description: Git-backed Wiki
     - Nextcloud:
         icon: nextcloud.png
-        href: http://nextcloud.home
+        href: https://nextcloud.lab.hartr.net
         description: File Sync & Share
     - Calibre Web:
         icon: calibre-web.png
-        href: http://calibre.home
+        href: https://calibre.lab.hartr.net
         description: eBook Library
         widget:
           type: calibreweb
-          url: http://calibre.home
+          url: https://calibre.lab.hartr.net
     - Audiobookshelf:
         icon: audiobookshelf.png
-        href: http://audiobookshelf.home
+        href: https://audiobookshelf.lab.hartr.net
         description: Audiobook & Podcast Server
         ping: http://10.0.0.60:13378
     - Uptime Kuma:
         icon: uptime-kuma.png
-        href: http://uptime-kuma.home
+        href: https://uptime-kuma.lab.hartr.net
         description: Uptime Monitoring
         widget:
           type: uptimekuma
-          url: http://uptime-kuma.home
+          url: https://uptime-kuma.lab.hartr.net
           slug: default
 
 - Storage:
     - MinIO S3:
         icon: minio.png
-        href: http://s3.home
+        href: https://s3.lab.hartr.net
         description: S3-Compatible Object Storage (API)
         ping: http://10.0.0.61:9000
     - MinIO Console:
         icon: minio.png
-        href: http://minio.home
+        href: https://minio.lab.hartr.net
         description: MinIO Admin Console
         ping: http://10.0.0.61:9001
     - NFS Storage:
@@ -210,12 +214,12 @@ EOH
 - Security:
     - Vaultwarden:
         icon: vaultwarden.png
-        href: http://vaultwarden.home
+        href: https://vaultwarden.lab.hartr.net
         description: Password Manager
         ping: http://10.0.0.60:80
     - Authelia:
         icon: authelia.png
-        href: http://authelia.home
+        href: https://authelia.lab.hartr.net
         description: SSO & Authentication
         ping: http://10.0.0.60:9091
 EOH
@@ -366,11 +370,11 @@ EOH
           description: Routing dashboard
     - Prometheus:
         - icon: prometheus.png
-          href: http://prometheus.home
+          href: https://prometheus.lab.hartr.net
           description: Metrics & alerts
     - Grafana:
         - icon: grafana.png
-          href: http://grafana.home
+          href: https://grafana.lab.hartr.net
           description: Dashboards
 
 - Homelab Resources:
@@ -394,15 +398,15 @@ EOH
 - Monitoring:
     - Netdata:
         - icon: netdata.png
-          href: http://netdata.home
+          href: https://netdata.lab.hartr.net
           description: Real-time metrics
     - Dozzle:
         - icon: dozzle.png
-          href: http://dozzle.home
+          href: https://dozzle.lab.hartr.net
           description: Container logs
     - Uptime Kuma:
         - icon: uptime-kuma.png
-          href: http://uptime-kuma.home
+          href: https://uptime-kuma.lab.hartr.net
           description: Uptime monitoring
 EOH
       }
@@ -412,7 +416,7 @@ EOH
         LOG_LEVEL              = "info"
         HOSTNAME               = "0.0.0.0"
         PORT                   = "3333"
-        HOMEPAGE_ALLOWED_HOSTS = "home.home"
+        HOMEPAGE_ALLOWED_HOSTS = "home.lab.hartr.net"
         NODE_OPTIONS           = "--dns-result-order=ipv4first"
       }
 
@@ -436,8 +440,10 @@ EOH
 
         tags = [
           "traefik.enable=true",
-          "traefik.http.routers.homepage.rule=Host(`home.home`)",
-          "traefik.http.routers.homepage.entrypoints=web",
+          "traefik.http.routers.homepage.rule=Host(`home.lab.hartr.net`)",
+          "traefik.http.routers.homepage.entrypoints=websecure",
+          "traefik.http.routers.homepage.tls=true",
+          "traefik.http.routers.homepage.tls.certresolver=letsencrypt",
         ]
 
         check {

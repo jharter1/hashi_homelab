@@ -22,8 +22,10 @@ job "uptime-kuma" {
       
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.uptime-kuma.rule=Host(`uptime-kuma.home`)",
-        "traefik.http.routers.uptime-kuma.entrypoints=web",
+        "traefik.http.routers.uptime-kuma.rule=Host(`uptime-kuma.lab.hartr.net`)",
+        "traefik.http.routers.uptime-kuma.entrypoints=websecure",
+        "traefik.http.routers.uptime-kuma.tls=true",
+        "traefik.http.routers.uptime-kuma.tls.certresolver=letsencrypt",
       ]
 
       check {

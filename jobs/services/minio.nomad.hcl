@@ -61,8 +61,10 @@ job "minio" {
           "storage",
           "s3",
           "traefik.enable=true",
-          "traefik.http.routers.minio-api.rule=Host(`s3.home`)",
+          "traefik.http.routers.minio-api.rule=Host(`s3.lab.hartr.net`)",
           "traefik.http.routers.minio-api.entrypoints=websecure",
+          "traefik.http.routers.minio-api.tls=true",
+          "traefik.http.routers.minio-api.tls.certresolver=letsencrypt",
           "traefik.http.routers.minio-api.tls=true",
         ]
         check {
@@ -79,8 +81,10 @@ job "minio" {
           "storage",
           "minio",
           "traefik.enable=true",
-          "traefik.http.routers.minio-console.rule=Host(`minio.home`)",
+          "traefik.http.routers.minio-console.rule=Host(`minio.lab.hartr.net`)",
           "traefik.http.routers.minio-console.entrypoints=websecure",
+          "traefik.http.routers.minio-console.tls=true",
+          "traefik.http.routers.minio-console.tls.certresolver=letsencrypt",
           "traefik.http.routers.minio-console.tls=true",
         ]
         check {
