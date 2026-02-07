@@ -32,6 +32,7 @@ job "calibre" {
         "traefik.http.routers.calibre.entrypoints=websecure",
         "traefik.http.routers.calibre.tls=true",
         "traefik.http.routers.calibre.tls.certresolver=letsencrypt",
+        "traefik.http.routers.calibre.middlewares=authelia@file",
       ]
 
       check {

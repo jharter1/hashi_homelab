@@ -114,6 +114,7 @@ job "audiobookshelf" {
           "traefik.http.routers.audiobookshelf.entrypoints=websecure",
           "traefik.http.routers.audiobookshelf.tls=true",
           "traefik.http.routers.audiobookshelf.tls.certresolver=letsencrypt",
+          "traefik.http.routers.audiobookshelf.middlewares=authelia@file",
         ]
 
         check {

@@ -193,6 +193,11 @@ EOH
           type: uptimekuma
           url: https://uptime-kuma.lab.hartr.net
           slug: default
+    - Speedtest:
+        icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/speedtest-tracker.png
+        href: https://speedtest.lab.hartr.net
+        description: Internet Speed Testing
+
 
 - Storage:
     - MinIO S3:

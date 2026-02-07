@@ -89,6 +89,8 @@ EOH
           "traefik.http.routers.grafana.entrypoints=websecure",
           "traefik.http.routers.grafana.tls=true",
           "traefik.http.routers.grafana.tls.certresolver=letsencrypt",
+          # Authelia SSO Protection
+          "traefik.http.routers.grafana.middlewares=authelia@file",
         ]
         check {
           type     = "http"

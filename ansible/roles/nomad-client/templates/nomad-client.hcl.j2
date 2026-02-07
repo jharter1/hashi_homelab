@@ -156,6 +156,21 @@ client {
     read_only = false
   }
 
+  host_volume "speedtest_data" {
+    path = "{{ nas_mount_point }}/speedtest"
+    read_only = false
+  }
+
+  host_volume "immich_upload" {
+    path = "{{ nas_mount_point }}/immich/upload"
+    read_only = false
+  }
+
+  host_volume "immich_postgres" {
+    path = "{{ nas_mount_point }}/immich/postgres"
+    read_only = false
+  }
+
   host_volume "traefik_acme" {
     path = "/opt/traefik/acme"
     read_only = false

@@ -10,9 +10,6 @@ job "gitea" {
       port "http" {
         static = 3000
       }
-      port "ssh" {
-        static = 2222
-      }
     }
 
     volume "gitea_data" {
@@ -30,7 +27,7 @@ job "gitea" {
       config {
         image        = "gitea/gitea:latest"
         network_mode = "host"
-        ports        = ["http", "ssh"]
+        ports        = ["http"]
       }
 
       volume_mount {
@@ -44,7 +41,7 @@ job "gitea" {
         env         = true
         data        = <<EOH
 GITEA__database__PASSWD={{ with secret "secret/data/postgres/gitea" }}{{ .Data.data.password }}{{ end }}
-GITEA__database__HOST=postgresql.home:5432
+GITEA__database__HOST={{ range service "postgresql" }}{{ .Address }}{{ end }}:5432
 EOH
       }
 
@@ -59,13 +56,17 @@ EOH
         GITEA__database__USER = "gitea"
         GITEA__database__SSL_MODE = "disable"
         
-        # Server configuration
-        GITEA__server__DOMAIN = "gitea.home"
-        GITEA__server__SSH_DOMAIN = "gitea.home"
-        GITEA__server__SSH_PORT = "2222"
+        # Server configuration - HTTPS only, no SSH
+        GITEA__server__DOMAIN = "gitea.lab.hartr.net"
         GITEA__server__HTTP_PORT = "3000"
-        GITEA__server__ROOT_URL = "http://gitea.home"
-        GITEA__server__DISABLE_SSH = "false"
+        GITEA__server__ROOT_URL = "https://gitea.lab.hartr.net"
+        GITEA__server__DISABLE_SSH = "true"
+        GITEA__server__START_SSH_SERVER = "false"
+        GITEA__server__OFFLINE_MODE = "false"
+        
+        # Trust Authelia's forwarded authentication headers (optional - not required for login)
+        GITEA__service__ENABLE_REVERSE_PROXY_AUTHENTICATION = "false"
+        GITEA__service__ENABLE_REVERSE_PROXY_AUTO_REGISTRATION = "false"
       }
 
       resources {
@@ -74,8 +75,9 @@ EOH
       }
 
       service {
-        name = "gitea-http"
-        port = "http"
+        name         = "gitea-http"
+        port         = "http"
+        address_mode = "driver"
         tags = [
           "git",
           "development",
@@ -84,19 +86,13 @@ EOH
           "traefik.http.routers.gitea.entrypoints=websecure",
           "traefik.http.routers.gitea.tls=true",
           "traefik.http.routers.gitea.tls.certresolver=letsencrypt",
+          "traefik.http.routers.gitea.middlewares=authelia@file",
         ]
         check {
-          type     = "http"
-          path     = "/api/healthz"
+          type     = "tcp"
           interval = "10s"
           timeout  = "2s"
         }
-      }
-
-      service {
-        name = "gitea-ssh"
-        port = "ssh"
-        tags = ["git", "ssh"]
       }
     }
   }

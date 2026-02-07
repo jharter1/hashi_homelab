@@ -21,13 +21,19 @@ job "authelia" {
     task "authelia" {
       driver = "docker"
 
+      # Enable Vault workload identity for secrets access
+      vault {
+        policies = ["nomad-workloads"]
+      }
+
       config {
         image        = "authelia/authelia:latest"
         network_mode = "host"
         ports        = ["http"]
 
         volumes = [
-          "local/configuration.yml:/config/configuration.yml:ro",
+          "local/configuration.yml:/config/configuration.yml",
+          "local/users_database.yml:/config/users_database.yml",
         ]
       }
 
@@ -36,6 +42,7 @@ job "authelia" {
         destination = "/data"
       }
 
+      # Main Authelia configuration with Vault-backed secrets
       template {
         destination = "local/configuration.yml"
         data        = <<EOH
@@ -43,50 +50,151 @@ server:
   host: 0.0.0.0
   port: 9091
   path: ""
+  read_buffer_size: 4096
+  write_buffer_size: 4096
 
 log:
   level: info
+  format: text
 
-jwt_secret: CHANGE_ME_GENERATE_RANDOM_STRING_JWT_MIN_32_CHARS
-default_redirection_url: https://authelia.lab.hartr.net
+# Secrets from Vault
+jwt_secret: {{ with secret "secret/data/authelia/config" }}{{ .Data.data.jwt_secret }}{{ end }}
 
 authentication_backend:
+  password_reset:
+    disable: false
+  
+  # File-based authentication
   file:
-    path: /data/users.yml
+    path: /config/users_database.yml
     password:
       algorithm: argon2id
-      iterations: 1
+      iterations: 3
       salt_length: 16
-      parallelism: 8
+      parallelism: 4
       memory: 64
 
 access_control:
   default_policy: deny
+  
   rules:
-    - domain: "*.lab.hartr.net"
+    # Bypass auth for Authelia itself and public services
+    - domain:
+        - authelia.lab.hartr.net
+        - home.lab.hartr.net
+        - whoami.lab.hartr.net
+      policy: bypass
+    
+    # Bypass auth for internal monitoring services (needed for Grafana data sources)
+    - domain:
+        - prometheus.lab.hartr.net
+        - loki.lab.hartr.net
+      policy: bypass
+    
+    # Protected services - require authentication
+    - domain:
+        - grafana.lab.hartr.net
+        - alertmanager.lab.hartr.net
+        - jenkins.lab.hartr.net
+        - gitea.lab.hartr.net
+        - wiki.lab.hartr.net
+        - code.lab.hartr.net
+        - uptime-kuma.lab.hartr.net
+        - calibre.lab.hartr.net
+        - audiobookshelf.lab.hartr.net
+        - freshrss.lab.hartr.net
+        - nextcloud.lab.hartr.net
+        - minio.lab.hartr.net
+        - registry-ui.lab.hartr.net
+        - traefik.lab.hartr.net
+        - speedtest.lab.hartr.net
       policy: one_factor
+    
+    # Admin-only infrastructure services
+    - domain:
+        - vault.lab.hartr.net
+        - nomad.lab.hartr.net
+        - consul.lab.hartr.net
+      policy: one_factor
+      subject:
+        - "group:admins"
 
 session:
-  name: authelia_session
-  secret: CHANGE_ME_GENERATE_RANDOM_STRING_SESSION_MIN_32_CHARS
-  expiration: 1h
-  inactivity: 5m
-  remember_me_duration: 1M
-  domain: lab.hartr.net
+  secret: {{ with secret "secret/data/authelia/config" }}{{ .Data.data.session_secret }}{{ end }}
+  
+  cookies:
+    - domain: lab.hartr.net
+      authelia_url: https://authelia.lab.hartr.net
+      default_redirection_url: https://home.lab.hartr.net
+      name: authelia_session
+      expiration: 12h
+      inactivity: 1h
+      remember_me: 1M
+  
+  # Use Redis for session storage (better than in-memory)
+  redis:
+    host: {{ range service "redis" }}{{ .Address }}{{ end }}
+    port: 6379
 
 regulation:
-  max_retries: 3
+  max_retries: 5
   find_time: 2m
-  ban_time: 5m
+  ban_time: 10m
 
 storage:
-  encryption_key: CHANGE_ME_GENERATE_RANDOM_STRING_ENCRYPTION_MIN_20_CHARS
-  local:
-    path: /data/db.sqlite3
+  encryption_key: {{ with secret "secret/data/authelia/config" }}{{ .Data.data.encryption_key }}{{ end }}
+  
+  # PostgreSQL backend (shared with other services)
+  postgres:
+    host: {{ range service "postgresql" }}{{ .Address }}{{ end }}
+    port: 5432
+    database: authelia
+    schema: public
+    username: authelia
+    password: {{ with secret "secret/data/postgres/authelia" }}{{ .Data.data.password }}{{ end }}
+    timeout: 5s
 
 notifier:
+  disable_startup_check: false
   filesystem:
     filename: /data/notification.txt
+
+# Optional: Enable SMTP for real email notifications
+# notifier:
+#   smtp:
+#     host: smtp.gmail.com
+#     port: 587
+#     username: your-email@gmail.com
+#     password: your-app-password
+#     sender: Authelia <authelia@lab.hartr.net>
+EOH
+      }
+
+      # User database - update the password hash after running generate-authelia-password.fish
+      template {
+        destination = "local/users_database.yml"
+        data        = <<EOH
+---
+# Authelia User Database
+# Generate password hash with: ./scripts/generate-authelia-password.fish
+
+users:
+  jack:
+    displayname: "Jack Harter"
+    # TODO: Replace with actual hash from generate-authelia-password.fish
+    password: "$argon2id$v=19$m=65536,t=3,p=4$3ixvZLI5S3TJ3v9+CBawbA$vJ5tv88X2oPrddVHwFEqDGVvt08+xNsHTHLrODgUjcc"
+    email: jack@hartr.net
+    groups:
+      - admins
+      - users
+
+# Add more users as needed:
+# username:
+#   displayname: "Full Name"
+#   password: "$argon2id$..."
+#   email: email@example.com
+#   groups:
+#     - users
 EOH
       }
 
@@ -107,11 +215,22 @@ EOH
           "traefik.http.routers.authelia.entrypoints=websecure",
           "traefik.http.routers.authelia.tls=true",
           "traefik.http.routers.authelia.tls.certresolver=letsencrypt",
+          # Define the ForwardAuth middleware for other services
+          "traefik.http.middlewares.authelia.forwardauth.address=http://authelia.service.consul:9091/api/verify?rd=https://authelia.lab.hartr.net",
+          "traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true",
+          "traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email",
         ]
         check {
-          type     = "tcp"
+          type     = "http"
+          path     = "/api/health"
           interval = "10s"
-          timeout  = "2s"
+          timeout  = "5s"
+          
+          check_restart {
+            limit           = 3
+            grace           = "30s"
+            ignore_warnings = false
+          }
         }
       }
     }

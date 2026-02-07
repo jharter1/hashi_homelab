@@ -146,6 +146,7 @@ EOH
           "traefik.http.routers.registry-ui.entrypoints=websecure",
           "traefik.http.routers.registry-ui.tls=true",
           "traefik.http.routers.registry-ui.tls.certresolver=letsencrypt",
+          "traefik.http.routers.registry-ui.middlewares=authelia@file",
         ]
         check {
           type     = "tcp"

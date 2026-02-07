@@ -151,6 +151,7 @@ EOH
           "traefik.http.routers.prometheus.entrypoints=websecure",
           "traefik.http.routers.prometheus.tls=true",
           "traefik.http.routers.prometheus.tls.certresolver=letsencrypt",
+          # No Authelia middleware - internal monitoring service
         ]
       }
     }

@@ -26,6 +26,7 @@ job "uptime-kuma" {
         "traefik.http.routers.uptime-kuma.entrypoints=websecure",
         "traefik.http.routers.uptime-kuma.tls=true",
         "traefik.http.routers.uptime-kuma.tls.certresolver=letsencrypt",
+        "traefik.http.routers.uptime-kuma.middlewares=authelia@file",
       ]
 
       check {

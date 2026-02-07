@@ -86,6 +86,7 @@ job "minio" {
           "traefik.http.routers.minio-console.tls=true",
           "traefik.http.routers.minio-console.tls.certresolver=letsencrypt",
           "traefik.http.routers.minio-console.tls=true",
+          "traefik.http.routers.minio-console.middlewares=authelia@file",
         ]
         check {
           type     = "http"

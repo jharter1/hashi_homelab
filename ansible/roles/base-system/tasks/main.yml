@@ -74,4 +74,7 @@
     - { name: 'registry', mode: '0755' }
     - { name: 'homepage', mode: '0755' }
     - { name: 'calibre', mode: '0755' }
+    - { name: 'speedtest', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'immich/upload', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'immich/postgres', owner: '1000', group: '1000', mode: '0755' }
   when: node_type == 'client' and nas_mount_source is defined

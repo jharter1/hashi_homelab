@@ -54,6 +54,7 @@ job "jenkins" {
           "traefik.http.routers.jenkins.entrypoints=websecure",
           "traefik.http.routers.jenkins.tls=true",
           "traefik.http.routers.jenkins.tls.certresolver=letsencrypt",
+          "traefik.http.routers.jenkins.middlewares=authelia@file",
         ]
 
         check {

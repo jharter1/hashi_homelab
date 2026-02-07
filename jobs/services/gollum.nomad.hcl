@@ -52,6 +52,7 @@ job "gollum" {
           "traefik.http.routers.gollum.entrypoints=websecure",
           "traefik.http.routers.gollum.tls=true",
           "traefik.http.routers.gollum.tls.certresolver=letsencrypt",
+          "traefik.http.routers.gollum.middlewares=authelia@file",
         ]
         check {
           type     = "http"

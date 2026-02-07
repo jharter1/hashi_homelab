@@ -159,6 +159,18 @@ tasks:
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/whoami.nomad.hcl
       - echo "All service jobs deployed successfully"
 
+  deploy:speedtest:
+    desc: "Deploy Speedtest Tracker"
+    cmds:
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/speedtest.nomad.hcl
+
+  deploy:immich:
+    desc: "Deploy Immich photo backup service"
+    cmds:
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/immich.nomad.hcl
+
   deploy:all:
     desc: "Deploy all Nomad jobs in correct order"
     cmds:

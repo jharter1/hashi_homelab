@@ -52,6 +52,7 @@ job "traefik" {
 
         volumes = [
           "local/traefik.yml:/etc/traefik/traefik.yml",
+          "local/dynamic.yml:/etc/traefik/dynamic.yml",
         ]
       }
 
@@ -104,6 +105,10 @@ providers:
     endpoint:
       address: 127.0.0.1:8500
       scheme: http
+  
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
 
 certificatesResolvers:
   letsencrypt:
@@ -126,6 +131,25 @@ accessLog:
   filePath: /dev/stdout
 EOF
         destination = "local/traefik.yml"
+      }
+
+      # Dynamic configuration for Authelia ForwardAuth middleware
+      template {
+        data = <<EOF
+# Traefik Dynamic Configuration
+http:
+  middlewares:
+    authelia:
+      forwardAuth:
+        address: http://{{ range service "authelia" }}{{ .Address }}{{ end }}:9091/api/authz/forward-auth
+        trustForwardHeader: true
+        authResponseHeaders:
+          - Remote-User
+          - Remote-Groups
+          - Remote-Email
+          - Remote-Name
+EOF
+        destination = "local/dynamic.yml"
       }
 
       resources {

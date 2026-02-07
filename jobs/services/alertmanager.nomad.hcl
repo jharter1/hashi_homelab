@@ -114,6 +114,7 @@ EOH
           "traefik.http.routers.alertmanager.entrypoints=websecure",
           "traefik.http.routers.alertmanager.tls=true",
           "traefik.http.routers.alertmanager.tls.certresolver=letsencrypt",
+          "traefik.http.routers.alertmanager.middlewares=authelia@file",
         ]
       }
     }
