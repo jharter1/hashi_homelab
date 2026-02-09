@@ -12,23 +12,10 @@ job "codeserver" {
       }
     }
 
-    volume "homepage_data" {
+    volume "codeserver_data" {
       type      = "host"
       read_only = false
-      source    = "homepage_data"
-    }
-
-    # Add other volumes you want to edit
-    volume "grafana_data" {
-      type      = "host"
-      read_only = false
-      source    = "grafana_data"
-    }
-
-    volume "loki_data" {
-      type      = "host"
-      read_only = false
-      source    = "loki_data"
+      source    = "codeserver_data"
     }
 
     restart {
@@ -49,22 +36,9 @@ job "codeserver" {
     task "codeserver" {
       driver = "docker"
 
-      # Mount all the config volumes
       volume_mount {
-        volume      = "homepage_data"
-        destination = "/workspace/homepage"
-        read_only   = false
-      }
-
-      volume_mount {
-        volume      = "grafana_data"
-        destination = "/workspace/grafana"
-        read_only   = false
-      }
-
-      volume_mount {
-        volume      = "loki_data"
-        destination = "/workspace/loki"
+        volume      = "codeserver_data"
+        destination = "/workspace"
         read_only   = false
       }
 

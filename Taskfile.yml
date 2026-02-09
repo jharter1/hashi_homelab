@@ -171,6 +171,12 @@ tasks:
       - |
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/immich.nomad.hcl
 
+  db:migrate:
+    desc: "🗄️  Migrate services from SQLite/embedded DB to central PostgreSQL"
+    cmds:
+      - |
+        fish scripts/migrate-databases.fish
+
   deploy:all:
     desc: "Deploy all Nomad jobs in correct order"
     cmds:

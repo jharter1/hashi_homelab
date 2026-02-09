@@ -21,6 +21,9 @@ job "vaultwarden" {
     task "vaultwarden" {
       driver = "docker"
 
+      # Enable Vault workload identity for secrets access
+      vault {}
+
       config {
         image        = "vaultwarden/server:latest"
         ports        = ["http"]
@@ -31,9 +34,17 @@ job "vaultwarden" {
         destination = "/data"
       }
 
+      # Vault template for database password
+      template {
+        destination = "secrets/db.env"
+        env         = true
+        data        = <<EOH
+DATABASE_URL=postgresql://vaultwarden:{{ with secret "secret/data/postgres/vaultwarden" }}{{ .Data.data.password }}{{ end }}@{{ range service "postgresql" }}{{ .Address }}{{ end }}:5432/vaultwarden
+EOH
+      }
+
       env {
-        # Use SQLite for simplicity (can be changed to PostgreSQL later)
-        DATABASE_URL = "/data/db.sqlite3"
+        # DATABASE_URL comes from Vault template above
         # Disable admin token for now (set via web UI or env var)
         # ADMIN_TOKEN = "your-admin-token-here"
         # Enable signups (disable in production)

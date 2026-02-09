@@ -141,7 +141,7 @@ http:
   middlewares:
     authelia:
       forwardAuth:
-        address: http://{{ range service "authelia" }}{{ .Address }}{{ end }}:9091/api/authz/forward-auth
+        address: http://{{ range service "authelia" }}{{ .Address }}{{ end }}:9091/api/verify?rd=https://authelia.lab.hartr.net
         trustForwardHeader: true
         authResponseHeaders:
           - Remote-User

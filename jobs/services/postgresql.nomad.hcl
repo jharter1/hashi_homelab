@@ -136,6 +136,48 @@ psql -v ON_ERROR_STOP=1 --username postgres <<-EOSQL
     GRANT ALL PRIVILEGES ON DATABASE grafana TO grafana;
     \c grafana
     GRANT ALL ON SCHEMA public TO grafana;
+
+    -- Speedtest Tracker
+    \c postgres
+    SELECT 'CREATE DATABASE speedtest' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'speedtest')\gexec
+    DO \$\$
+    BEGIN
+      IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'speedtest') THEN
+        CREATE USER speedtest WITH ENCRYPTED PASSWORD '{{ with secret "secret/data/postgres/speedtest" }}{{ .Data.data.password }}{{ end }}';
+      END IF;
+    END
+    \$\$;
+    GRANT ALL PRIVILEGES ON DATABASE speedtest TO speedtest;
+    \c speedtest
+    GRANT ALL ON SCHEMA public TO speedtest;
+
+    -- Uptime Kuma
+    \c postgres
+    SELECT 'CREATE DATABASE uptimekuma' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'uptimekuma')\gexec
+    DO \$\$
+    BEGIN
+      IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'uptimekuma') THEN
+        CREATE USER uptimekuma WITH ENCRYPTED PASSWORD '{{ with secret "secret/data/postgres/uptimekuma" }}{{ .Data.data.password }}{{ end }}';
+      END IF;
+    END
+    \$\$;
+    GRANT ALL PRIVILEGES ON DATABASE uptimekuma TO uptimekuma;
+    \c uptimekuma
+    GRANT ALL ON SCHEMA public TO uptimekuma;
+
+    -- Vaultwarden
+    \c postgres
+    SELECT 'CREATE DATABASE vaultwarden' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'vaultwarden')\gexec
+    DO \$\$
+    BEGIN
+      IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'vaultwarden') THEN
+        CREATE USER vaultwarden WITH ENCRYPTED PASSWORD '{{ with secret "secret/data/postgres/vaultwarden" }}{{ .Data.data.password }}{{ end }}';
+      END IF;
+    END
+    \$\$;
+    GRANT ALL PRIVILEGES ON DATABASE vaultwarden TO vaultwarden;
+    \c vaultwarden
+    GRANT ALL ON SCHEMA public TO vaultwarden;
 EOSQL
 
 echo "Database initialization completed successfully!"
