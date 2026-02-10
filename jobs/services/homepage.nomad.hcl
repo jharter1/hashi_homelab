@@ -20,12 +20,12 @@ job "homepage" {
     }
 
     update {
-      max_parallel     = 1
-      health_check     = "checks"
-      min_healthy_time = "5s"
-      healthy_deadline = "30s"
+      max_parallel      = 1
+      health_check      = "checks"
+      min_healthy_time  = "5s"
+      healthy_deadline  = "30s"
       progress_deadline = "1m"
-      auto_revert      = true
+      auto_revert       = true
     }
 
     task "homepage" {
@@ -34,7 +34,7 @@ job "homepage" {
       # Homepage configuration files
       template {
         destination = "local/config/settings.yaml"
-        data = <<EOH
+        data        = <<EOH
 ---
 title: Homelab Dashboard
 favicon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/nomad.png
@@ -96,7 +96,7 @@ EOH
 
       template {
         destination = "local/config/services.yaml"
-        data = <<EOH
+        data        = <<EOH
 ---
 - Infrastructure:
     - Nomad:
@@ -173,13 +173,10 @@ EOH
         icon: nextcloud.png
         href: https://nextcloud.lab.hartr.net
         description: File Sync & Share
-    - Calibre Web:
-        icon: calibre-web.png
-        href: https://calibre.lab.hartr.net
-        description: eBook Library
-        widget:
-          type: calibreweb
-          url: https://calibre.lab.hartr.net
+    - Speedtest:
+        icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/speedtest-tracker.png
+        href: https://speedtest.lab.hartr.net
+        description: Internet Speed Testing
     - Audiobookshelf:
         icon: audiobookshelf.png
         href: https://audiobookshelf.lab.hartr.net
@@ -193,11 +190,13 @@ EOH
           type: uptimekuma
           url: https://uptime-kuma.lab.hartr.net
           slug: default
-    - Speedtest:
-        icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/speedtest-tracker.png
-        href: https://speedtest.lab.hartr.net
-        description: Internet Speed Testing
-
+    - Calibre Web:
+        icon: calibre-web.png
+        href: https://calibre.lab.hartr.net
+        description: eBook Library
+        widget:
+          type: calibreweb
+          url: https://calibre.lab.hartr.net
 
 - Storage:
     - MinIO S3:
@@ -232,7 +231,7 @@ EOH
 
       template {
         destination = "local/config/widgets.yaml"
-        data = <<EOH
+        data        = <<EOH
 ---
 # System resources from Glances
 - resources:
@@ -277,7 +276,7 @@ EOH
 
       template {
         destination = "local/config/docker.yaml"
-        data = <<EOH
+        data        = <<EOH
 ---
 # Docker integration disabled - not available in rootless setup
 # Uncomment below if Docker TCP API is enabled on port 2375
@@ -289,7 +288,7 @@ EOH
 
       template {
         destination = "local/config/custom.css"
-        data = <<EOH
+        data        = <<EOH
 /* Custom styling for Homepage dashboard */
 .service-card {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -336,7 +335,7 @@ EOH
 
       template {
         destination = "local/config/bookmarks.yaml"
-        data = <<EOH
+        data        = <<EOH
 ---
 - Documentation:
     - Homelab GitHub:
@@ -426,7 +425,7 @@ EOH
       }
 
       config {
-        image    = "gethomepage/homepage:latest"
+        image        = "gethomepage/homepage:latest"
         network_mode = "host"
         # Mount local config files into container
         volumes = [
