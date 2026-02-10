@@ -1,0 +1,56 @@
+{
+  "//": [
+    "Recommended MCP configuration for Hashi Homelab.",
+    "This file is an example you can copy into:",
+    "- Cursor:   ~/.cursor/mcp.json (or via Settings → Cursor Settings → MCP)",
+    "- Claude:   ~/Library/Application Support/Claude/claude_desktop_config.json",
+    "- VS Code:  .vscode/mcp.json (for workspace sharing)",
+    "",
+    "Update paths, versions, and tokens as appropriate for your environment."
+  ],
+  "mcpServers": {
+    "homelab_fs": {
+      "command": "your-filesystem-mcp-binary",
+      "args": [],
+      "env": {
+        "ROOT": "/Users/jackharter/Developer/hashi_homelab"
+      }
+    },
+    "homelab_shell": {
+      "command": "your-shell-mcp-binary",
+      "args": [],
+      "env": {
+        "WORKDIR": "/Users/jackharter/Developer/hashi_homelab"
+      }
+    },
+    "homelab_http": {
+      "command": "your-http-mcp-binary",
+      "args": []
+    },
+    "mcp_nomad": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@kocierik/mcp-nomad@latest"
+      ],
+      "env": {
+        "NOMAD_ADDR": "http://10.0.0.50:4646",
+        "//NOMAD_TOKEN": "optional-ACL-token-if-needed"
+      }
+    },
+    "terraform": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "TFE_ADDRESS=https://app.terraform.io",
+        "-e",
+        "TFE_TOKEN=<<YOUR_TFE_TOKEN_HERE>>",
+        "hashicorp/terraform-mcp-server:0.4.0"
+      ]
+    }
+  }
+}
+

@@ -33,6 +33,7 @@ job "postgresql" {
         image        = "postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
+        privileged   = true
       }
 
       volume_mount {

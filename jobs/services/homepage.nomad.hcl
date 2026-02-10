@@ -153,10 +153,6 @@ EOH
         icon: docker.png
         href: https://registry-ui.lab.hartr.net
         description: Container Registry
-    - Jenkins:
-        icon: jenkins.png
-        href: https://jenkins.lab.hartr.net
-        description: CI/CD
     - Gitea:
         icon: gitea.png
         href: https://gitea.lab.hartr.net

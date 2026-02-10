@@ -18,14 +18,15 @@ terraform {
     }
   }
 
-# Terraform Cloud backend configuration - disabled during provider migration
-  cloud {
-    organization = "pve_homelab_cloud"
-  
-    workspaces {
-      name = "hashi-homelab"
-    }
-  }
+  # Local backend (default) - state stored in terraform.tfstate
+  # To use Terraform Cloud, uncomment the cloud block below and run: terraform login
+  # cloud {
+  #   organization = "pve_homelab_cloud"
+  # 
+  #   workspaces {
+  #     name = "hashi-homelab"
+  #   }
+  # }
 }
 
 # ProxMox provider configuration (bpg)

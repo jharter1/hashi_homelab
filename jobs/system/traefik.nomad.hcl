@@ -49,6 +49,9 @@ job "traefik" {
       config {
         image        = "traefik:v3.0"
         network_mode = "host"
+        
+        # Run as root to bind to privileged ports 80/443
+        privileged = true
 
         volumes = [
           "local/traefik.yml:/etc/traefik/traefik.yml",
@@ -129,6 +132,12 @@ log:
 
 accessLog:
   filePath: /dev/stdout
+
+metrics:
+  prometheus:
+    addEntryPointsLabels: true
+    addRoutersLabels: true
+    addServicesLabels: true
 EOF
         destination = "local/traefik.yml"
       }

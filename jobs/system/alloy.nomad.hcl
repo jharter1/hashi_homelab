@@ -24,7 +24,7 @@ job "alloy" {
         args = [
           "run",
           "--server.http.listen-addr=0.0.0.0:12345",
-          "--storage.path=/var/lib/alloy/data",
+          "--storage.path=/alloy/data",
           "--disable-reporting",
           "/alloy/config.alloy",
         ]
@@ -32,6 +32,7 @@ job "alloy" {
         # 1. Mount the necessary host paths for log scraping/discovery
         volumes = [
           "local/config.alloy:/alloy/config.alloy:ro",
+          "local/data:/alloy/data",
           # For Docker discovery and log scraping
           "/var/run/docker.sock:/var/run/docker.sock:ro",
           "/var/lib/docker/containers:/var/lib/docker/containers:ro",

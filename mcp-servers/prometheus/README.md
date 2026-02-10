@@ -1,4 +1,10 @@
-# Prometheus MCP Server
+# Prometheus MCP Server (legacy local implementation)
+
+> **Status: Deprecated in favor of generic HTTP/shell MCP servers**
+>
+> This directory contains a project-specific Node/TypeScript MCP server for Prometheus. For new setups, prefer using:
+> - A **shell MCP server** to run `curl`/CLI queries against Prometheus, and
+> - An **HTTP MCP server** to call the Prometheus HTTP API directly.
 
 Model Context Protocol (MCP) server for querying Prometheus metrics to monitor your HashiCorp homelab infrastructure.
 

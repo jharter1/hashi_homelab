@@ -26,6 +26,16 @@
     group: root
     mode: '0600'
 
+- name: Create local host volume directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: '/opt/nomad-volumes/artifactory_data', owner: 'nomad', group: 'nomad', mode: '0755' }
+
 - name: Install Nomad client configuration
   ansible.builtin.template:
     src: nomad-client.hcl.j2
@@ -99,3 +109,20 @@
     enabled: yes
     state: started
     daemon_reload: yes
+
+- name: Deploy Docker cleanup script
+  copy:
+    src: docker-cleanup.sh
+    dest: /usr/local/bin/docker-cleanup.sh
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Create cron job for Docker cleanup
+  cron:
+    name: "Docker system cleanup"
+    minute: "0"
+    hour: "2"
+    job: "/usr/local/bin/docker-cleanup.sh >> /var/log/docker-cleanup.log 2>&1"
+    user: root
+    state: present

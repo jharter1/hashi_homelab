@@ -27,6 +27,7 @@ job "speedtest" {
       config {
         image        = "lscr.io/linuxserver/speedtest-tracker:latest"
         ports        = ["http"]
+        privileged   = true
       }
 
       volume_mount {

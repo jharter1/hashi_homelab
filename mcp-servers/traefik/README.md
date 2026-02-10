@@ -1,4 +1,10 @@
-# Traefik MCP Server
+# Traefik MCP Server (legacy local implementation)
+
+> **Status: Deprecated in favor of generic HTTP/shell MCP servers**
+>
+> This directory contains a project-specific Node/TypeScript MCP server for Traefik. For new setups, prefer using:
+> - A **shell MCP server** to call `curl` or `nomad alloc logs` for Traefik,
+> - An **HTTP MCP server** to query the Traefik API and dashboard endpoints directly.
 
 Model Context Protocol (MCP) server for Traefik reverse proxy management. Query routers, services, middleware, and entrypoints through AI assistants.
 

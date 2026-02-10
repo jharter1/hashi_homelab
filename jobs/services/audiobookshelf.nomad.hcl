@@ -94,6 +94,7 @@ job "audiobookshelf" {
       config {
         image        = "ghcr.io/advplyr/audiobookshelf:latest"
         network_mode = "host"
+        privileged   = true
         
         # Use Pi-hole for DNS resolution
         dns_servers = ["10.0.0.10", "1.1.1.1"]

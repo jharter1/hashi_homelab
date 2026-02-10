@@ -1,4 +1,8 @@
-# Nomad MCP Server
+# Nomad MCP Server (legacy local implementation)
+
+> **Status: Deprecated in favor of community `mcp-nomad`**
+>
+> This directory contains a project-specific Node/TypeScript Nomad MCP server. For new setups, prefer the **Go-based community Nomad MCP server** [`@kocierik/mcp-nomad`](https://github.com/kocierik/mcp-nomad), which ships prebuilt binaries and an NPM CLI.
 
 Model Context Protocol (MCP) server for HashiCorp Nomad cluster management. This allows AI assistants to interact with your Nomad cluster directly.
 
@@ -9,7 +13,52 @@ Model Context Protocol (MCP) server for HashiCorp Nomad cluster management. This
 - 🏥 **Cluster Health**: Check overall cluster status and node health
 - 🔐 **Token Support**: Optional ACL token authentication
 
-## Installation
+## Recommended Alternative: `mcp-nomad`
+
+Instead of building this local server, install and configure `mcp-nomad`:
+
+```bash
+npm install -g @kocierik/mcp-nomad
+```
+
+Claude / Cursor MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "mcp_nomad": {
+      "command": "mcp-nomad",
+      "args": [],
+      "env": {
+        "NOMAD_ADDR": "http://10.0.0.50:4646",
+        "NOMAD_TOKEN": "your-acl-token-if-needed"
+      }
+    }
+  }
+}
+```
+
+Or, using `npx`:
+
+```json
+{
+  "mcpServers": {
+    "mcp_nomad": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@kocierik/mcp-nomad@latest"
+      ],
+      "env": {
+        "NOMAD_ADDR": "http://10.0.0.50:4646",
+        "NOMAD_TOKEN": "your-acl-token-if-needed"
+      }
+    }
+  }
+}
+```
+
+## Installation (legacy server)
 
 ```bash
 cd mcp-servers/nomad

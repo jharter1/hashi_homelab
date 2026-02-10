@@ -19,6 +19,7 @@ job "redis" {
         image        = "redis:7-alpine"
         network_mode = "host"
         ports        = ["redis"]
+        privileged   = true
         
         args = [
           "redis-server",

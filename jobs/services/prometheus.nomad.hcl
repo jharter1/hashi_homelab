@@ -122,6 +122,28 @@ scrape_configs:
       - source_labels: [__meta_consul_address]
         target_label: __address__
         replacement: '$1:8081'
+
+  - job_name: 'consul'
+    metrics_path: '/v1/agent/metrics'
+    params:
+      format: ['prometheus']
+    static_configs:
+      - targets:
+          - '10.0.0.50:8500'
+          - '10.0.0.51:8500'
+          - '10.0.0.52:8500'
+          - '10.0.0.60:8500'
+          - '10.0.0.61:8500'
+          - '10.0.0.62:8500'
+
+  - job_name: 'traefik'
+    consul_sd_configs:
+      - server: "127.0.0.1:8500"
+        services: ["traefik"]
+    relabel_configs:
+      - source_labels: [__meta_consul_address]
+        target_label: __address__
+        replacement: '$1:8080'
 EOH
       }
 

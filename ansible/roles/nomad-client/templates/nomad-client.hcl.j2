@@ -195,6 +195,7 @@ consul {
 plugin "docker" {
   config {
     allow_privileged = true
+    allow_caps = ["SYS_PTRACE"]
     volumes {
       enabled = true
     }

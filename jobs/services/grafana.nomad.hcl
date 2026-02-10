@@ -54,7 +54,27 @@ GF_DATABASE_HOST=postgresql.home:5432
 EOH
       }
 
+      # Provision Prometheus datasource
+      template {
+        destination = "local/provisioning/datasources/prometheus.yml"
+        data        = <<EOH
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus.service.consul:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: 15s
+EOH
+      }
+
       env {
+        # Provisioning paths
+        GF_PATHS_PROVISIONING = "/local/provisioning"
         # PostgreSQL database configuration
         # GF_DATABASE_HOST and PASSWORD come from template above
         GF_DATABASE_TYPE = "postgres"
@@ -73,6 +93,10 @@ EOH
         GF_SERVER_ENFORCE_DOMAIN = "false"
         GF_SERVER_PROTOCOL = "http"
         GF_SERVER_ENABLE_GZIP = "true"
+        
+        # Fix Monaco Editor loading issues
+        GF_SECURITY_CONTENT_SECURITY_POLICY = "false"
+        GF_SECURITY_STRICT_TRANSPORT_SECURITY = "false"
       }
 
       resources {

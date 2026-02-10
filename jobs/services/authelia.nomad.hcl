@@ -30,6 +30,7 @@ job "authelia" {
         image        = "authelia/authelia:latest"
         network_mode = "host"
         ports        = ["http"]
+        privileged   = true
 
         volumes = [
           "local/configuration.yml:/config/configuration.yml",
@@ -91,11 +92,27 @@ access_control:
         - loki.lab.hartr.net
       policy: bypass
     
+    # Bypass API endpoints that have their own authentication
+    # Calibre OPDS API - used by ebook readers
+    - domain:
+        - calibre.lab.hartr.net
+      resources:
+        - "^/opds.*$"
+      policy: bypass
+    
+    # Grafana API - used for dashboards, data sources, and integrations
+    - domain:
+        - grafana.lab.hartr.net
+      resources:
+        - "^/api/.*$"
+        - "^/avatar/.*$"
+        - "^/public/.*$"
+      policy: bypass
+    
     # Protected services - require authentication
     - domain:
         - grafana.lab.hartr.net
         - alertmanager.lab.hartr.net
-        - jenkins.lab.hartr.net
         - gitea.lab.hartr.net
         - wiki.lab.hartr.net
         - code.lab.hartr.net
@@ -146,8 +163,7 @@ storage:
   
   # PostgreSQL backend (shared with other services)
   postgres:
-    host: {{ range service "postgresql" }}{{ .Address }}{{ end }}
-    port: 5432
+    address: tcp://{{ range service "postgresql" }}{{ .Address }}{{ end }}:5432
     database: authelia
     schema: public
     username: authelia

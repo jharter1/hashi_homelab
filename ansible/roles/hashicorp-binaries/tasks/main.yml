@@ -17,7 +17,6 @@
     src: "/tmp/consul_{{ consul_version }}_linux_amd64.zip"
     dest: /usr/local/bin
     remote_src: yes
-    creates: /usr/local/bin/consul
     mode: '0755'
 
 - name: Download Nomad binary
@@ -32,7 +31,6 @@
     src: "/tmp/nomad_{{ nomad_version }}_linux_amd64.zip"
     dest: /usr/local/bin
     remote_src: yes
-    creates: /usr/local/bin/nomad
     mode: '0755'
 
 - name: Download Vault binary
@@ -47,7 +45,6 @@
     src: "/tmp/vault_{{ vault_version }}_linux_amd64.zip"
     dest: /usr/local/bin
     remote_src: yes
-    creates: /usr/local/bin/vault
     mode: '0755'
 
 - name: Clean up downloaded archives

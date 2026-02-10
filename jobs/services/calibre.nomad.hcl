@@ -49,6 +49,7 @@ job "calibre" {
       config {
         image = "linuxserver/calibre-web:latest"
         ports = ["http"]
+        privileged = true
       }
 
       volume_mount {
