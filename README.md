@@ -43,11 +43,12 @@ This project deploys a multi-tier HashiCorp stack on Proxmox VE.
 
 ```mermaid
 graph TD
-    Server1[Nomad Server 1<br/>10.0.0.50]
-    Server2[Nomad Server 2<br/>10.0.0.51]
-    Server3[Nomad Server 3<br/>10.0.0.52]
-    Client1[Nomad Client 1<br/>10.0.0.60]
-    Client2[Nomad Client 2<br/>10.0.0.61]
+    Server1[Nomad Server 1<br/>10.0.0.50<br/>4 GB RAM]
+    Server2[Nomad Server 2<br/>10.0.0.51<br/>4 GB RAM]
+    Server3[Nomad Server 3<br/>10.0.0.52<br/>4 GB RAM]
+    Client1[Nomad Client 1<br/>10.0.0.60<br/>10 GB RAM]
+    Client2[Nomad Client 2<br/>10.0.0.61<br/>10 GB RAM]
+    Client3[Nomad Client 3<br/>10.0.0.62<br/>10 GB RAM]
     
     Server1 <-->|Raft Consensus| Server2
     Server2 <-->|Raft Consensus| Server3
@@ -55,12 +56,14 @@ graph TD
     
     Client1 -->|Register| Server1
     Client2 -->|Register| Server2
+    Client3 -->|Register| Server3
     
     style Server1 fill:#60ac39,stroke:#333,stroke-width:2px,color:white
     style Server2 fill:#60ac39,stroke:#333,stroke-width:2px,color:white
     style Server3 fill:#60ac39,stroke:#333,stroke-width:2px,color:white
     style Client1 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
     style Client2 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
+    style Client3 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
 ```
 
 ### Service Flow
@@ -104,11 +107,23 @@ graph TD
 **Key Components:**
 
 - **Nomad Servers (3)**: Manage cluster state, scheduling decisions, and job placement using Raft consensus
-- **Nomad Clients (2+)**: Run containerized workloads with Docker driver
+- **Nomad Clients (3)**: Run containerized workloads with Docker driver
 - **Consul**: Service discovery, health checking, and KV store (co-located with Nomad servers)
 - **Traefik**: Reverse proxy with automatic service registration via Consul catalog
 - **Observability Stack**: Prometheus (metrics), Loki (logs), Grafana (visualization), Alloy (collection)
 - **Storage**: NFS mounts from NAS provide persistent storage via host volumes
+
+**Current Resource Allocation:**
+
+| Component | Count | vCPU | Memory | Notes |
+|-----------|-------|------|--------|-------|
+| Nomad Servers | 3 | 2 | 4 GB | Consul co-located |
+| Nomad Clients | 3 | 4 | 10 GB | Docker + workloads |
+| Vault Hubs (optional) | 3 | 2 | 2 GB | HA cluster |
+| **Total** | **6-9** | **20-26** | **42-48 GB** | **~75% utilization** |
+
+**Container Memory Usage:** ~13.6 GB across 28+ services  
+**Optimization History:** See [RESOURCE_SURVEY.md](docs/RESOURCE_SURVEY.md)
 
 ## Quick Start
 

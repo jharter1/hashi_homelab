@@ -38,7 +38,7 @@ job "gollum" {
 
       resources {
         cpu    = 200
-        memory = 256
+        memory = 128
       }
 
       service {

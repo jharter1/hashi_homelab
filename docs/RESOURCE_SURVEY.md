@@ -1,8 +1,9 @@
 # Infrastructure Resource Survey
 
-**Survey Date:** February 4, 2026  
-**Survey Tool:** Prometheus MCP Server  
-**Purpose:** Identify resource optimization opportunities
+**Last Survey:** February 4, 2026  
+**Last Optimization:** February 10, 2026  
+**Survey Tool:** Prometheus MCP Server & Nomad API  
+**Purpose:** Identify and implement resource optimization
 
 ## How to Use This Survey
 
@@ -54,14 +55,17 @@ The Prometheus MCP server provides 10 tools for resource monitoring:
 | dev-nomad-server-1 | Server | 4 GB | 1.5 GB | 2 | Running |
 | dev-nomad-server-2 | Server | 4 GB | 1.4 GB | 2 | Running |
 | dev-nomad-server-3 | Server | 4 GB | 1.4 GB | 2 | Running |
-| dev-nomad-client-1 | Client | 8 GB | 7.8 GB | 4 | Running |
-| dev-nomad-client-2 | Client | 8 GB | 7.6 GB | 4 | Running |
-| dev-nomad-client-3 | Client | 8 GB | 7.8 GB | 4 | Running |
+| dev-nomad-client-1 | Client | 10 GB | ~7.5 GB | 4 | Running |
+| dev-nomad-client-2 | Client | 10 GB | ~7.5 GB | 4 | Running |
+| dev-nomad-client-3 | Client | 10 GB | ~7.5 GB | 4 | Running |
 | hub-vault-1 | Vault | 2 GB | 1.3 GB | 2 | Running |
 | hub-vault-2 | Vault | 2 GB | 1.0 GB | 2 | Running |
 | hub-vault-3 | Vault | 2 GB | 1.1 GB | 2 | Running |
 
-**Total:** 42 GB allocated, ~30 GB actually used (~71% utilization)
+**Total:** 48 GB allocated, ~35 GB actually used (~73% utilization)
+
+**Optimization History:**
+- **Feb 10, 2026**: Increased client memory 8→10 GB, reduced 4 service limits, freed ~6.8 GB headroom
 
 ### Nomad Jobs (Configured Memory Limits)
 
@@ -73,22 +77,22 @@ From job file analysis:
 | audiobookshelf | 2048 MB | Media | Medium |
 | nextcloud | 1024 MB | Storage | High |
 | gitea | 1024 MB | Dev | Medium |
-| calibre | 1024 MB | Media | Low |
+| calibre | 768 MB ~~1024~~ | Media | Low |
 | jenkins | 1024 MB | CI/CD | Medium |
 | prometheus | 512 MB | Monitoring | High |
 | minio | 512 MB | Storage | High |
 | loki | 512 MB | Logs | High |
 | uptime-kuma | 512 MB | Monitoring | Medium |
 | vaultwarden | 512 MB | Security | Medium |
-| codeserver | 512 MB | Dev | Low |
+| codeserver | 256 MB ~~512~~ | Dev | Low |
 | docker-registry | 512 MB | Infrastructure | High |
-| freshrss | 512 MB | RSS | Low |
-| gollum | 256 MB | Wiki | Low |
+| freshrss | 256 MB ~~512~~ | RSS | Low |
+| gollum | 128 MB ~~256~~ | Wiki | Low |
 | homepage | 256 MB | Dashboard | Medium |
 | authelia | 256 MB | Auth | High |
 | alertmanager | 256 MB | Alerts | High |
 
-**Total Container Memory:** ~14.5 GB configured across all services
+**Total Container Memory:** ~13.6 GB configured across all services (saved ~900 MB)
 
 ## Optimization Opportunities
 
@@ -158,11 +162,105 @@ Services that may need LESS resources (verify with Prometheus):
    - Could add 4th client VM OR reduce container limits
    - Balance cost vs. performance
 
-## Recommended First Actions
+## How to Optimize Resources
 
-1. Run `prometheus_resource_summary` to get baseline
-2. Run `prometheus_top_memory_containers` with limit=20
-3. Compare configured limits vs actual usage
-4. Identify 3-5 services with >50% overhead
-5. Reduce their limits by 25-30%
-6. Monitor for stability over 48 hours
+### Step 1: Survey Current Usage
+
+```bash
+# Check Nomad cluster memory
+for node_name in dev-nomad-client-1 dev-nomad-client-2 dev-nomad-client-3
+  set node_id (curl -s http://10.0.0.50:4646/v1/nodes | python3 -c "import sys, json; nodes = json.load(sys.stdin); print([n['ID'] for n in nodes if '$node_name' == n['Name']][0])")
+  curl -s http://10.0.0.50:4646/v1/node/$node_id | python3 -c "import sys, json; n = json.load(sys.stdin); mem = n.get('NodeResources', {}).get('Memory', {}).get('MemoryMB', 0); print('$node_name: ' + str(mem) + ' MB (' + str(round(mem/1024, 2)) + ' GB)')"
+end
+
+# Check actual VM memory
+for ip in 10.0.0.60 10.0.0.61 10.0.0.62
+  ssh ubuntu@$ip "echo -n '$ip: ' && free -h | grep Mem"
+end
+
+# List all job statuses
+curl -s http://10.0.0.50:4646/v1/jobs | python3 -c "import sys, json; jobs = json.load(sys.stdin); [print(f\"{j['Name']}: {j['Status']}\") for j in jobs]"
+```
+
+### Step 2: Increase VM Memory (if needed)
+
+**IMPORTANT:** Memory changes require a full stop/start cycle, not just a reboot.
+
+1. Edit `terraform/environments/dev/terraform.tfvars`:
+   ```hcl
+   nomad_client_memory = 10240  # Or desired value
+   ```
+
+2. Apply Terraform changes:
+   ```bash
+   task tf:apply
+   ```
+
+3. **Stop all clients** (Terraform only updates config, doesn't restart):
+   ```bash
+   ssh ubuntu@10.0.0.60 "sudo shutdown -h now"
+   ssh ubuntu@10.0.0.61 "sudo shutdown -h now"
+   ssh ubuntu@10.0.0.62 "sudo shutdown -h now"
+   ```
+
+4. **Start VMs from Proxmox UI** (cold boot required for memory to apply)
+
+5. Verify new memory:
+   ```bash
+   ssh ubuntu@10.0.0.60 "free -h"
+   ```
+
+### Step 3: Reduce Service Memory Limits
+
+1. Identify over-provisioned services using Prometheus MCP
+2. Edit job files in `jobs/services/*.nomad.hcl`
+3. Update the `resources` block:
+   ```hcl
+   resources {
+     cpu    = 500
+     memory = 256  # Reduced from 512
+   }
+   ```
+4. Redeploy: `nomad job run -address=http://10.0.0.50:4646 jobs/services/servicename.nomad.hcl`
+
+### Step 4: Handle Services After Client Reboots
+
+Some services may go "dead" after client reboots. To recover:
+
+```bash
+# Check for dead jobs
+nomad job status -address=http://10.0.0.50:4646 | grep dead
+
+# Restart dead services
+nomad job run -address=http://10.0.0.50:4646 jobs/services/servicename.nomad.hcl
+
+# Or restart all services
+for job in jobs/services/*.nomad.hcl
+  nomad job run -address=http://10.0.0.50:4646 $job
+end
+```
+
+### Step 5: Monitor for 48-72 Hours
+
+- Watch for OOM kills: `nomad alloc status <alloc-id>`
+- Check service health in Traefik/Consul
+- Use Prometheus to monitor actual usage vs limits
+- Adjust if services are struggling or still over-provisioned
+
+## Optimization Results (Feb 10, 2026)
+
+**Changes Made:**
+- Client VMs: 8 GB → 10 GB (+25% headroom)
+- calibre: 1024 → 768 MB
+- codeserver: 512 → 256 MB
+- freshrss: 512 → 256 MB
+- gollum: 256 → 128 MB
+
+**Net Impact:**
+- Total cluster memory: 24 GB → 30 GB
+- Container overhead saved: ~900 MB
+- Effective headroom gain: ~6.8 GB
+- Utilization: ~97% → ~75% (much healthier!)
+
+**Services to Monitor:**
+- calibre, codeserver, freshrss, gollum (reduced limits)

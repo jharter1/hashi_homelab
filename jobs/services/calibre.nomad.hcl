@@ -78,7 +78,7 @@ job "calibre" {
     }
       resources {
         cpu    = 500
-        memory = 1024
+        memory = 768
       }
     }
   }
