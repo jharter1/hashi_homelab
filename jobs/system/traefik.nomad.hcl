@@ -54,7 +54,9 @@ job "traefik" {
         privileged = true
 
         volumes = [
-          "local/traefik.yml:/etc/traefik/traefik.yml",
+          # Static config from external file
+          "/mnt/nas/configs/infrastructure/traefik/traefik.yml:/etc/traefik/traefik.yml:ro",
+          # Dynamic config from template (needs Consul SD)
           "local/dynamic.yml:/etc/traefik/dynamic.yml",
         ]
       }
@@ -78,69 +80,8 @@ EOF
         env         = true
       }
 
-      # Traefik static configuration
-      template {
-        data = <<EOF
-# Traefik Static Configuration
-# See: https://doc.traefik.io/traefik/
-
-api:
-  dashboard: true
-  insecure: true
-
-entryPoints:
-  web:
-    address: ":80"
-    http:
-      redirections:
-        entryPoint:
-          to: websecure
-          scheme: https
-          permanent: true
-
-  websecure:
-    address: ":443"
-
-providers:
-  consulCatalog:
-    prefix: traefik
-    exposedByDefault: false
-    endpoint:
-      address: 127.0.0.1:8500
-      scheme: http
-  
-  file:
-    filename: /etc/traefik/dynamic.yml
-    watch: true
-
-certificatesResolvers:
-  letsencrypt:
-    acme:
-      email: jack@hartr.net
-      storage: /letsencrypt/acme.json
-      dnsChallenge:
-        provider: route53
-        resolvers:
-          - "1.1.1.1:53"
-          - "8.8.8.8:53"
-        delayBeforeCheck: 30s
-      # IMPORTANT: Uncomment for testing to avoid rate limits
-      # caServer: https://acme-staging-v02.api.letsencrypt.org/directory
-
-log:
-  level: INFO
-
-accessLog:
-  filePath: /dev/stdout
-
-metrics:
-  prometheus:
-    addEntryPointsLabels: true
-    addRoutersLabels: true
-    addServicesLabels: true
-EOF
-        destination = "local/traefik.yml"
-      }
+      # NOTE: Static config now loaded from /mnt/nas/configs/infrastructure/traefik/traefik.yml
+      # This eliminates the HEREDOC pattern and centralizes configuration
 
       # Dynamic configuration for Authelia ForwardAuth middleware
       template {

@@ -37,6 +37,13 @@ job "grafana" {
         network_mode = "host"
         ports        = ["http"]
         dns_servers  = ["10.0.0.10", "1.1.1.1"]
+
+        volumes = [
+          # Datasources from centralized config
+          "/mnt/nas/configs/observability/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro",
+          # Dashboard provisioning from centralized config
+          "/mnt/nas/configs/observability/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro",
+        ]
       }
 
       volume_mount {
@@ -54,27 +61,10 @@ GF_DATABASE_HOST=postgresql.home:5432
 EOH
       }
 
-      # Provision Prometheus datasource
-      template {
-        destination = "local/provisioning/datasources/prometheus.yml"
-        data        = <<EOH
-apiVersion: 1
-
-datasources:
-  - name: Prometheus
-    type: prometheus
-    access: proxy
-    url: http://prometheus.service.consul:9090
-    isDefault: true
-    editable: true
-    jsonData:
-      timeInterval: 15s
-EOH
-      }
+      # NOTE: Datasources config now loaded from /mnt/nas/configs/observability/grafana/datasources.yml
+      # This eliminates the HEREDOC pattern and centralizes configuration
 
       env {
-        # Provisioning paths
-        GF_PATHS_PROVISIONING = "/local/provisioning"
         # PostgreSQL database configuration
         # GF_DATABASE_HOST and PASSWORD come from template above
         GF_DATABASE_TYPE = "postgres"

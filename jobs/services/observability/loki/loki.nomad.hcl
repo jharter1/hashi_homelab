@@ -32,6 +32,11 @@ job "loki" {
         args = [
           "-config.file=/etc/loki/local-config.yaml",
         ]
+
+        volumes = [
+          # Config from centralized location
+          "/mnt/nas/configs/observability/loki/loki.yaml:/etc/loki/local-config.yaml:ro",
+        ]
       }
 
       volume_mount {
@@ -39,47 +44,8 @@ job "loki" {
         destination = "/loki"
       }
 
-      template {
-        destination = "local/local-config.yaml"
-        data        = <<EOH
-auth_enabled: false
-
-server:
-  http_listen_port: 3100
-  grpc_listen_port: 9096
-
-common:
-  path_prefix: /loki
-  storage:
-    filesystem:
-      chunks_directory: /loki/chunks
-      rules_directory: /loki/rules
-  replication_factor: 1
-  ring:
-    instance_addr: 127.0.0.1
-    kvstore:
-      store: inmemory
-
-schema_config:
-  configs:
-    - from: 2020-10-24
-      store: boltdb-shipper
-      object_store: filesystem
-      schema: v11
-      index:
-        prefix: index_
-        period: 24h
-
-ruler:
-  alertmanager_url: http://localhost:9093
-
-limits_config:
-  reject_old_samples: true
-  reject_old_samples_max_age: 168h
-  ingestion_rate_mb: 10
-  ingestion_burst_size_mb: 20
-EOH
-      }
+      # NOTE: Config now loaded from /mnt/nas/configs/observability/loki/loki.yaml
+      # This eliminates the HEREDOC pattern and centralizes configuration
 
       resources {
         cpu    = 500

@@ -1,0 +1,56 @@
+---
+# Config Sync Role
+# Synchronizes configuration files from repo to /mnt/nas/configs/ on all clients
+
+- name: Create configs directory on NAS
+  file:
+    path: /mnt/nas/configs
+    state: directory
+    owner: nomad
+    group: nomad
+    mode: '0775'
+  become: yes
+
+- name: Create config subdirectories
+  file:
+    path: "/mnt/nas/configs/{{ item }}"
+    state: directory
+    owner: nomad
+    group: nomad
+    mode: '0775'
+  become: yes
+  loop:
+    - observability/prometheus
+    - observability/grafana
+    - observability/grafana/dashboards
+    - observability/loki
+    - observability/alertmanager
+    - observability/alloy
+    - auth/authelia
+    - auth/redis
+    - databases/postgresql/init-scripts
+    - databases/mariadb/init-scripts
+    - infrastructure/traefik
+    - infrastructure/minio
+
+- name: Sync all config files
+  synchronize:
+    src: "{{ playbook_dir }}/../../configs/"
+    dest: /mnt/nas/configs/
+    delete: no
+    recursive: yes
+    rsync_opts:
+      - "--exclude=.git"
+      - "--exclude=README.md"
+      - "--exclude=*.swp"
+      - "--omit-dir-times"
+      - "--no-perms"
+      - "--no-owner"
+      - "--no-group"
+  delegate_to: localhost
+  become: no
+  register: config_sync_result
+
+- name: Display sync results
+  debug:
+    msg: "Configs synced: {{ config_sync_result.changed }}"

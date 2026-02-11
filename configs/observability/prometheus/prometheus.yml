@@ -1,0 +1,75 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'dev'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files: []
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter via Consul service discovery
+  - job_name: 'node-exporter'
+    consul_sd_configs:
+      - server: 'localhost:8500'
+    relabel_configs:
+      - source_labels: [__meta_consul_service]
+        target_label: job
+      - source_labels: [__meta_consul_node]
+        target_label: node
+      - source_labels: [__address__]
+        target_label: instance
+
+  # Nomad Clients via Consul service discovery
+  - job_name: 'nomad-client'
+    consul_sd_configs:
+      - server: 'localhost:8500'
+    relabel_configs:
+      - source_labels: [__meta_consul_service]
+        regex: 'nomad-client'
+        action: keep
+      - source_labels: [__meta_consul_node]
+        target_label: node
+      - source_labels: [__address__]
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '${1}:4646'
+        target_label: __address__
+
+  # Nomad Servers via Consul service discovery
+  - job_name: 'nomad-server'
+    consul_sd_configs:
+      - server: 'localhost:8500'
+    relabel_configs:
+      - source_labels: [__meta_consul_service]
+        regex: 'nomad-server'
+        action: keep
+      - source_labels: [__meta_consul_node]
+        target_label: node
+      - source_labels: [__address__]
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '${1}:4646'
+        target_label: __address__
+
+  # Consul via Consul service discovery
+  - job_name: 'consul'
+    consul_sd_configs:
+      - server: 'localhost:8500'
+    relabel_configs:
+      - source_labels: [__meta_consul_service]
+        regex: 'consul'
+        action: keep
+      - source_labels: [__meta_consul_node]
+        target_label: node
+      - source_labels: [__address__]
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '${1}:8500'
+        target_label: __address__

@@ -1,0 +1,20 @@
+---
+# Config Sync Role Metadata
+
+dependencies:
+  - role: base-system
+
+galaxy_info:
+  author: Jack Harter
+  description: Synchronizes configuration files to NAS storage for Nomad services
+  company: hartr.net
+  license: MIT
+  min_ansible_version: 2.14
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+  galaxy_tags:
+    - hashicorp
+    - nomad
+    - configuration

@@ -1,0 +1,21 @@
+---
+# Playbook to sync configuration files to NAS storage
+# Usage: ansible-playbook ansible/playbooks/sync-configs.yml
+
+- name: Sync configuration files
+  hosts: nomad_clients[0]  # Only need to sync to one client since NAS is shared
+  gather_facts: yes
+  
+  roles:
+    - role: ../roles/config-sync
+  
+  post_tasks:
+    - name: Verify configs directory
+      stat:
+        path: /mnt/nas/configs
+      register: configs_dir
+      
+    - name: Show sync status
+      debug:
+        msg: "✅ Configs synced successfully to /mnt/nas/configs/"
+      when: configs_dir.stat.exists

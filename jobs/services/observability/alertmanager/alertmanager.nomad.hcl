@@ -34,7 +34,8 @@ job "alertmanager" {
         ]
 
         volumes = [
-          "local/alertmanager.yml:/etc/alertmanager/alertmanager.yml",
+          # Config from centralized location
+          "/mnt/nas/configs/observability/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro",
         ]
       }
 
@@ -43,50 +44,8 @@ job "alertmanager" {
         destination = "/alertmanager"
       }
 
-      template {
-        destination = "local/alertmanager.yml"
-        data        = <<EOH
-global:
-  resolve_timeout: 5m
-
-# Route alerts based on labels
-route:
-  group_by: ['alertname', 'cluster', 'service']
-  group_wait: 10s
-  group_interval: 10s
-  repeat_interval: 12h
-  receiver: 'default'
-  routes:
-    - match:
-        severity: critical
-      receiver: 'critical'
-    - match:
-        severity: warning
-      receiver: 'warning'
-
-# Receivers define where alerts are sent
-receivers:
-  - name: 'default'
-    # For now, just log alerts
-    # Can be extended with email, Slack, Discord, etc.
-    
-  - name: 'critical'
-    # Critical alerts receiver
-    # Add notification channels here (email, Slack, etc.)
-    
-  - name: 'warning'
-    # Warning alerts receiver
-    # Add notification channels here
-
-# Inhibit rules to reduce noise
-inhibit_rules:
-  - source_match:
-      severity: 'critical'
-    target_match:
-      severity: 'warning'
-    equal: ['alertname', 'cluster', 'service']
-EOH
-      }
+      # NOTE: Config now loaded from /mnt/nas/configs/observability/alertmanager/alertmanager.yml
+      # This eliminates the HEREDOC pattern and centralizes configuration
 
       resources {
         cpu    = 200

@@ -36,7 +36,8 @@ job "prometheus" {
         ]
 
         volumes = [
-          "local/prometheus.yml:/etc/prometheus/prometheus.yml",
+          # Config now loaded from centralized location
+          "/mnt/nas/configs/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro",
         ]
       }
 
@@ -50,102 +51,8 @@ job "prometheus" {
         destination = "/prometheus"
       }
 
-      template {
-        destination = "local/prometheus.yml"
-        data        = <<EOH
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
-
-scrape_configs:
-  - job_name: 'prometheus'
-    static_configs:
-      - targets: ['127.0.0.1:9090']
-
-  - job_name: 'node-exporter'
-    consul_sd_configs:
-      - server: "127.0.0.1:8500"
-        services: ["node-exporter"]
-    relabel_configs:
-      # Use node address if service address is empty
-      - source_labels: [__meta_consul_address]
-        target_label: __address__
-        replacement: '$1:9100'
-
-  - job_name: 'nomad-servers'
-    metrics_path: '/v1/metrics'
-    params:
-      format: ['prometheus']
-    static_configs:
-      - targets: 
-          - '10.0.0.50:4646'
-          - '10.0.0.51:4646'
-          - '10.0.0.52:4646'
-        labels:
-          job: 'nomad-server'
-
-  - job_name: 'nomad-clients'
-    metrics_path: '/v1/metrics'
-    params:
-      format: ['prometheus']
-    static_configs:
-      - targets:
-          - '10.0.0.60:4646'
-          - '10.0.0.61:4646'
-          - '10.0.0.62:4646'
-        labels:
-          job: 'nomad-client'
-
-  - job_name: 'loki'
-    consul_sd_configs:
-      - server: "127.0.0.1:8500"
-        services: ["loki"]
-    relabel_configs:
-      - source_labels: [__meta_consul_address]
-        target_label: __address__
-        replacement: '$1:3100'
-
-  - job_name: 'alloy'
-    consul_sd_configs:
-      - server: "127.0.0.1:8500"
-        services: ["alloy"]
-    relabel_configs:
-      - source_labels: [__meta_consul_address]
-        target_label: __address__
-        replacement: '$1:12345'
-
-  - job_name: 'cadvisor'
-    consul_sd_configs:
-      - server: "127.0.0.1:8500"
-        services: ["cadvisor"]
-    relabel_configs:
-      - source_labels: [__meta_consul_address]
-        target_label: __address__
-        replacement: '$1:8081'
-
-  - job_name: 'consul'
-    metrics_path: '/v1/agent/metrics'
-    params:
-      format: ['prometheus']
-    static_configs:
-      - targets:
-          - '10.0.0.50:8500'
-          - '10.0.0.51:8500'
-          - '10.0.0.52:8500'
-          - '10.0.0.60:8500'
-          - '10.0.0.61:8500'
-          - '10.0.0.62:8500'
-
-  - job_name: 'traefik'
-    consul_sd_configs:
-      - server: "127.0.0.1:8500"
-        services: ["traefik"]
-    relabel_configs:
-      - source_labels: [__meta_consul_address]
-        target_label: __address__
-        replacement: '$1:8080'
-EOH
-      }
+      # NOTE: Config now loaded from /mnt/nas/configs/observability/prometheus/prometheus.yml
+      # This eliminates the HEREDOC pattern and centralizes configuration
 
       resources {
         cpu    = 500

@@ -1,0 +1,32 @@
+---
+# Handlers for config-sync role
+
+- name: restart traefik
+  command: nomad job restart -address=http://10.0.0.50:4646 traefik
+  delegate_to: localhost
+  run_once: true
+
+- name: restart prometheus
+  command: nomad job restart -address=http://10.0.0.50:4646 prometheus
+  delegate_to: localhost
+  run_once: true
+
+- name: restart grafana
+  command: nomad job restart -address=http://10.0.0.50:4646 grafana
+  delegate_to: localhost
+  run_once: true
+
+- name: restart loki
+  command: nomad job restart -address=http://10.0.0.50:4646 loki
+  delegate_to: localhost
+  run_once: true
+
+- name: restart alertmanager
+  command: nomad job restart -address=http://10.0.0.50:4646 alertmanager
+  delegate_to: localhost
+  run_once: true
+
+- name: restart alloy
+  command: nomad job restart -address=http://10.0.0.50:4646 alloy
+  delegate_to: localhost
+  run_once: true

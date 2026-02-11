@@ -1,0 +1,85 @@
+# Pre-commit hooks for hashi_homelab
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Terraform validation
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.83.0
+    hooks:
+      - id: terraform_fmt
+        args:
+          - --args=-recursive
+      - id: terraform_validate
+        args:
+          - --hook-config=--retry-once-with-cleanup=true
+      - id: terraform_docs
+        args:
+          - --hook-config=--path-to-file=README.md
+          - --hook-config=--add-to-existing-file=true
+          - --hook-config=--create-file-if-not-exist=true
+
+  # Ansible validation
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v6.22.0
+    hooks:
+      - id: ansible-lint
+        files: \.(yaml|yml)$
+        exclude: ^kubernetes/|^\.github/
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^docs/
+      - id: end-of-file-fixer
+        exclude: ^docs/
+      - id: check-yaml
+        args: ['--unsafe']  # Allow custom YAML tags
+        exclude: ^kubernetes/|docker-compose
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # Nomad job validation (local hook)
+  - repo: local
+    hooks:
+      - id: nomad-validate
+        name: Validate Nomad job files
+        entry: scripts/validate-nomad-jobs.fish
+        language: script
+        files: \.nomad\.hcl$
+        pass_filenames: true
+
+      - id: nomad-fmt
+        name: Format Nomad job files
+        entry: bash -c 'for file in "$@"; do nomad fmt "$file"; done' --
+        language: system
+        files: \.nomad\.hcl$
+        pass_filenames: true
+
+  # YAML linting
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.33.0
+    hooks:
+      - id: yamllint
+        args: ['-d', '{extends: default, rules: {line-length: {max: 120}, document-start: disable}}']
+        exclude: ^kubernetes/|docker-compose|\.github/
+
+  # Fish shell syntax check
+  - repo: https://github.com/fish-shop/syntax-check
+    rev: v1.1.0
+    hooks:
+      - id: syntax-check
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.37.0
+    hooks:
+      - id: markdownlint
+        args: ['--fix']
+        exclude: ^docs/ANSWERS\.md|SECURITY_AUDIT

@@ -50,10 +50,6 @@
           url: https://prometheus.lab.hartr.net
 
 - Services:
-    - Docker Registry:
-        icon: docker.png
-        href: https://registry-ui.lab.hartr.net
-        description: Container Registry
     - Gitea:
         icon: gitea.png
         href: https://gitea.lab.hartr.net
