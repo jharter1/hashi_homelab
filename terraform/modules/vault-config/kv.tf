@@ -103,3 +103,201 @@ resource "vault_kv_secret_v2" "consul_encryption" {
     gossip_key = random_bytes.consul_gossip.base64
   })
 }
+
+# ============================================================================
+# PostgreSQL Database Passwords
+# ============================================================================
+
+resource "random_password" "postgres_admin" {
+  length  = 32
+  special = true
+}
+
+resource "random_password" "postgres_authelia" {
+  length  = 32
+  special = true
+}
+
+resource "random_password" "postgres_freshrss" {
+  length  = 32
+  special = true
+}
+
+resource "random_password" "postgres_gitea" {
+  length  = 32
+  special = true
+}
+
+resource "random_password" "postgres_grafana" {
+  length  = 32
+  special = true
+}
+
+resource "random_password" "postgres_speedtest" {
+  length  = 32
+  special = true
+}
+
+resource "random_password" "postgres_uptimekuma" {
+  length  = 32
+  special = true
+}
+
+resource "random_password" "postgres_vaultwarden" {
+  length  = 32
+  special = true
+}
+
+# PostgreSQL admin password
+resource "vault_kv_secret_v2" "postgres_admin" {
+  mount = vault_mount.kv.path
+  name  = "postgres/admin"
+
+  data_json = jsonencode({
+    password = random_password.postgres_admin.result
+  })
+
+  lifecycle {
+    ignore_changes = [data_json]
+  }
+}
+
+# Authelia database
+resource "vault_kv_secret_v2" "postgres_authelia" {
+  mount = vault_mount.kv.path
+  name  = "postgres/authelia"
+
+  data_json = jsonencode({
+    password = random_password.postgres_authelia.result
+  })
+
+  lifecycle {
+    ignore_changes = [data_json]
+  }
+}
+
+# FreshRSS database
+resource "vault_kv_secret_v2" "postgres_freshrss" {
+  mount = vault_mount.kv.path
+  name  = "postgres/freshrss"
+
+  data_json = jsonencode({
+    password = random_password.postgres_freshrss.result
+  })
+
+  lifecycle {
+    ignore_changes = [data_json]
+  }
+}
+
+# Gitea database
+resource "vault_kv_secret_v2" "postgres_gitea" {
+  mount = vault_mount.kv.path
+  name  = "postgres/gitea"
+
+  data_json = jsonencode({
+    password = random_password.postgres_gitea.result
+  })
+
+  lifecycle {
+    ignore_changes = [data_json]
+  }
+}
+
+# Grafana database
+resource "vault_kv_secret_v2" "postgres_grafana" {
+  mount = vault_mount.kv.path
+  name  = "postgres/grafana"
+
+  data_json = jsonencode({
+    password = random_password.postgres_grafana.result
+  })
+
+  lifecycle {
+    ignore_changes = [data_json]
+  }
+}
+
+# Speedtest database
+resource "vault_kv_secret_v2" "postgres_speedtest" {
+  mount = vault_mount.kv.path
+  name  = "postgres/speedtest"
+
+  data_json = jsonencode({
+    password = random_password.postgres_speedtest.result
+  })
+
+  lifecycle {
+    ignore_changes = [data_json]
+  }
+}
+
+# Uptime Kuma database
+resource "vault_kv_secret_v2" "postgres_uptimekuma" {
+  mount = vault_mount.kv.path
+  name  = "postgres/uptimekuma"
+
+  data_json = jsonencode({
+    password = random_password.postgres_uptimekuma.result
+  })
+
+  lifecycle {
+    ignore_changes = [data_json]
+  }
+}
+
+# Vaultwarden database
+resource "vault_kv_secret_v2" "postgres_vaultwarden" {
+  mount = vault_mount.kv.path
+  name  = "postgres/vaultwarden"
+
+  data_json = jsonencode({
+    password = random_password.postgres_vaultwarden.result
+  })
+
+  lifecycle {
+    ignore_changes = [data_json]
+  }
+}
+
+# ============================================================================
+# MariaDB Database Passwords
+# ============================================================================
+
+resource "random_password" "mariadb_admin" {
+  length  = 32
+  special = true
+}
+
+resource "random_password" "mariadb_seafile" {
+  length  = 32
+  special = true
+}
+
+# MariaDB root password
+resource "vault_kv_secret_v2" "mariadb_admin" {
+  mount = vault_mount.kv.path
+  name  = "mariadb/admin"
+
+  data_json = jsonencode({
+    password = random_password.mariadb_admin.result
+  })
+
+  lifecycle {
+    ignore_changes = [data_json]
+  }
+}
+
+# Seafile database password
+resource "vault_kv_secret_v2" "mariadb_seafile" {
+  mount = vault_mount.kv.path
+  name  = "mariadb/seafile"
+
+  data_json = jsonencode({
+    password = random_password.mariadb_seafile.result
+  })
+
+  lifecycle {
+    ignore_changes = [data_json]
+  }
+}

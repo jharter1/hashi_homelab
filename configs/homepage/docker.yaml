@@ -1,0 +1,6 @@
+---
+# Docker integration disabled - not available in rootless setup
+# Uncomment below if Docker TCP API is enabled on port 2375
+# my-docker:
+#   host: 10.0.0.60
+#   port: 2375

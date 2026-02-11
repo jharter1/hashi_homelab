@@ -120,7 +120,7 @@ access_control:
         - calibre.lab.hartr.net
         - audiobookshelf.lab.hartr.net
         - freshrss.lab.hartr.net
-        - nextcloud.lab.hartr.net
+        - seafile.lab.hartr.net
         - minio.lab.hartr.net
         - registry-ui.lab.hartr.net
         - traefik.lab.hartr.net

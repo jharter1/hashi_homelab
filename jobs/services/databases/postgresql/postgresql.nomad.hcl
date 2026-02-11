@@ -96,20 +96,6 @@ psql -v ON_ERROR_STOP=1 --username postgres <<-EOSQL
     \c gitea
     GRANT ALL ON SCHEMA public TO gitea;
 
-    -- Nextcloud
-    \c postgres
-    SELECT 'CREATE DATABASE nextcloud' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'nextcloud')\gexec
-    DO \$\$
-    BEGIN
-      IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'nextcloud') THEN
-        CREATE USER nextcloud WITH ENCRYPTED PASSWORD '{{ with secret "secret/data/postgres/nextcloud" }}{{ .Data.data.password }}{{ end }}';
-      END IF;
-    END
-    \$\$;
-    GRANT ALL PRIVILEGES ON DATABASE nextcloud TO nextcloud;
-    \c nextcloud
-    GRANT ALL ON SCHEMA public TO nextcloud;
-
     -- Authelia
     \c postgres
     SELECT 'CREATE DATABASE authelia' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'authelia')\gexec

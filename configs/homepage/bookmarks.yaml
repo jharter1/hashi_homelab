@@ -1,0 +1,76 @@
+---
+- Documentation:
+    - Homelab GitHub:
+        - icon: github.png
+          href: https://github.com/jharter1/hashi_homelab
+          description: Main repository
+    - Nomad Docs:
+        - icon: nomad.png
+          href: https://developer.hashicorp.com/nomad/docs
+          description: Job orchestration
+    - Consul Docs:
+        - icon: consul.png
+          href: https://developer.hashicorp.com/consul/docs
+          description: Service mesh & discovery
+    - Vault Docs:
+        - icon: vault.png
+          href: https://developer.hashicorp.com/vault/docs
+          description: Secrets management
+    - Traefik Docs:
+        - icon: traefik.png
+          href: https://doc.traefik.io/traefik/
+          description: Reverse proxy
+
+- Quick Links:
+    - Nomad UI:
+        - icon: nomad.png
+          href: http://10.0.0.50:4646
+          description: Job management
+    - Consul UI:
+        - icon: consul.png
+          href: http://10.0.0.50:8500
+          description: Service catalog
+    - Traefik Dashboard:
+        - icon: traefik.png
+          href: http://10.0.0.60:8080
+          description: Routing dashboard
+    - Prometheus:
+        - icon: prometheus.png
+          href: https://prometheus.lab.hartr.net
+          description: Metrics & alerts
+    - Grafana:
+        - icon: grafana.png
+          href: https://grafana.lab.hartr.net
+          description: Dashboards
+
+- Homelab Resources:
+    - r/homelab:
+        - icon: reddit.png
+          href: https://reddit.com/r/homelab
+          description: Homelab community
+    - r/selfhosted:
+        - icon: reddit.png
+          href: https://reddit.com/r/selfhosted
+          description: Self-hosting community
+    - Awesome Selfhosted:
+        - icon: github.png
+          href: https://github.com/awesome-selfhosted/awesome-selfhosted
+          description: Service directory
+    - LinuxServer.io:
+        - icon: linuxserver.png
+          href: https://www.linuxserver.io/
+          description: Container images
+
+- Monitoring:
+    - Netdata:
+        - icon: netdata.png
+          href: https://netdata.lab.hartr.net
+          description: Real-time metrics
+    - Dozzle:
+        - icon: dozzle.png
+          href: https://dozzle.lab.hartr.net
+          description: Container logs
+    - Uptime Kuma:
+        - icon: uptime-kuma.png
+          href: https://uptime-kuma.lab.hartr.net
+          description: Uptime monitoring

@@ -43,6 +43,15 @@ path "secret/data/common/*" {
   capabilities = ["read"]
 }
 
+# Allow workloads to read database credentials
+path "secret/data/postgres/*" {
+  capabilities = ["read"]
+}
+
+path "secret/data/mariadb/*" {
+  capabilities = ["read"]
+}
+
 # Allow workloads to renew their own tokens
 path "auth/token/renew-self" {
   capabilities = ["update"]

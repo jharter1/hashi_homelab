@@ -22,11 +22,19 @@ job "uptime-kuma" {
       
       tags = [
         "traefik.enable=true",
+        # Main UI router - protected by Authelia
         "traefik.http.routers.uptime-kuma.rule=Host(`uptime-kuma.lab.hartr.net`)",
         "traefik.http.routers.uptime-kuma.entrypoints=websecure",
         "traefik.http.routers.uptime-kuma.tls=true",
         "traefik.http.routers.uptime-kuma.tls.certresolver=letsencrypt",
         "traefik.http.routers.uptime-kuma.middlewares=authelia@file",
+        "traefik.http.routers.uptime-kuma.priority=1",
+        # API router - bypasses Authelia for status page API (used by Homepage widget)
+        "traefik.http.routers.uptime-kuma-api.rule=Host(`uptime-kuma.lab.hartr.net`) && PathPrefix(`/api/status-page`)",
+        "traefik.http.routers.uptime-kuma-api.entrypoints=websecure",
+        "traefik.http.routers.uptime-kuma-api.tls=true",
+        "traefik.http.routers.uptime-kuma-api.tls.certresolver=letsencrypt",
+        "traefik.http.routers.uptime-kuma-api.priority=10",
       ]
 
       check {

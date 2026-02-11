@@ -74,7 +74,19 @@
     - { name: 'registry', mode: '0755' }
     - { name: 'homepage', mode: '0755' }
     - { name: 'calibre', mode: '0755' }
+    - { name: 'seafile', mode: '0755' }
+    - { name: 'postgres', mode: '0755' }
+    - { name: 'mariadb', owner: '999', group: '999', mode: '0755' }
     - { name: 'speedtest', owner: '1000', group: '1000', mode: '0755' }
     - { name: 'immich/upload', owner: '1000', group: '1000', mode: '0755' }
     - { name: 'immich/postgres', owner: '1000', group: '1000', mode: '0755' }
+  when: node_type == 'client' and nas_mount_source is defined
+
+- name: Sync homepage configuration files
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../configs/homepage/"
+    dest: "{{ nas_mount_point }}/homepage/"
+    owner: root
+    group: root
+    mode: '0644'
   when: node_type == 'client' and nas_mount_source is defined

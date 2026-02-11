@@ -1,0 +1,15 @@
+---
+- name: Sync homepage configuration files
+  hosts: nomad_clients
+  become: yes
+  gather_facts: no
+  
+  tasks:
+    - name: Sync homepage configuration files to NAS
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../configs/homepage/"
+        dest: "{{ nas_mount_point }}/homepage/"
+        owner: root
+        group: root
+        mode: '0644'
+      when: nas_mount_source is defined

@@ -1,0 +1,133 @@
+---
+- Infrastructure:
+    - Nomad:
+        icon: nomad.png
+        href: http://10.0.0.50:4646
+        description: Container Orchestration
+    - Consul:
+        icon: consul.png
+        href: http://10.0.0.50:8500
+        description: Service Discovery
+    - Vault:
+        icon: vault.png
+        href: http://10.0.0.30:8200
+        description: Secrets Management
+    - Traefik:
+        icon: traefik.png
+        href: https://traefik.lab.hartr.net
+        description: Reverse Proxy
+        widget:
+          type: traefik
+          url: http://10.0.0.60:8080
+
+- Monitoring:
+    - Grafana:
+        icon: grafana.png
+        href: https://grafana.lab.hartr.net
+        description: Metrics Visualization
+    - Alertmanager:
+        icon: alertmanager.png
+        href: https://alertmanager.lab.hartr.net
+        description: Alert Routing
+    - Loki:
+        icon: loki.png
+        href: https://loki.lab.hartr.net
+        description: Log Aggregation
+    - Netdata:
+        icon: netdata.png
+        href: https://netdata.lab.hartr.net
+        description: Real-time Performance
+    - Dozzle:
+        icon: dozzle.png
+        href: https://dozzle.lab.hartr.net
+        description: Docker Log Viewer
+    - Prometheus:
+        icon: prometheus.png
+        href: https://prometheus.lab.hartr.net
+        description: Metrics Collection
+        widget:
+          type: prometheus
+          url: https://prometheus.lab.hartr.net
+
+- Services:
+    - Docker Registry:
+        icon: docker.png
+        href: https://registry-ui.lab.hartr.net
+        description: Container Registry
+    - Gitea:
+        icon: gitea.png
+        href: https://gitea.lab.hartr.net
+        description: Self-hosted Git
+    - Code Server:
+        icon: code.png
+        href: https://code.lab.hartr.net
+        description: VS Code in Browser
+    - Gollum Wiki:
+        icon: gollum.png
+        href: https://wiki.lab.hartr.net
+        description: Git-backed Wiki
+    - Seafile:
+        icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/seafile.png
+        href: https://seafile.lab.hartr.net
+        description: File Sync & Collaboration
+    - Speedtest:
+        icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/speedtest-tracker.png
+        href: https://speedtest.lab.hartr.net
+        description: Internet Speed Testing
+        widget:
+          type: speedtest
+          url: https://speedtest.lab.hartr.net
+          key: "lVBkCELz5L7PYgyrPEd0BbFn64KEbuFkrmo7q9iGe22c26b4"
+    - Audiobookshelf:
+        icon: audiobookshelf.png
+        href: https://audiobookshelf.lab.hartr.net
+        description: Audiobook & Podcast Server
+        ping: http://10.0.0.60:13378
+        widget:
+          type: audiobookshelf
+          url: http://10.0.0.60:13378
+          key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXlJZCI6IjA4NDE2ODhlLWEyYzQtNDMzYy05ZmY0LTM3ZTQ0NmJmNWVhZiIsIm5hbWUiOiJ3aWRnZXQiLCJ0eXBlIjoiYXBpIiwiaWF0IjoxNzcwODQxNDEzfQ.DTtiVThhl6n6CQZNs-9dyARRWcPeTvlRS6Ew8Th2rLk"
+    - Uptime Kuma:
+        icon: uptime-kuma.png
+        href: https://uptime-kuma.lab.hartr.net
+        description: Uptime Monitoring
+        widget:
+          type: uptimekuma
+          url: https://uptime-kuma.lab.hartr.net
+          slug: default
+    - Calibre Web:
+        icon: calibre-web.png
+        href: https://calibre.lab.hartr.net
+        description: eBook Library
+        widget:
+          type: calibreweb
+          url: https://calibre.lab.hartr.net
+
+- Storage:
+    - MinIO S3:
+        icon: minio.png
+        href: https://s3.lab.hartr.net
+        description: S3-Compatible Object Storage (API)
+        ping: http://10.0.0.61:9000
+    - MinIO Console:
+        icon: minio.png
+        href: https://minio.lab.hartr.net
+        description: MinIO Admin Console
+        ping: http://10.0.0.61:9001
+    - NFS Storage:
+        icon: mdi-F08F3.png
+        href: nfs://10.0.0.220/mnt/storage
+        description: Network File System (10.0.0.220)
+        ping: 10.0.0.220
+
+- Security:
+    - Vaultwarden:
+        icon: vaultwarden.png
+        href: https://vaultwarden.lab.hartr.net
+        description: Password Manager
+        ping: http://10.0.0.60:80
+    - Authelia:
+        icon: authelia.png
+        href: https://authelia.lab.hartr.net
+        description: SSO & Authentication
+        ping: http://10.0.0.60:9091

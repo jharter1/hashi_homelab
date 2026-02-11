@@ -1,0 +1,56 @@
+---
+title: Homelab Dashboard
+favicon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/nomad.png
+logo: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/home-assistant.png
+background:
+  image: https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920
+  blur: sm
+  saturate: 50
+  brightness: 50
+  opacity: 20
+
+theme: dark
+color: slate
+headerStyle: boxed
+layout:
+  Infrastructure:
+    style: row
+    columns: 3
+    icon: mdi-server-network
+  Monitoring:
+    style: row
+    columns: 3
+    icon: mdi-chart-line
+  Services:
+    style: row
+    columns: 4
+    icon: mdi-apps
+  Storage:
+    style: row
+    columns: 2
+    icon: mdi-database
+  Security:
+    style: row
+    columns: 2
+    icon: mdi-shield-lock
+
+# Quick launch with keyboard shortcuts
+quicklaunch:
+  searchDescriptions: true
+  hideInternetSearch: false
+  hideVisitURL: false
+
+# Custom CSS for additional styling
+customCss: |
+  .service-card {
+    transition: transform 0.2s;
+  }
+  .service-card:hover {
+    transform: scale(1.05);
+  }
+
+# Status style
+statusStyle: "dot"
+
+# Show stats
+showStats: true

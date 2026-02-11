@@ -146,30 +146,52 @@ tasks:
     desc: "Deploy service jobs (monitoring stack, registry, apps)"
     cmds:
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/loki.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/observability/loki/loki.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/minio.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/minio/minio.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/prometheus.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/observability/prometheus/prometheus.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/grafana.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/observability/grafana/grafana.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/docker-registry.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/development/docker-registry/docker-registry.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/whoami.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/whoami/whoami.nomad.hcl
       - echo "All service jobs deployed successfully"
 
   deploy:speedtest:
     desc: "Deploy Speedtest Tracker"
     cmds:
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/speedtest.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/speedtest/speedtest.nomad.hcl
 
   deploy:immich:
     desc: "Deploy Immich photo backup service"
     cmds:
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/immich.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/media/immich/immich.nomad.hcl
+
+  homepage:sync:
+    desc: "🏠 Sync homepage configuration files to NAS"
+    cmds:
+      - |
+        echo "📤 Syncing homepage configs to /mnt/nas/homepage/..."
+        cd ansible && ansible-playbook playbooks/sync-homepage-config.yml
+        echo "✅ Homepage configs synced"
+
+  homepage:deploy:
+    desc: "🏠 Deploy homepage service"
+    cmds:
+      - |
+        echo "🚀 Deploying homepage..."
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/homepage/homepage.nomad.hcl
+        echo "✅ Homepage deployed"
+
+  homepage:update:
+    desc: "🏠 Sync configs and redeploy homepage (quick update workflow)"
+    cmds:
+      - task: homepage:sync
+      - task: homepage:deploy
 
   db:migrate:
     desc: "🗄️  Migrate services from SQLite/embedded DB to central PostgreSQL"
@@ -428,11 +450,11 @@ tasks:
       - |
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/system/traefik.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/minio.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/minio/minio.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/prometheus.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/observability/prometheus/prometheus.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/grafana.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/observability/grafana/grafana.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/whoami.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/whoami/whoami.nomad.hcl
       - echo "All jobs deployed successfully"

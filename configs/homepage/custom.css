@@ -1,0 +1,41 @@
+/* Custom styling for Homepage dashboard */
+.service-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+}
+
+.service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+.service-title {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.widget {
+  backdrop-filter: blur(10px);
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+/* Pulse animation for status indicators */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.status-dot {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Card hover glow effect */
+.service-card:hover {
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+}

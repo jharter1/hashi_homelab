@@ -57,7 +57,8 @@ docker pull prom/alertmanager:latest &
 docker pull codercom/code-server:latest &
 docker pull authelia/authelia:latest &
 docker pull traefik/whoami &
-docker pull nextcloud:latest &
+docker pull seafileltd/seafile-mc:11.0-latest &
+docker pull mariadb:11.2 &
 docker pull ghcr.io/advplyr/audiobookshelf:latest &
 docker pull postgres:16-alpine &
 docker pull freshrss/freshrss:latest &

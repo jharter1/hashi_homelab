@@ -57,7 +57,7 @@ client {
     read_only = false
   }
 
-  host_volume "homepage_data" {
+  host_volume "homepage_config" {
     path = "{{ nas_mount_point }}/homepage"
     read_only = false
   }
@@ -72,13 +72,8 @@ client {
     read_only = false
   }
 
-  host_volume "nextcloud_data" {
-    path = "{{ nas_mount_point }}/nextcloud/data"
-    read_only = false
-  }
-
-  host_volume "nextcloud_config" {
-    path = "{{ nas_mount_point }}/nextcloud/config"
+  host_volume "seafile_data" {
+    path = "{{ nas_mount_point }}/seafile"
     read_only = false
   }
 
@@ -148,6 +143,11 @@ client {
 
   host_volume "postgres_data" {
     path = "{{ nas_mount_point }}/postgres"
+    read_only = false
+  }
+
+  host_volume "mariadb_data" {
+    path = "{{ nas_mount_point }}/mariadb"
     read_only = false
   }
 

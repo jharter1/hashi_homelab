@@ -1,0 +1,57 @@
+---
+# System resources from Glances
+- resources:
+    label: Homepage Container
+    cpu: true
+    memory: true
+    disk: /
+    cputemp: true
+    uptime: true
+
+# Weather widget
+- openweathermap:
+    label: Local Weather
+    latitude: 41.8781
+    longitude: -87.6298
+    units: imperial
+    provider: openweathermap
+    apiKey: 8cff25cca0e4cf3dcf9aca5b8ca3f378
+    cache: 5
+
+# Search functionality
+- search:
+    provider: google
+    target: _blank
+    focus: true
+    showSearchSuggestions: true
+
+# Date and time
+- datetime:
+    text_size: xl
+    format:
+      timeStyle: short
+      dateStyle: short
+      hour12: true
+
+# Calendar widget - iCal format
+# Ready to connect when needed - just uncomment and add your calendar URL(s)
+# Google: Calendar Settings > Integrate > "Secret address in iCal format"
+# iCloud: Share calendar > Public > Copy webcal:// URL (change to https://)
+# - calendar:
+#     integrations:
+#       - type: ical
+#         name: Personal Calendar
+#         url: "https://calendar.google.com/calendar/ical/..."
+#         color: blue
+#       - type: ical
+#         name: Work Calendar
+#         url: "https://calendar.google.com/calendar/ical/..."
+#         color: green
+#     maxEvents: 5
+#     showTime: true
+#     timezone: America/Chicago
+
+# Greeting based on time of day
+- greeting:
+    text_size: xl
+    text: "Welcome to your Homelab!"
