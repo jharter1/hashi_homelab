@@ -75,6 +75,8 @@
     - { name: 'homepage', mode: '0755' }
     - { name: 'calibre', mode: '0755' }
     - { name: 'seafile', mode: '0755' }
+    - { name: 'syncthing/config', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'syncthing/data', owner: '1000', group: '1000', mode: '0755' }
     - { name: 'postgres', mode: '0755' }
     - { name: 'mariadb', owner: '999', group: '999', mode: '0755' }
     - { name: 'speedtest', owner: '1000', group: '1000', mode: '0755' }

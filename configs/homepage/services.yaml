@@ -62,10 +62,11 @@
         icon: gollum.png
         href: https://wiki.lab.hartr.net
         description: Git-backed Wiki
-    - Seafile:
-        icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/seafile.png
-        href: https://seafile.lab.hartr.net
-        description: File Sync & Collaboration
+    - Syncthing:
+        icon: syncthing.png
+        href: https://syncthing.lab.hartr.net
+        description: Decentralized File Sync
+        ping: http://10.0.0.60:8384
     - Speedtest:
         icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/speedtest-tracker.png
         href: https://speedtest.lab.hartr.net
@@ -87,10 +88,6 @@
         icon: uptime-kuma.png
         href: https://uptime-kuma.lab.hartr.net
         description: Uptime Monitoring
-        widget:
-          type: uptimekuma
-          url: https://uptime-kuma.lab.hartr.net
-          slug: default
     - Calibre Web:
         icon: calibre-web.png
         href: https://calibre.lab.hartr.net

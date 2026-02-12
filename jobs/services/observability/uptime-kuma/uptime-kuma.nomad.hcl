@@ -49,28 +49,16 @@ job "uptime-kuma" {
     task "uptime-kuma" {
       driver = "docker"
       
-      # Enable Vault workload identity for secrets access
-      vault {}
-      
       volume_mount {
         volume      = "uptime_kuma_data"
         destination = "/app/data"
         read_only   = false
       }
       
-      # Vault template for database connection string
-      template {
-        destination = "secrets/db.env"
-        env         = true
-        data        = <<EOH
-UPTIME_KUMA_DB_CONNECTION_STRING=postgres://uptimekuma:{{ with secret "secret/data/postgres/uptimekuma" }}{{ .Data.data.password }}{{ end }}@{{ range service "postgresql" }}{{ .Address }}{{ end }}:5432/uptimekuma
-EOH
-      }
-      
       env {
         UPTIME_KUMA_DISABLE_FRAME_SAMEORIGIN = "true"
         DATA_DIR = "/app/data"
-        # UPTIME_KUMA_DB_CONNECTION_STRING comes from Vault template above
+        # Uses default SQLite at /app/data/kuma.db for self-contained monitoring
       }
       
       config {

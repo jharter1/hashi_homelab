@@ -22,10 +22,8 @@ jobs/
 │   │       └── uptime-kuma.nomad.hcl
 │   │
 │   ├── databases/                       # Data Stores
-│   │   ├── postgresql/
-│   │   │   └── postgresql.nomad.hcl    # Centralized, used by 14+ services
-│   │   └── mariadb/
-│   │       └── mariadb.nomad.hcl       # Legacy, Seafile only
+   │   └── postgresql/
+   │       └── postgresql.nomad.hcl    # Centralized, used by 14+ services
 │   │
 │   ├── auth/                            # Authentication & Security
 │   │   ├── authelia/
@@ -42,8 +40,8 @@ jobs/
 │   │   │   └── calibre.nomad.hcl       # eBook library
 │   │   ├── audiobookshelf/
 │   │   │   └── audiobookshelf.nomad.hcl
-│   │   └── seafile/
-│   │       └── seafile.nomad.hcl       # File sync & share
+   │   └── syncthing/
+   │       └── syncthing.nomad.hcl     # Decentralized file sync
 │   │
 │   ├── development/                     # Developer Tools
 │   │   ├── gitea/

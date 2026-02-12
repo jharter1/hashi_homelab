@@ -57,7 +57,7 @@ client {
     read_only = false
   }
 
-  host_volume "homepage_config" {
+  host_volume "homepage_data" {
     path = "{{ nas_mount_point }}/homepage"
     read_only = false
   }
@@ -73,7 +73,22 @@ client {
   }
 
   host_volume "seafile_data" {
-    path = "{{ nas_mount_point }}/seafile"
+    path = "{{ nas_mount_point }}/seafile_data"
+    read_only = false
+  }
+
+  host_volume "seafile_mysql" {
+    path = "{{ nas_mount_point }}/seafile_mysql"
+    read_only = false
+  }
+
+  host_volume "syncthing_config" {
+    path = "{{ nas_mount_point }}/syncthing/config"
+    read_only = false
+  }
+
+  host_volume "syncthing_data" {
+    path = "{{ nas_mount_point }}/syncthing/data"
     read_only = false
   }
 

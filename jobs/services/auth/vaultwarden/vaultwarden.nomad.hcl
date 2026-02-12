@@ -26,6 +26,7 @@ job "vaultwarden" {
 
       config {
         image        = "vaultwarden/server:latest"
+        network_mode = "host"
         ports        = ["http"]
       }
 
@@ -34,17 +35,26 @@ job "vaultwarden" {
         destination = "/data"
       }
 
-      # Vault template for database password
+      # Vault + Consul template for database password
       template {
         destination = "secrets/db.env"
         env         = true
         data        = <<EOH
-DATABASE_URL=postgresql://vaultwarden:{{ with secret "secret/data/postgres/vaultwarden" }}{{ .Data.data.password }}{{ end }}@{{ range service "postgresql" }}{{ .Address }}{{ end }}:5432/vaultwarden
+{{ with secret "secret/data/postgres/vaultwarden" }}
+{{- $password := .Data.data.password }}
+{{- range service "postgresql" }}
+DATABASE_URL=postgresql://vaultwarden:{{ $password }}@{{ .Address }}:{{ .Port }}/vaultwarden
+{{- end }}
+{{- end }}
 EOH
       }
 
       env {
         # DATABASE_URL comes from Vault template above
+        
+        # Port configuration (vaultwarden defaults to 80, we use 8222)
+        ROCKET_PORT = "8222"
+        
         # Disable admin token for now (set via web UI or env var)
         # ADMIN_TOKEN = "your-admin-token-here"
         # Enable signups (disable in production)
