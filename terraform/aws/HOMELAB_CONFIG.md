@@ -4,10 +4,13 @@
 
 ### Traefik Deployment
 - **Type**: System job (runs on every Nomad client)
-- **Nodes**: 3 Nomad clients
+- **Nodes**: 6 Nomad clients
   - 10.0.0.60 (primary DNS target)
   - 10.0.0.61
   - 10.0.0.62
+  - 10.0.0.63
+  - 10.0.0.64
+  - 10.0.0.65
 - **Load Balancing**: Handled by Consul service discovery
 - **Certificate Storage**: Shared via NFS-backed host volume `/opt/traefik/acme`
 

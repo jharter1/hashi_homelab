@@ -7,7 +7,7 @@ December 11, 2025
 - **Nomad Version**: v1.11.0 (BuildDate 2025-11-11T16:18:19Z)
 - **Vault Version**: HA cluster, 3 nodes (10.0.0.30-32)
 - **Root Token**: [REDACTED - stored securely]
-- **Cluster**: 3 servers (10.0.0.50-52), 3 clients (10.0.0.60-62)
+- **Cluster**: 3 servers (10.0.0.50-52), 6 clients (10.0.0.60-65)
 
 ## What Works ✅
 

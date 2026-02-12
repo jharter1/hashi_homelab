@@ -149,7 +149,7 @@ Nomad Client 1 (10.0.0.60)
   ↓ (advertises 10.0.0.0/24 subnet)
 Entire Homelab Network
   ├── 10.0.0.50-52 (Nomad servers)
-  ├── 10.0.0.60-62 (Nomad clients)
+  ├── 10.0.0.60-65 (Nomad clients)
   └── All services via Traefik
 ```
 

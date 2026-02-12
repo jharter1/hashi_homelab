@@ -129,7 +129,7 @@ The Vault integration is partially implemented and ready to be completed. Here's
 
 **Option 1: Separate Vault Cluster (Recommended)**
 - Deploy hub environment with dedicated Vault cluster (10.0.0.30-32)
-- Keep Nomad cluster separate (10.0.0.50-52 servers, 10.0.0.60-62 clients)
+- Keep Nomad cluster separate (10.0.0.50-52 servers, 10.0.0.60-65 clients)
 - Nomad workloads authenticate to Vault cluster
 - Better separation of concerns, more HA
 

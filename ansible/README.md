@@ -59,9 +59,9 @@ ansible/
 
 ## Inventory
 
-The inventory defines 6 nodes:
+The inventory defines 9 nodes:
 - **Nomad Servers** (3): 10.0.0.50-52
-- **Nomad Clients** (3): 10.0.0.60-62
+- **Nomad Clients** (6): 10.0.0.60-65
 
 All nodes use the `ubuntu` user and SSH keys for authentication.
 

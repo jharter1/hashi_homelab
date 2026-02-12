@@ -62,7 +62,7 @@ The following files have been updated:
 
 ### Step 2: Run Migration Playbook
 
-Execute the migration playbook to update all 3 Nomad clients:
+Execute the migration playbook to update all 6 Nomad clients:
 
 ```bash
 cd /Users/jackharter/Developer/hashi_homelab/ansible

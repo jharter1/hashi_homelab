@@ -49,6 +49,9 @@ graph TD
     Client1[Nomad Client 1<br/>10.0.0.60<br/>10 GB RAM]
     Client2[Nomad Client 2<br/>10.0.0.61<br/>10 GB RAM]
     Client3[Nomad Client 3<br/>10.0.0.62<br/>10 GB RAM]
+    Client4[Nomad Client 4<br/>10.0.0.63<br/>10 GB RAM]
+    Client5[Nomad Client 5<br/>10.0.0.64<br/>10 GB RAM]
+    Client6[Nomad Client 6<br/>10.0.0.65<br/>10 GB RAM]
     
     Server1 <-->|Raft Consensus| Server2
     Server2 <-->|Raft Consensus| Server3
@@ -57,6 +60,9 @@ graph TD
     Client1 -->|Register| Server1
     Client2 -->|Register| Server2
     Client3 -->|Register| Server3
+    Client4 -->|Register| Server1
+    Client5 -->|Register| Server2
+    Client6 -->|Register| Server3
     
     style Server1 fill:#60ac39,stroke:#333,stroke-width:2px,color:white
     style Server2 fill:#60ac39,stroke:#333,stroke-width:2px,color:white
@@ -64,6 +70,9 @@ graph TD
     style Client1 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
     style Client2 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
     style Client3 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
+    style Client4 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
+    style Client5 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
+    style Client6 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
 ```
 
 ### Service Flow
@@ -107,7 +116,7 @@ graph TD
 **Key Components:**
 
 - **Nomad Servers (3)**: Manage cluster state, scheduling decisions, and job placement using Raft consensus
-- **Nomad Clients (3)**: Run containerized workloads with Docker driver
+- **Nomad Clients (6)**: Run containerized workloads with Docker driver
 - **Consul**: Service discovery, health checking, and KV store (co-located with Nomad servers)
 - **Traefik**: Reverse proxy with automatic service registration via Consul catalog
 - **Observability Stack**: Prometheus (metrics), Loki (logs), Grafana (visualization), Alloy (collection)
@@ -118,9 +127,9 @@ graph TD
 | Component | Count | vCPU | Memory | Notes |
 |-----------|-------|------|--------|-------|
 | Nomad Servers | 3 | 2 | 4 GB | Consul co-located |
-| Nomad Clients | 3 | 4 | 10 GB | Docker + workloads |
+| Nomad Clients | 6 | 4 | 10 GB | Docker + workloads |
 | Vault Hubs (optional) | 3 | 2 | 2 GB | HA cluster |
-| **Total** | **6-9** | **20-26** | **42-48 GB** | **~75% utilization** |
+| **Total** | **9-12** | **32-38** | **72-78 GB** | **~75% utilization** |
 
 **Container Memory Usage:** ~13.6 GB across 28+ services  
 **Optimization History:** See [RESOURCE_SURVEY.md](docs/RESOURCE_SURVEY.md)
@@ -208,7 +217,7 @@ terraform apply tfplan
 
 This provisions:
 - 3 Nomad servers with Consul
-- 3 Nomad clients with Docker
+- 6 Nomad clients with Docker
 - All networking and VM configuration
 - NFS mounts for shared storage
 
@@ -272,7 +281,7 @@ task bootstrap
 
 This executes all steps:
 1. Verifies Packer templates exist (requires DNS on Proxmox for initial creation)
-2. Provisions VMs with Terraform (6 VMs: 3 servers, 3 clients)
+2. Provisions VMs with Terraform (9 VMs: 3 servers, 6 clients)
 3. Waits for VMs to boot (60 seconds)
 4. Configures nodes with Ansible (Docker, Nomad, NFS, etc.)
 5. Deploys all Nomad jobs (Traefik, monitoring, registry, apps)

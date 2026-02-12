@@ -168,13 +168,13 @@ Services that may need LESS resources (verify with Prometheus):
 
 ```bash
 # Check Nomad cluster memory
-for node_name in dev-nomad-client-1 dev-nomad-client-2 dev-nomad-client-3
+for node_name in dev-nomad-client-1 dev-nomad-client-2 dev-nomad-client-3 dev-nomad-client-4 dev-nomad-client-5 dev-nomad-client-6
   set node_id (curl -s http://10.0.0.50:4646/v1/nodes | python3 -c "import sys, json; nodes = json.load(sys.stdin); print([n['ID'] for n in nodes if '$node_name' == n['Name']][0])")
   curl -s http://10.0.0.50:4646/v1/node/$node_id | python3 -c "import sys, json; n = json.load(sys.stdin); mem = n.get('NodeResources', {}).get('Memory', {}).get('MemoryMB', 0); print('$node_name: ' + str(mem) + ' MB (' + str(round(mem/1024, 2)) + ' GB)')"
 end
 
 # Check actual VM memory
-for ip in 10.0.0.60 10.0.0.61 10.0.0.62
+for ip in 10.0.0.60 10.0.0.61 10.0.0.62 10.0.0.63 10.0.0.64 10.0.0.65
   ssh ubuntu@$ip "echo -n '$ip: ' && free -h | grep Mem"
 end
 

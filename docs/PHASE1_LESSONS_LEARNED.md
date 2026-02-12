@@ -69,6 +69,9 @@ rsync(27765): error: unexpected end of file
 ssh ubuntu@10.0.0.60 "sudo apt-get update && sudo apt-get install -y rsync"
 ssh ubuntu@10.0.0.61 "sudo apt-get update && sudo apt-get install -y rsync"
 ssh ubuntu@10.0.0.62 "sudo apt-get update && sudo apt-get install -y rsync"
+ssh ubuntu@10.0.0.63 "sudo apt-get update && sudo apt-get install -y rsync"
+ssh ubuntu@10.0.0.64 "sudo apt-get update && sudo apt-get install -y rsync"
+ssh ubuntu@10.0.0.65 "sudo apt-get update && sudo apt-get install -y rsync"
 ```
 
 **Solution (Permanent):**
@@ -108,6 +111,9 @@ rsync: [generator] failed to set permissions on "/mnt/nas/configs/auth": Operati
 ssh ubuntu@10.0.0.60 "sudo usermod -a -G nomad ubuntu"
 ssh ubuntu@10.0.0.61 "sudo usermod -a -G nomad ubuntu"
 ssh ubuntu@10.0.0.62 "sudo usermod -a -G nomad ubuntu"
+ssh ubuntu@10.0.0.63 "sudo usermod -a -G nomad ubuntu"
+ssh ubuntu@10.0.0.64 "sudo usermod -a -G nomad ubuntu"
+ssh ubuntu@10.0.0.65 "sudo usermod -a -G nomad ubuntu"
 
 # Verify
 ssh ubuntu@10.0.0.60 "groups ubuntu"
@@ -348,12 +354,12 @@ The `config-sync` role has handlers defined but they're not triggered for the bu
 Update validation scripts to check:
 ```fish
 # Check rsync installed on all clients
-for ip in 10.0.0.60 10.0.0.61 10.0.0.62; do
+for ip in 10.0.0.60 10.0.0.61 10.0.0.62 10.0.0.63 10.0.0.64 10.0.0.65; do
   ssh ubuntu@$ip "which rsync" || echo "❌ rsync missing on $ip"
 end
 
 # Check ubuntu in nomad group
-for ip in 10.0.0.60 10.0.0.61 10.0.0.62; do
+for ip in 10.0.0.60 10.0.0.61 10.0.0.62 10.0.0.63 10.0.0.64 10.0.0.65; do
   ssh ubuntu@$ip "groups ubuntu | grep nomad" || echo "❌ ubuntu not in nomad group on $ip"
 end
 ```
@@ -405,8 +411,8 @@ end
 ## Next Steps
 
 **Immediate (before continuing Phase 1B):**
-- [ ] Install rsync on client-2 and client-3
-- [ ] Add ubuntu to nomad group on client-2 and client-3
+- [ ] Install rsync on all clients (client-2 through client-6)
+- [ ] Add ubuntu to nomad group on all clients (client-2 through client-6)
 - [ ] Update base-system Ansible role with rsync package
 - [ ] Deploy remaining 2 services (Prometheus, Grafana, Alertmanager)
 - [ ] Run integration tests per `docs/PHASE1_TESTING_GUIDE.md`

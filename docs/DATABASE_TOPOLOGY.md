@@ -1,28 +1,21 @@
 # Database Topology & Consolidation Status
 
-**Last Updated:** 2026-02-11  
-**Phase:** Phase 2 (Database Consolidation)
+**Last Updated:** 2026-02-12  
+**Phase:** ✅ Complete
 
 ## Overview
 
-Database consolidation is **mostly complete** with shared PostgreSQL and MariaDB instances serving multiple applications. Some services are configured but databases not yet created.
+Database consolidation is **complete** with a shared PostgreSQL instance serving multiple applications. All active services using databases are connected via Vault credentials and Consul service discovery.
 
 ## Shared Database Instances
 
 ### PostgreSQL (Job: `postgresql`)
-- **Location:** Nomad allocation 29397ebe (postgres task group)
+- **Location:** Nomad allocation (postgres task group)
 - **Version:** Latest (Docker image)
 - **Storage:** `/mnt/nas/postgres_data` (NFS host volume)
 - **Backup:** Automated daily backups via `postgres-backup` task (7-day retention)
 - **Access:** Via Consul service discovery (`postgresql.home:5432`)
 - **Admin Credentials:** Vault `secret/data/postgres/admin`
-
-### MariaDB (Job: `mariadb`)
-- **Location:** Nomad allocation (running on client nodes)
-- **Version:** Latest (Docker image)
-- **Storage:** `/mnt/nas/mariadb_data` (NFS host volume)
-- **Access:** Direct IP 10.0.0.60:3306 (hardcoded in Seafile)
-- **Admin Credentials:** Vault `secret/data/mariadb/admin`
 
 ## PostgreSQL Database Mappings
 
@@ -33,19 +26,19 @@ Database consolidation is **mostly complete** with shared PostgreSQL and MariaDB
 | Grafana | `grafana` | `grafana` | `secret/data/postgres/grafana` | ✅ Active |
 | Nextcloud | `nextcloud` | `nextcloud` | `secret/data/postgres/nextcloud` | ✅ Active |
 | Speedtest | `speedtest` | `speedtest` | `secret/data/postgres/speedtest` | ✅ Active |
-| FreshRSS | `freshrss` | `freshrss` | `secret/data/postgres/freshrss` | ❌ Job not running |
-| Vaultwarden | `vaultwarden` | `vaultwarden` | `secret/data/postgres/vaultwarden` | ❌ Job not running |
+| FreshRSS | `freshrss` | `freshrss` | `secret/data/postgres/freshrss` | ✅ Active |
+| Vaultwarden | `vaultwarden` | `vaultwarden` | `secret/data/postgres/vaultwarden` | ✅ Active |
 
-**Active Databases:** 5 (authelia, gitea, grafana, nextcloud, speedtest)  
-**Not Running:** 2 (freshrss, vaultwarden - jobs stopped/never deployed)
+**Active Databases:** 7  
+**Total Services:** 7 (authelia, gitea, grafana, nextcloud, speedtest, freshrss, vaultwarden)
 
-## MariaDB Database Mappings
+## Abandoned Database Instances
 
-| Service | Database Name | User | Vault Secret Path | Status |
-|---------|---------------|------|-------------------|--------|
-| Seafile | `ccnet_db`, `seafile_db`, `seahub_db` | `seafile` | `secret/data/mariadb/seafile` | ✅ Active |
-
-**Note:** Seafile creates 3 databases during initialization.
+### MariaDB
+- **Status:** ❌ Abandoned
+- **Reason:** Complexity not worth maintaining for single service (Uptime-kuma)
+- **Decision:** Uptime-kuma reverted to SQLite standalone database
+- **Learning:** Database consolidation has diminishing returns and increases system fragility
 
 ## SQLite-Based Services (No Shared DB)
 
@@ -53,19 +46,20 @@ Database consolidation is **mostly complete** with shared PostgreSQL and MariaDB
 |---------|------------------|-------------------|
 | Calibre | `/mnt/nas/calibre_data` | Embedded library database |
 | Homepage | `/mnt/nas/homepage_data` | Lightweight config-only service |
-| Uptime-Kuma | `/mnt/nas/uptime_kuma_data` | Self-contained monitoring (avoids dependency on monitored services) |
+| Uptime-kuma | `/mnt/nas/uptime_kuma_data` | Self-contained monitoring, reverted from MariaDB |
 
 ## Not Using Databases
 
-| Service | Storage Type |
-|---------|--------------|
-| Alertmanager | In-memory + NFS config |
-| Audiobookshelf | File-based library |
-| Loki | Time-series file storage |
-| MinIO | Object storage (S3-compatible) |
-| Prometheus | Time-series file storage |
-| Redis | In-memory key-value store |
-| Traefik | Configuration-only |
+| Service | Storage Type | Notes |
+|---------|--------------|-------|
+| Alertmanager | In-memory + NFS config | |
+| Audiobookshelf | File-based library | |
+| Loki | Time-series file storage | |
+| MinIO | Object storage (S3-compatible) | |
+| Prometheus | Time-series file storage | |
+| Redis | In-memory key-value store | |
+| Syncthing | File synchronization | Replaces Seafile |
+| Traefik | Configuration-only | |
 
 ## Architecture Patterns
 
@@ -86,55 +80,45 @@ EOH
 - Dynamic password rotation support
 - Automatic failover if PostgreSQL moves
 
-### MariaDB Connection Pattern (Seafile)
+### SQLite Pattern (Uptime-kuma)
 ```hcl
-env {
-  DB_HOST = "10.0.0.60"
-  DB_PORT = "3306"
+volume "uptime_kuma_data" {
+  type      = "host"
+  source    = "uptime_kuma_data"
+  read_only = false
 }
 
-template {
-  data = <<EOH
-DB_ROOT_PASSWD={{ with secret "secret/data/mariadb/admin" }}{{ .Data.data.password }}{{ end }}
-EOH
-  destination = "secrets/db.env"
-  env         = true
+volume_mount {
+  volume      = "uptime_kuma_data"
+  destination = "/app/data"
 }
 ```
 
-**Limitations:**
-- Hardcoded IP (no service discovery)
-- Should migrate to Consul service discovery pattern
+**Benefits:**
+- Self-contained, no external dependencies
+- Simpler operational model
+- Monitoring shouldn't depend on monitored services
 
 ## Consolidation Status
 
 ### ✅ Completed
-1. Shared PostgreSQL instance deployed
-2. Shared MariaDB instance deployed
-3. 5 services actively using PostgreSQL (Authelia, Gitea, Grafana, Nextcloud, Speedtest)
-4. 2 services using MariaDB (Seafile, Uptime-kuma)
-5. Automated PostgreSQL backups (daily, 7-day retention)
-6. All database credentials in Vault
-7. Migrated uptime-kuma from SQLite to MariaDB (data wiped)
+1. ✅ Shared PostgreSQL instance deployed
+2. ✅ 7 services actively using PostgreSQL (Authelia, Gitea, Grafana, Nextcloud, Speedtest, FreshRSS, Vaultwarden)
+3. ✅ Automated PostgreSQL backups (daily, 7-day retention)
+4. ✅ All database credentials in Vault
+5. ✅ All PostgreSQL services using Consul service discovery (no hardcoded IPs)
+6. ✅ FreshRSS deployed with PostgreSQL
+7. ✅ Vaultwarden deployed with PostgreSQL (fixed schema permissions issue)
+8. ❌ MariaDB experiment abandoned (reverted Uptime-kuma to SQLite)
 
-### ⚠️ Pending
-1. **Decision needed on FreshRSS and Vaultwarden:**
-   - Jobs exist but not running
-   - If deploying: Create PostgreSQL databases first
-   - If not needed: Remove job files to reduce clutter
+### ✅ Database Anti-Pattern Note
+Further database consolidation is considered an anti-pattern that reduces system resilience:
+- Creates single points of failure
+- Increases blast radius for database issues
+- Complicates resource isolation
+- Makes independent service scaling harder
 
-3. **Improve MariaDB integration:**
-   - Add Consul service discovery for MariaDB
-   - Update Seafile job to use service discovery instead of hardcoded IP
-
-4. **Add MariaDB backups:**
-   - Similar to PostgreSQL backup task
-   - Daily mariabackup or mysqldump
-   - 7-day retention
-
-### ❌ Not Applicable
-- **Individual database containers:** None found (consolidation already complete)
-- **Database migration needed:** No, all services already reference shared instances
+**Decision:** Database migration phase is complete. Future services should evaluate database needs independently.
 
 ## Database Creation Process
 
@@ -181,32 +165,38 @@ SQL
 ## Performance Metrics
 
 ### Current Resource Usage
-- **PostgreSQL Memory:** ~256 MB (check current allocation)
+- **PostgreSQL Memory:** ~256 MB baseline
 - **PostgreSQL CPU:** < 5% (idle state)
-- **MariaDB Memory:** ~256 MB (check current allocation)
-- **Databases per Instance:** PostgreSQL (5 active), MariaDB (1 active)
-- **Total Database Count:** 6 logical databases across 2 instances
+- **Databases per Instance:** PostgreSQL (7 active)
+- **Total Database Count:** 7 logical databases in 1 shared instance
 
 ### Capacity Planning
-- **Current:** 2 shared database instances serving 6 services
-- **Target:** Same, plus 3 additional services when databases created
-- **Future:** May need PostgreSQL replicas for HA (not currently implemented)
+- **Current:** 1 shared PostgreSQL instance serving 7 services
+- **Headroom:** Can handle 10-15 more databases on current resources
+- **Future HA:** PostgreSQL replicas not planned (accepted risk for homelab)
 
-## Next Actions
+## Lessons Learned
 
-1. **Immediate (Phase 2):**
-   - [ ] Create missing PostgreSQL databases (freshrss, vaultwarden, uptimekuma)
-   - [ ] Verify those services are running and can connect
-   - [ ] Add MariaDB backup task (mirror PostgreSQL pattern)
-   - [ ] Update Seafile to use Consul service discovery for MariaDB
+### Technical Wins
+1. ✅ **Consul Service Discovery:** Eliminates hardcoded IPs, enables dynamic routing
+2. ✅ **Vault Integration:** Centralized credential management with rotation capability
+3. ✅ **Template Variable Scoping:** Pattern for mixing Vault/Consul contexts: `{{ $var := .Data }}{{ range }}{{ $var }}{{ end }}`
+4. ✅ **Automated Backups:** PostgreSQL backup task runs daily without manual intervention
 
-2. **Short-term:**
-   - [ ] Document database initialization process
-   - [ ] Add automated database creation for new services
-   - [ ] Monitor backup success/failure
+### Service-Specific Challenges
+1. **Vaultwarden:** Required 4 fixes (schema permissions, template scoping, network mode, ROCKET_PORT)
+2. **PostgreSQL 15+:** Changed default schema permissions, need explicit `GRANT ALL ON SCHEMA public`
+3. **Seafile:** Complex initialization requirements incompatible with shared database model (abandoned)
 
-3. **Long-term:**
-   - [ ] PostgreSQL HA setup (multi-node cluster)
-   - [ ] Database performance monitoring (pg_stat_statements)
-   - [ ] Backup restoration testing
-   - [ ] Database size monitoring and alerting
+### Migration Decisions
+- **Uptime-kuma:** SQLite → MariaDB → SQLite (reverted, monitoring shouldn't depend on databases)
+- **Seafile:** Abandoned in favor of Syncthing (complexity not worth it)
+- **MariaDB:** Abandoned entirely (not worth maintaining for edge cases)
+- **Future:** No further database consolidation (anti-pattern for resilience)
+
+## Optional Future Work
+
+- [ ] PostgreSQL performance monitoring (pg_stat_statements)
+- [ ] Backup restoration testing
+- [ ] Database size alerting
+- [ ] PostgreSQL query optimization for slow queries

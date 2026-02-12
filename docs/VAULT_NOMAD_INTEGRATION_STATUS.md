@@ -1,7 +1,17 @@
 Template: Missing: vault.read(secret/data/postgres/admin)
-# Vault-Nomad Integration Troubleshooting Status
+# Vault-Nomad Integration Status
 
-**Goal**: Enable Nomad jobs to read secrets from Vault for PostgreSQL and FreshRSS deployments.
+**Status**: ✅ WORKING - JWT Workload Identity Fully Operational
+**Last Verified**: 2026-02-12
+
+## Integration Summary
+
+Vault-Nomad integration is **fully functional** using JWT workload identity (modern approach):
+- ✅ JWT auth backend configured at `jwt-nomad/`
+- ✅ Nomad servers configured with workload identity
+- ✅ Jobs successfully reading secrets from Vault
+- ✅ Automatic token renewal every 1 hour
+- ✅ No server tokens required (JWT-based authentication)
 
 ## What We've Successfully Completed ✅
 
@@ -45,30 +55,53 @@ Template: Missing: vault.read(secret/data/postgres/admin)
 3. **Host Volumes**: Added to all Nomad clients for persistent storage
 4. **NAS Directories**: Created for postgres, freshrss, etc.
 
-## What's NOT Working ❌
+## How It Works 🔧
 
-### Current Error
+### Architecture
+1. **Vault Infrastructure** (10.0.0.30-32):
+   - 3-node HA cluster with Raft storage
+   - JWT auth backend at `jwt-nomad/` pointing to Nomad's JWKS endpoint
+   - KV v2 secrets engine at `secret/` path
+   - Policies: `nomad-workloads` (read secret/data/nomad/*)
+
+2. **Nomad Server Configuration**:
+   ```hcl
+   vault {
+     enabled = true
+     address = "http://10.0.0.30:8200"
+     jwt_auth_backend_path = "jwt-nomad"
+     default_identity {
+       aud = ["vault.io"]
+       ttl = "1h"
+     }
+   }
+   ```
+
+3. **Job Configuration**:
+   - Add `vault {}` block to tasks needing secrets
+   - Use Vault templates to read secrets
+   - Example: `{{ with secret "secret/data/postgres/admin" }}{{ .Data.data.password }}{{ end }}`
+
+### Verification
+Check allocation events for token acquisition:
+```bash
+nomad alloc status <alloc-id> | grep "Vault: new Vault token acquired"
 ```
-Template: Missing: vault.read(secret/data/postgres/admin), 
-vault.read(secret/data/postgres/authelia), 
-vault.read(secret/data/postgres/freshrss), and 3 more
+
+## Previous Issues (Now Resolved) ✅
+
+## Optimization Options 🎯
+
+### Reduce Token Renewal Frequency
+Current TTL of 1h causes hourly task restarts. To reduce:
+```hcl
+default_identity {
+  aud = ["vault.io"]
+  ttl = "8h"  # Restart every 8 hours instead of 1 hour
+}
 ```
 
-### Failed Approaches
-1. **Workload Identity Approach**:
-   - Added `vault {}` blocks to job tasks
-   - Added `create_from_role = "nomad-cluster"` to Nomad server config
-   - **Error**: `failed to retrieve signed workload identity: unable to find token for workload`
-   - **Reason**: Requires JWT auth method in Vault (not configured)
-
-2. **Legacy Token Approach** (current):
-   - Removed `vault {}` blocks from jobs
-   - Removed `create_from_role` from Nomad server config
-   - **Status**: Still failing with "Missing: vault.read" errors
-
-## What We Haven't Tried Yet 🤔
-
-### Verification Steps
+### Historical Verification Steps (Used During Troubleshooting)
 1. **Verify Token Validity**:
    ```bash
    # Source credentials first

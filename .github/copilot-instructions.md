@@ -12,12 +12,12 @@ This is a production-ready HashiCorp homelab deploying containerized workloads o
 
 **Cluster Topology:**
 - 3 Nomad servers (10.0.0.50-52) with co-located Consul for Raft consensus
-- 3 Nomad clients (10.0.0.60-62) running Docker workloads, 10 GB RAM each
+- 6 Nomad clients (10.0.0.60-65) running Docker workloads, 10 GB RAM each
 - NFS storage (10.0.0.100) mounted at `/mnt/nas/` for persistent volumes
 - Traefik reverse proxy with automatic Consul catalog integration
 
 **Resource Allocation (as of Feb 2026):**
-- Client VMs: 10 GB RAM each (30 GB total), ~75% utilization
+- Client VMs: 10 GB RAM each (60 GB total), ~75% utilization
 - Container memory: ~13.6 GB across 28+ services
 - See `docs/RESOURCE_SURVEY.md` for optimization history
 
@@ -31,7 +31,7 @@ This is a production-ready HashiCorp homelab deploying containerized workloads o
 task build:debian:base      # Create base cloud template (VM 9400) - 20+ min
 task build:debian:server    # Build server template (VM 9500)
 task build:debian:client    # Build client template (VM 9501)
-task tf:apply               # Deploy 6 VMs with Terraform
+task tf:apply               # Deploy 9 VMs with Terraform
 task ansible:configure      # Configure all nodes (Docker, Nomad, NFS)
 task deploy:all             # Deploy all Nomad jobs (system + services)
 task bootstrap              # Run all steps above sequentially
@@ -148,13 +148,13 @@ Optional 3-node Vault HA cluster on hub nodes (10.0.0.30-32). See `ansible/TODO.
 **Checking Cluster Resources (Fish shell):**
 ```fish
 # Check Nomad client memory
-for node_name in dev-nomad-client-1 dev-nomad-client-2 dev-nomad-client-3
+for node_name in dev-nomad-client-1 dev-nomad-client-2 dev-nomad-client-3 dev-nomad-client-4 dev-nomad-client-5 dev-nomad-client-6
   set node_id (curl -s http://10.0.0.50:4646/v1/nodes | python3 -c "import sys, json; nodes = json.load(sys.stdin); print([n['ID'] for n in nodes if '$node_name' == n['Name']][0])")
   curl -s http://10.0.0.50:4646/v1/node/$node_id | python3 -c "import sys, json; n = json.load(sys.stdin); mem = n.get('NodeResources', {}).get('Memory', {}).get('MemoryMB', 0); print('$node_name: ' + str(mem) + ' MB')"
 end
 
 # Check actual VM memory
-for ip in 10.0.0.60 10.0.0.61 10.0.0.62
+for ip in 10.0.0.60 10.0.0.61 10.0.0.62 10.0.0.63 10.0.0.64 10.0.0.65
   ssh ubuntu@$ip "free -h | grep Mem"
 end
 
@@ -166,7 +166,7 @@ curl -s http://10.0.0.50:4646/v1/jobs | python3 -c "import sys, json; [print(f\"
 1. Edit `terraform/environments/dev/terraform.tfvars`: `nomad_client_memory = 10240`
 2. Apply: `task tf:apply`
 3. **CRITICAL**: Memory changes require cold boot, not just reboot
-4. Stop clients: `ssh ubuntu@10.0.0.60 "sudo shutdown -h now"` (repeat for 61, 62)
+4. Stop clients: `ssh ubuntu@10.0.0.60 "sudo shutdown -h now"` (repeat for 61-65)
 5. Start VMs from Proxmox UI
 6. Verify: `ssh ubuntu@10.0.0.60 "free -h"`
 

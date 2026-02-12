@@ -15,10 +15,10 @@ User → Home DNS (*.lab.hartr.net → 10.0.0.60) → Traefik (any of 3 nodes) �
 ```
 
 **Your homelab setup**:
-- **Traefik**: System job running on 3 Nomad clients (10.0.0.60, 10.0.0.61, 10.0.0.62)
+- **Traefik**: System job running on 6 Nomad clients (10.0.0.60-65)
 - **Home DNS**: Points `*.lab.hartr.net` to 10.0.0.60 (primary endpoint)
 - **Route 53**: Public DNS for Let's Encrypt validation, mirrors home DNS configuration
-- **Consul**: Service discovery and health checking across all 3 nodes
+- **Consul**: Service discovery and health checking across all nodes
 - **Let's Encrypt**: Free SSL/TLS certificate authority using DNS-01 challenge
 - **DNS-01 Challenge**: Proves domain ownership by creating TXT records in Route 53
 
@@ -61,14 +61,14 @@ Update the IP address to your Traefik server:
 aws_region = "us-east-1"
 
 # Your homelab configuration:
-# - Traefik runs as system job on 3 Nomad clients: 10.0.0.60, 10.0.0.61, 10.0.0.62
+# - Traefik runs as system job on 6 Nomad clients: 10.0.0.60-65
 # - Home DNS points to 10.0.0.60 as primary Traefik endpoint
 # - Route 53 DNS should match your home DNS configuration
 traefik_server_ip = "10.0.0.60"
 ```
 
 **About your homelab setup**:
-- **Traefik deployment**: System job running on all 3 Nomad clients (10.0.0.60-62)
+- **Traefik deployment**: System job running on all 6 Nomad clients (10.0.0.60-65)
 - **DNS routing**: Home DNS resolves `*.lab.hartr.net` → 10.0.0.60
 - **Service discovery**: Consul catalog automatically registers services on any node
 - **Traffic flow**: Route 53 (public DNS) → 10.0.0.60 (home network) → Traefik → Consul → Services
@@ -216,12 +216,12 @@ cd /Users/jackharter/Developer/hashi_homelab
 # Plan the deployment
 nomad job plan jobs/system/traefik.nomad.hcl
 
-# Deploy (as system job, will run on all 3 Nomad clients)
+# Deploy (as system job, will run on all 6 Nomad clients)
 nomad job run jobs/system/traefik.nomad.hcl
 
 # Verify Traefik is running on all nodes
 nomad job status traefik
-# Should show 3 allocations (one per client: 10.0.0.60, 10.0.0.61, 10.0.0.62)
+# Should show 6 allocations (one per client: 10.0.0.60-65)
 ```
 
 ### 4.3 Monitor Certificate Request
@@ -646,7 +646,7 @@ job "myservice" {
 ```
 User → Home DNS (*.lab.hartr.net → 10.0.0.60)
          ↓
-   Traefik (3 nodes: 10.0.0.60-62, SSL/TLS)
+   Traefik (6 nodes: 10.0.0.60-65, SSL/TLS)
          ↓
    Consul Service Discovery
          ↓

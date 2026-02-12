@@ -169,7 +169,7 @@ This MCP server is designed to work with the HashiCorp homelab stack:
 
 All metrics are scraped by Prometheus from:
 - Nomad servers (10.0.0.50-52)
-- Nomad clients (10.0.0.60-62)
+- Nomad clients (10.0.0.60-65)
 - Node exporters on all VMs
 - Container runtime metrics
 
