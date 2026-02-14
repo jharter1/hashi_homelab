@@ -49,6 +49,51 @@ for ip in 10.0.0.30 10.0.0.31 10.0.0.32; do ssh $ip "vault operator unseal"; don
 
 vault status
 
+## Adding New Services with Volumes
+
+**CRITICAL CHECKLIST** - Do ALL steps or jobs will fail!
+
+### 1. Add volume to Ansible base-system role
+
+Edit `ansible/roles/base-system/tasks/main.yml`:
+```yaml
+- name: Create host volume directories
+  loop:
+    # ... existing volumes ...
+    - { name: 'my_new_volume', owner: '1000', group: '1000', mode: '0755' }
+```
+
+### 2. Add host_volume to Nomad client template
+
+Edit `ansible/roles/nomad-client/templates/nomad-client.hcl.j2`:
+```hcl
+client {
+  # ... existing volumes ...
+  
+  host_volume "my_new_volume" {
+    path      = "{{ nas_mount_point }}/my_new_volume"
+    read_only = false
+  }
+}
+```
+
+### 3. Apply and restart
+
+```bash
+# Apply Ansible configuration
+task ansible:configure
+
+# MUST manually restart Nomad clients
+for ip in 10.0.0.60 10.0.0.61 10.0.0.62 10.0.0.63 10.0.0.64 10.0.0.65
+  ssh ubuntu@$ip "sudo systemctl restart nomad"
+end
+
+# Verify volumes are registered
+nomad node status dev-nomad-client-1 | grep -A 50 "Host Volumes"
+```
+
+**Without step 2 and 3, you'll get "missing compatible host volumes" errors!**
+
 ## Nomad
 
 ### Deploy all services

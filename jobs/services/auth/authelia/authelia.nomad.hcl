@@ -140,7 +140,7 @@ session:
   secret: {{ with secret "secret/data/authelia/config" }}{{ .Data.data.session_secret }}{{ end }}
   
   cookies:
-    - domain: lab.hartr.net
+    - domain: .lab.hartr.net
       authelia_url: https://authelia.lab.hartr.net
       default_redirection_url: https://home.lab.hartr.net
       name: authelia_session

@@ -42,21 +42,6 @@ client {
     read_only = false
   }
   
-  host_volume "registry_data" {
-    path = "{{ nas_mount_point }}/registry"
-    read_only = false
-  }
-
-  host_volume "artifactory_data" {
-    path = "/opt/nomad-volumes/artifactory_data"
-    read_only = false
-  }
-
-  host_volume "jenkins_home" {
-    path = "{{ nas_mount_point }}/jenkins"
-    read_only = false
-  }
-
   host_volume "homepage_data" {
     path = "{{ nas_mount_point }}/homepage"
     read_only = false
@@ -72,16 +57,6 @@ client {
     read_only = false
   }
 
-  host_volume "seafile_data" {
-    path = "{{ nas_mount_point }}/seafile_data"
-    read_only = false
-  }
-
-  host_volume "seafile_mysql" {
-    path = "{{ nas_mount_point }}/seafile_mysql"
-    read_only = false
-  }
-
   host_volume "syncthing_config" {
     path = "{{ nas_mount_point }}/syncthing/config"
     read_only = false
@@ -93,26 +68,21 @@ client {
   }
 
   host_volume "alertmanager_data" {
-    path = "{{ nas_mount_point }}/alertmanager"
+    path = "{{ nas_mount_point }}/alertmanager_data"
     read_only = false
   }
-  host_volume "bookstack_data" {
-    path = "{{ nas_mount_point }}/bookstack/data"
-    read_only = false
-  }
-
   host_volume "bookstack_config" {
-    path = "{{ nas_mount_point }}/bookstack/config"
+    path = "{{ nas_mount_point }}/bookstack_config"
     read_only = false
   }
 
-  host_volume "bookstack_db_data" {
-    path = "{{ nas_mount_point }}/bookstack/db"
+  host_volume "bookstack_mariadb_data" {
+    path = "{{ nas_mount_point }}/bookstack_mariadb_data"
     read_only = false
   }
 
   host_volume "gollum_data" {
-    path = "{{ nas_mount_point }}/gollum"
+    path = "{{ nas_mount_point }}/gollum_data"
     read_only = false
   }
 
@@ -137,42 +107,42 @@ client {
   }
 
   host_volume "gitea_data" {
-    path = "{{ nas_mount_point }}/gitea"
+    path = "{{ nas_mount_point }}/gitea_data"
     read_only = false
   }
 
   host_volume "vaultwarden_data" {
-    path = "{{ nas_mount_point }}/vaultwarden"
+    path = "{{ nas_mount_point }}/vaultwarden_data"
     read_only = false
   }
 
   host_volume "codeserver_data" {
-    path = "{{ nas_mount_point }}/codeserver"
+    path = "{{ nas_mount_point }}/codeserver_data"
     read_only = false
   }
 
   host_volume "authelia_data" {
-    path = "{{ nas_mount_point }}/authelia"
+    path = "{{ nas_mount_point }}/authelia_data"
     read_only = false
   }
 
   host_volume "postgres_data" {
-    path = "{{ nas_mount_point }}/postgres"
+    path = "{{ nas_mount_point }}/postgres_data"
     read_only = false
   }
 
   host_volume "mariadb_data" {
-    path = "{{ nas_mount_point }}/mariadb"
+    path = "{{ nas_mount_point }}/mariadb_data"
     read_only = false
   }
 
   host_volume "freshrss_data" {
-    path = "{{ nas_mount_point }}/freshrss"
+    path = "{{ nas_mount_point }}/freshrss_data"
     read_only = false
   }
 
   host_volume "speedtest_data" {
-    path = "{{ nas_mount_point }}/speedtest"
+    path = "{{ nas_mount_point }}/speedtest_data"
     read_only = false
   }
 
@@ -188,6 +158,99 @@ client {
 
   host_volume "traefik_acme" {
     path = "/opt/traefik/acme"
+    read_only = false
+  }
+
+  # Knowledge Management
+  host_volume "trilium_data" {
+    path = "{{ nas_mount_point }}/trilium_data"
+    read_only = false
+  }
+
+  host_volume "linkwarden_data" {
+    path = "{{ nas_mount_point }}/linkwarden_data"
+    read_only = false
+  }
+
+  host_volume "linkwarden_postgres_data" {
+    path = "{{ nas_mount_point }}/linkwarden_postgres_data"
+    read_only = false
+  }
+
+  host_volume "wallabag_data" {
+    path = "{{ nas_mount_point }}/wallabag_data"
+    read_only = false
+  }
+
+  host_volume "wallabag_images" {
+    path = "{{ nas_mount_point }}/wallabag_images"
+    read_only = false
+  }
+
+  host_volume "wallabag_postgres_data" {
+    path = "{{ nas_mount_point }}/wallabag_postgres_data"
+    read_only = false
+  }
+
+  host_volume "paperless_data" {
+    path = "{{ nas_mount_point }}/paperless_data"
+    read_only = false
+  }
+
+  host_volume "paperless_media" {
+    path = "{{ nas_mount_point }}/paperless_media"
+    read_only = false
+  }
+
+  host_volume "paperless_consume" {
+    path = "{{ nas_mount_point }}/paperless_consume"
+    read_only = false
+  }
+
+  host_volume "paperless_export" {
+    path = "{{ nas_mount_point }}/paperless_export"
+    read_only = false
+  }
+
+  host_volume "paperless_postgres_data" {
+    path = "{{ nas_mount_point }}/paperless_postgres_data"
+    read_only = false
+  }
+
+  host_volume "drawio_data" {
+    path = "{{ nas_mount_point }}/drawio_data"
+    read_only = false
+  }
+
+  # Development
+  host_volume "woodpecker_data" {
+    path = "{{ nas_mount_point }}/woodpecker_data"
+    read_only = false
+  }
+
+  # Infrastructure - Harbor
+  host_volume "harbor_data" {
+    path = "{{ nas_mount_point }}/harbor_data"
+    read_only = false
+  }
+
+  host_volume "harbor_registry" {
+    path = "{{ nas_mount_point }}/harbor_registry"
+    read_only = false
+  }
+
+  host_volume "harbor_postgres_data" {
+    path = "{{ nas_mount_point }}/harbor_postgres_data"
+    read_only = false
+  }
+
+  host_volume "harbor_redis" {
+    path = "{{ nas_mount_point }}/harbor_redis"
+    read_only = false
+  }
+
+  host_volume "paperless_redis" {
+    path = "{{ nas_mount_point }}/paperless_redis"
     read_only = false
   }
 }

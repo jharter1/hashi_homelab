@@ -103,10 +103,48 @@ Optional 3-node Vault HA cluster on hub nodes (10.0.0.30-32). See `ansible/TODO.
 
 ## Common Tasks
 
-**Adding a new service:**
+**Adding a new service with volumes (CRITICAL - TWO-STEP PROCESS):**
 1. Create `jobs/services/<name>.nomad.hcl` with host volume + Traefik tags
-2. Add volume directory to Ansible `base-system` role if not using existing volume
-3. Deploy: `nomad job run jobs/services/<name>.nomad.hcl`
+2. **STEP 1**: Add volume directory to `ansible/roles/base-system/tasks/main.yml` (creates NFS directory)
+3. **STEP 2**: Add `host_volume` block to `ansible/roles/nomad-client/templates/nomad-client.hcl.j2` (registers with Nomad)
+   - Pattern: `host_volume "name" { path = "{{ nas_mount_point }}/name"; read_only = false }`
+   - **WITHOUT THIS STEP, JOBS FAIL WITH "missing compatible host volumes" ERROR**
+4. Apply configuration: `task ansible:configure`
+5. **Restart all Nomad clients** (required for volume registration):
+   ```fish
+   for ip in 10.0.0.60 10.0.0.61 10.0.0.62 10.0.0.63 10.0.0.64 10.0.0.65
+     ssh ubuntu@$ip "sudo systemctl restart nomad"
+   end
+   ```
+6. Verify volumes registered: `nomad node status dev-nomad-client-1 | grep -A 50 "Host Volumes"`
+7. Deploy: `nomad job run jobs/services/<name>.nomad.hcl`
+8. Create Vault secrets if needed: `vault kv put secret/<service>/key value="..."`
+
+**Adding a new service with PostgreSQL (AUTOMATED):**
+1. Create Vault secret with database password:
+   ```fish
+   vault kv put secret/postgres/<service> password="$(openssl rand -base64 32)"
+   ```
+2. Add database entry to `jobs/services/databases/postgresql/postgresql.nomad.hcl` in the `init-databases` task:
+   ```sql
+   -- Service Name
+   \c postgres
+   SELECT 'CREATE DATABASE <service>' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '<service>')\gexec
+   DO $$
+   BEGIN
+     IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '<service>') THEN
+       CREATE USER <service> WITH ENCRYPTED PASSWORD '{{ with secret "secret/data/postgres/<service>" }}{{ .Data.data.password }}{{ end }}';
+     END IF;
+   END
+   $$;
+   GRANT ALL PRIVILEGES ON DATABASE <service> TO <service>;
+   \c <service>
+   GRANT ALL ON SCHEMA public TO <service>;
+   ```
+3. Redeploy PostgreSQL: `nomad job run jobs/services/databases/postgresql/postgresql.nomad.hcl`
+4. The `init-databases` task automatically creates the database/user (idempotent, safe to run multiple times)
+5. Configure service to use Vault template for database password (see `docs/POSTGRESQL_AUTO_INIT.md`)
+6. **NO MANUAL DATABASE CREATION NEEDED** - the system is fully automated and self-healing
 
 **Updating Nomad/Consul versions:**
 1. Edit `packer/variables/common.pkrvars.hcl` (version variables)
@@ -136,6 +174,12 @@ Optional 3-node Vault HA cluster on hub nodes (10.0.0.30-32). See `ansible/TODO.
 - **Don't** manually edit Nomad/Consul configs on VMs - use Ansible roles with templates
 - **Don't** run `nomad agent` directly - systemd manages services
 - **Don't** create volumes on client filesystems - all data goes to `/mnt/nas/`
+- **Don't** manually create PostgreSQL databases/users - use the automated `init-databases` task (see below)
+- **Don't** forget the TWO-STEP volume configuration - NFS directory creation alone is NOT sufficient
+  - Creating a directory in `base-system` role creates the NFS directory ✅
+  - But you MUST also add `host_volume` block to `nomad-client.hcl.j2` template ❌ (commonly forgotten)
+  - Missing this causes "missing compatible host volumes" deployment failures
+- **Don't** forget to restart Nomad clients after updating nomad-client.hcl.j2 template
 - **Don't** use bridge networking unless necessary - host mode simplifies port management
 - **Don't** skip the template build chain (9400→9500→9501) - each layer depends on the previous
 - **Don't** use bash heredoc syntax (<<EOF) - Fish shell doesn't support it
@@ -143,6 +187,7 @@ Optional 3-node Vault HA cluster on hub nodes (10.0.0.30-32). See `ansible/TODO.
 - **Do** use `task bootstrap:check` before full bootstrap to verify prerequisites
 - **Do** set `PROXMOX_PASSWORD` before Packer builds
 - **Do** wait 60s after Terraform apply for VMs to boot before running Ansible
+- **Do** add new PostgreSQL databases to the `init-databases` task and redeploy - fully idempotent
 ## Resource Management & Operations
 
 **Checking Cluster Resources (Fish shell):**

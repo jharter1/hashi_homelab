@@ -70,6 +70,14 @@ layout:
     style: row
     columns: 2
     icon: mdi-shield-lock
+  Knowledge Management:
+    style: row
+    columns: 3
+    icon: mdi-book-open-variant
+  Development:
+    style: row
+    columns: 3
+    icon: mdi-code-braces
 
 # Quick launch with keyboard shortcuts
 quicklaunch:
@@ -161,6 +169,10 @@ EOH
         icon: code.png
         href: https://code.lab.hartr.net
         description: VS Code in Browser
+    - IT Tools:
+        icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/it-tools.png
+        href: https://tools.lab.hartr.net
+        description: Handy Developer Tools
     - Gollum Wiki:
         icon: gollum.png
         href: https://wiki.lab.hartr.net
@@ -222,6 +234,55 @@ EOH
         href: https://authelia.lab.hartr.net
         description: SSO & Authentication
         ping: http://10.0.0.60:9091
+
+- Knowledge Management:
+    - Trilium Notes:
+        icon: trilium.png
+        href: https://trilium.lab.hartr.net
+        description: Personal Knowledge Base
+        ping: http://10.0.0.60:8080
+    - Linkwarden:
+        icon: linkwarden.png
+        href: https://linkwarden.lab.hartr.net
+        description: Bookmark Archiver
+        ping: http://10.0.0.60:3001
+    - Wallabag:
+        icon: wallabag.png
+        href: https://wallabag.lab.hartr.net
+        description: Read-it-Later
+        ping: http://10.0.0.60:8081
+    - FreshRSS:
+        icon: freshrss.png
+        href: https://freshrss.lab.hartr.net
+        description: RSS Aggregator
+        ping: http://10.0.0.60:8082
+    - Paperless-ngx:
+        icon: paperless.png
+        href: https://paperless.lab.hartr.net
+        description: Document Management
+        ping: http://10.0.0.60:8086
+    - BookStack:
+        icon: bookstack.png
+        href: https://bookstack.lab.hartr.net
+        description: Documentation Wiki
+        ping: http://10.0.0.60:8083
+
+- Development:
+    - Woodpecker CI:
+        icon: woodpecker-ci.png
+        href: https://ci.lab.hartr.net
+        description: CI/CD Pipeline
+        ping: http://10.0.0.60:8084
+    - Harbor:
+        icon: harbor.png
+        href: https://harbor.lab.hartr.net
+        description: Container Registry & Scanning
+        ping: http://10.0.0.60:5000
+    - Draw.io:
+        icon: drawio.png
+        href: https://diagrams.lab.hartr.net
+        description: Diagram Editor
+        ping: http://10.0.0.60:8085
 EOH
       }
 

@@ -86,6 +86,15 @@ GRANT ALL PRIVILEGES ON `ccnet_db`.* TO 'seafile'@'%';
 GRANT ALL PRIVILEGES ON `seafile_db`.* TO 'seafile'@'%';
 GRANT ALL PRIVILEGES ON `seahub_db`.* TO 'seafile'@'%';
 
+-- BookStack database
+CREATE DATABASE IF NOT EXISTS `bookstack` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Create BookStack user
+CREATE USER IF NOT EXISTS 'bookstack'@'%' IDENTIFIED BY '{{ with secret "secret/data/mariadb/bookstack" }}{{ .Data.data.password }}{{ end }}';
+
+-- Grant permissions
+GRANT ALL PRIVILEGES ON `bookstack`.* TO 'bookstack'@'%';
+
 FLUSH PRIVILEGES;
 EOH
       }

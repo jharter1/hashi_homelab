@@ -67,27 +67,78 @@
     group: "{{ item.group | default('root') }}"
     mode: "{{ item.mode | default('0755') }}"
   loop:
-    - { name: 'grafana', owner: '472', group: '472', mode: '0755' }
-    - { name: 'loki', owner: '10001', group: '10001', mode: '0755' }
-    - { name: 'minio', mode: '0755' }
-    - { name: 'prometheus', owner: '65534', group: '65534', mode: '0777' }
-    - { name: 'registry', mode: '0755' }
-    - { name: 'homepage', mode: '0755' }
-    - { name: 'calibre', mode: '0755' }
-    - { name: 'seafile', mode: '0755' }
-    - { name: 'syncthing/config', owner: '1000', group: '1000', mode: '0755' }
-    - { name: 'syncthing/data', owner: '1000', group: '1000', mode: '0755' }
-    - { name: 'postgres', mode: '0755' }
-    - { name: 'mariadb', owner: '999', group: '999', mode: '0755' }
-    - { name: 'speedtest', owner: '1000', group: '1000', mode: '0755' }
-    - { name: 'immich/upload', owner: '1000', group: '1000', mode: '0755' }
-    - { name: 'immich/postgres', owner: '1000', group: '1000', mode: '0755' }
+    # Observability
+    - { name: 'grafana_data', owner: '472', group: '472', mode: '0755' }
+    - { name: 'loki_data', owner: '10001', group: '10001', mode: '0755' }
+    - { name: 'prometheus_data', owner: '65534', group: '65534', mode: '0777' }
+    - { name: 'alertmanager_data', owner: '65534', group: '65534', mode: '0755' }
+    - { name: 'uptime_kuma_data', owner: '1000', group: '1000', mode: '0755' }
+    
+    # Infrastructure
+    - { name: 'minio_data', mode: '0755' }
+    - { name: 'homepage_data', mode: '0755' }
+    - { name: 'traefik_acme', mode: '0755' }
+    
+    # Databases
+    - { name: 'postgres_data', mode: '0755' }
+    - { name: 'mariadb_data', owner: '999', group: '999', mode: '0755' }
+    
+    # Media & Content
+    - { name: 'calibre_data', mode: '0755' }
+    - { name: 'calibre_config', mode: '0755' }
+    - { name: 'audiobookshelf_config', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'audiobookshelf_metadata', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'audiobookshelf_audiobooks', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'audiobookshelf_podcasts', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'syncthing_config', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'syncthing_data', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'freshrss_data', owner: '1000', group: '1000', mode: '0755' }
+    
+    # Storage & File Management
+    - { name: 'nextcloud_data', owner: '1000', group: '1000', mode: '0755' }
+    
+    # Security
+    - { name: 'vaultwarden_data', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'authelia_data', owner: '1000', group: '1000', mode: '0755' }
+    
+    # Development & Tools
+    - { name: 'gitea_data', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'codeserver_data', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'gollum_data', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'woodpecker_data', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'harbor_data', owner: '10000', group: '10000', mode: '0755' }
+    - { name: 'harbor_registry', owner: '10000', group: '10000', mode: '0755' }
+    - { name: 'harbor_redis', owner: '999', group: '999', mode: '0755' }
+    
+    # Knowledge Management (NEW)
+    - { name: 'trilium_data', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'linkwarden_data', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'linkwarden_postgres_data', mode: '0755' }
+    - { name: 'wallabag_data', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'wallabag_images', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'wallabag_postgres_data', mode: '0755' }
+    - { name: 'paperless_data', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'paperless_media', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'paperless_consume', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'paperless_export', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'paperless_postgres_data', mode: '0755' }
+    - { name: 'paperless_redis', owner: '999', group: '999', mode: '0755' }
+    - { name: 'drawio_data', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'bookstack_config', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'bookstack_mariadb_data', owner: '999', group: '999', mode: '0755' }
+    - { name: 'harbor_postgres_data', mode: '0755' }
+    
+    # Testing & Monitoring
+    - { name: 'speedtest_data', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'immich_upload', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'immich_postgres', owner: '1000', group: '1000', mode: '0755' }
+
   when: node_type == 'client' and nas_mount_source is defined
 
 - name: Sync homepage configuration files
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../../configs/homepage/"
-    dest: "{{ nas_mount_point }}/homepage/"
+    dest: "{{ nas_mount_point }}/homepage_data/"
     owner: root
     group: root
     mode: '0644'

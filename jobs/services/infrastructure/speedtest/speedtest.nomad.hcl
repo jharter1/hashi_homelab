@@ -78,7 +78,7 @@ EOH
           "traefik.http.routers.speedtest.entrypoints=websecure",
           "traefik.http.routers.speedtest.tls=true",
           "traefik.http.routers.speedtest.tls.certresolver=letsencrypt",
-          # No Authelia - Speedtest has its own authentication system
+          "traefik.http.routers.speedtest.middlewares=authelia@file",
         ]
         check {
           type     = "http"
