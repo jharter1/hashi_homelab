@@ -22,9 +22,9 @@ job "homepage" {
     update {
       max_parallel      = 1
       health_check      = "checks"
-      min_healthy_time  = "5s"
-      healthy_deadline  = "30s"
-      progress_deadline = "1m"
+      min_healthy_time  = "10s"
+      healthy_deadline  = "2m"
+      progress_deadline = "3m"
       auto_revert       = true
     }
 

@@ -61,6 +61,10 @@ job "loki" {
           "traefik.http.routers.loki.entrypoints=websecure",
           "traefik.http.routers.loki.tls=true",
           "traefik.http.routers.loki.tls.certresolver=letsencrypt",
+          # Redirect root path to Grafana Explore (Loki has no UI)
+          "traefik.http.middlewares.loki-redirect.redirectregex.regex=^https://loki.lab.hartr.net/$$",
+          "traefik.http.middlewares.loki-redirect.redirectregex.replacement=https://grafana.lab.hartr.net/explore?left=%7B%22datasource%22:%22Loki%22,%22queries%22:%5B%7B%22refId%22:%22A%22%7D%5D%7D",
+          "traefik.http.routers.loki.middlewares=loki-redirect@consulcatalog",
         ]
         check {
           type     = "http"
