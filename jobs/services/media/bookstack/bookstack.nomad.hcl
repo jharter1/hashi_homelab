@@ -13,6 +13,11 @@ job "bookstack" {
   group "bookstack" {
     count = 1
 
+    # Prevent multiple instances on same node to avoid port conflicts
+    constraint {
+      distinct_hosts = true
+    }
+
     network {
       mode = "host"
       port "http" {
@@ -102,6 +107,13 @@ EOH
         network_mode = "host"
         ports        = ["http"]
         privileged   = true
+        
+        # Mount custom nginx config for port 8083
+        mount {
+          type   = "bind"
+          source = "local/nginx-default.conf"
+          target = "/config/nginx/site-confs/default.conf"
+        }
       }
 
       volume_mount {
@@ -109,13 +121,52 @@ EOH
         destination = "/config"
       }
 
-      # Vault template for database credentials
+      # Vault template for database and app credentials
       template {
-        destination = "secrets/db.env"
+        destination = "secrets/app.env"
         env         = true
         data        = <<EOH
-# Database password
-DB_PASS={{ with secret "secret/data/mariadb/bookstack" }}{{ .Data.data.password }}{{ end }}
+# Database password - linuxserver.io uses DB_PASSWORD
+DB_PASSWORD={{ with secret "secret/data/mariadb/bookstack" }}{{ .Data.data.password }}{{ end }}
+
+# Application key (Laravel encryption key)
+APP_KEY={{ with secret "secret/data/bookstack/app" }}{{ .Data.data.key }}{{ end }}
+EOH
+      }
+
+      # Custom nginx config for port 8083
+      template {
+        destination = "local/nginx-default.conf"
+        data        = <<EOH
+server {
+    listen 8083 default_server;
+    listen [::]:8083 default_server;
+    
+    server_name _;
+    
+    root /app/www/public;
+    index index.php index.html;
+    
+    client_max_body_size 0;
+    
+    location / {
+        try_files {{`$`}}uri {{`$`}}uri/ /index.php{{`$`}}is_args{{`$`}}args;
+    }
+    
+    location ~ \.php{{`$`}} {
+        fastcgi_split_path_info ^(.+\.php)(/.+){{`$`}};
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+        include /etc/nginx/fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME {{`$`}}document_root{{`$`}}fastcgi_script_name;
+        fastcgi_param PATH_INFO {{`$`}}fastcgi_path_info;
+        fastcgi_param QUERY_STRING {{`$`}}query_string;
+    }
+    
+    location ~ /\.ht {
+        deny all;
+    }
+}
 EOH
       }
 
@@ -129,14 +180,13 @@ EOH
         APP_URL = "https://bookstack.lab.hartr.net"
 
         # Database configuration - using dedicated MariaDB sidecar
-        DB_HOST = "localhost"
+        # Use 127.0.0.1 instead of localhost to force TCP connection
+        # linuxserver.io uses DB_USERNAME not DB_USER
+        DB_HOST = "127.0.0.1"
         DB_PORT = "3307"
         DB_DATABASE = "bookstack"
-        DB_USER = "bookstack"
-        # DB_PASS comes from Vault template
-
-        # Port configuration (override default 80)
-        APP_PORT = "8083"
+        DB_USERNAME = "bookstack"
+        # DB_PASSWORD and APP_KEY come from Vault template
 
         # Mail configuration (optional - using log for local deployment)
         MAIL_DRIVER = "log"

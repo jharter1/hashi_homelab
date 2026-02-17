@@ -1,6 +1,96 @@
 # New Services Deployment Guide
 
-This guide covers the deployment of 8 new services added to the homelab focused on education, knowledge management, and development tools.
+This guide covers the architecture, deployment strategy, and specific instructions for running services on the Nomad cluster.
+
+## Architecture: The "Holy Trinity"
+
+The standard pattern for HashiCorp homelabs involves three components working together:
+
+1. **Nomad**: Schedules and runs application containers (Docker).
+2. **Consul**: Acts as the "Phonebook". When Nomad starts a container, it registers the service (IP and Port) with Consul.
+3. **Traefik**: Acts as the "Switchboard". It connects to Consul, watches for services with specific tags (e.g., `traefik.enable=true`), and automatically creates routing rules to expose them on port 80/443.
+
+### Traffic Flow
+
+```
+User → Traefik (Port 80/443) → Consul Lookup → Nomad Client IP:Port → Container
+```
+
+**How it works**:
+1. User accesses `https://service.lab.hartr.net`
+2. Traefik receives request and queries Consul
+3. Consul returns healthy service instances registered by Nomad
+4. Traefik proxies request to service with SSL termination
+
+### Required Service Tags
+
+To expose a service via Traefik, add tags in the Nomad job file:
+
+```hcl
+service {
+  name = "myapp"
+  port = "http"
+  
+  tags = [
+    "traefik.enable=true",
+    "traefik.http.routers.myapp.rule=Host(`myapp.lab.hartr.net`)",
+    "traefik.http.routers.myapp.entrypoints=websecure",
+    "traefik.http.routers.myapp.tls=true",
+    "traefik.http.routers.myapp.tls.certresolver=letsencrypt",
+  ]
+}
+```
+
+See [SERVICES.md](SERVICES.md) for detailed Traefik SSL configuration.
+
+## Service Categories & Ideas
+
+### 🛠️ Core Infrastructure
+- **Traefik**: Ingress controller (system job)
+- **Homepage / Dashy**: Dashboard for all services
+- **Docker Registry**: Image caching and private registry
+
+### 📊 Observability (LGTM Stack)
+- **Prometheus**: Metrics collection and storage
+- **Grafana**: Visualization dashboards
+- **Loki**: Log aggregation
+- **Tempo**: Distributed tracing (future)
+
+### 📚 Knowledge Management
+- **Trilium Notes**: Hierarchical note-taking
+- **Linkwarden**: Bookmark archiving with tagging
+- **Wallabag**: Read-it-later for articles
+- **BookStack**: Organized documentation platform
+
+### 🏠 Home Automation
+- **Home Assistant**: Smart home control (future)
+- **Mosquitto**: MQTT broker for IoT (future)
+- **Zigbee2MQTT**: Zigbee device integration (future)
+
+### 🎬 Media & Content
+- **Jellyfin / Plex**: Media streaming (future)
+- **Sonarr / Radarr**: Media management (future)
+- **Calibre**: E-book library
+- **Immich**: Photo/video backup with ML features
+
+### 🧪 Development & CI/CD
+- **Gitea**: Self-hosted Git repositories
+- **Woodpecker CI**: CI/CD pipelines
+- **Harbor**: Enterprise container registry with scanning
+- **Code-Server**: VS Code in browser (future)
+
+### 🗂️ Document Management
+- **Paperless-ngx**: Document OCR and organization
+- **Draw.io**: Diagramming and flowcharts
+
+### 🌐 Network & Monitoring
+- **Speedtest Tracker**: Network speed monitoring
+- **Uptime-Kuma**: Service availability monitoring
+- **Tailscale**: VPN remote access
+
+## Recent Services Deployed
+
+This section covers 8 new services added to the homelab focused on education, knowledge management, and development tools.
 
 ## Services Added
 
@@ -428,3 +518,93 @@ Constraint "missing compatible host volumes": 6 nodes excluded by filter
 - Verify service is registered in Consul: http://10.0.0.50:8500
 - Check Traefik tags in job file match expected pattern
 - Review Traefik logs: `nomad alloc logs -job traefik`
+
+### PostgreSQL authentication failures
+
+**Symptom:** Service logs show `password authentication failed for user <service_name>`
+
+**Root Cause:** Database or user doesn't exist, even though PostgreSQL is running.
+
+**Solution:**
+1. **Don't create users manually** - Use the automated init-databases system (see `docs/POSTGRESQL.md`)
+2. Verify the service is listed in the init-databases task in `jobs/services/databases/postgresql/postgresql.nomad.hcl`
+3. If missing, add database initialization SQL to the init script
+4. Redeploy PostgreSQL: `nomad job run jobs/services/databases/postgresql/postgresql.nomad.hcl`
+5. Check init-databases task logs: `nomad alloc logs <alloc-id> init-databases`
+6. Verify database exists:
+   ```fish
+   ssh ubuntu@10.0.0.60 "sudo docker exec -i \$(sudo docker ps | grep postgres | grep -v backup | awk '{print \$1}') \\
+     psql -U postgres -c '\\l' | grep <service_name>"
+   ```
+
+**Prevention:** Always use the automated PostgreSQL initialization system. Manual database creation is error-prone and not idempotent.
+
+### Homepage dashboard widgets not working
+
+**Symptom:** Homepage widgets show "No data" or fail to load, even though services are running.
+
+**Root Cause:** Homepage widget configuration has hardcoded IP addresses, but Nomad schedules services on different nodes.
+
+**Solution:**
+1. Find the actual service allocation IP:
+   ```fish
+   nomad job status <service-name> | grep -A 2 'Allocations'
+   nomad alloc status <alloc-id> | grep -A 3 'Allocation Addresses'
+   ```
+2. Update widget URL in `configs/homepage/services.yaml` with correct IP:port
+3. Sync and redeploy homepage:
+   ```fish
+   task homepage:update
+   ```
+
+**Prevention:** Consider using Consul service discovery or Nomad API for dynamic widget URLs instead of hardcoding IPs.
+
+### Speedtest Tracker admin user creation
+
+**Symptom:** Can't log into Speedtest Tracker after deployment.
+
+**Common Gotchas:**
+1. **Interactive commands don't work over SSH:**
+   ```fish
+   # ❌ This fails:
+   ssh ubuntu@10.0.0.63 "sudo docker exec -it <container> php /app/www/artisan make:filament-user"
+   # Error: NonInteractiveValidationException
+   ```
+
+2. **Use non-interactive flags instead:**
+   ```fish
+   # ✅ This works:
+   ssh ubuntu@10.0.0.63 "sudo docker exec <container> php /app/www/artisan make:filament-user \\
+     --name='Admin' --email='admin@admin.com' --password='password'"
+   ```
+
+3. **Default role is 'user', not 'admin':**
+   - The `make:filament-user` command creates users with role='user' by default
+   - Must manually upgrade to admin role in database:
+   ```fish
+   ssh ubuntu@10.0.0.60 "sudo docker exec \$(sudo docker ps | grep postgres | grep -v backup | awk '{print \$1}') \\
+     psql -U speedtest -d speedtest -c \"UPDATE users SET role = 'admin' WHERE email = 'admin@admin.com';\""
+   ```
+
+4. **Container IDs change between queries:**
+   - Always run `docker ps` immediately before exec commands
+   - Container ID from 5 minutes ago may no longer be valid
+
+**Full Workflow:**
+```fish
+# 1. Get current container ID
+CONTAINER_ID=$(ssh ubuntu@10.0.0.63 "sudo docker ps | grep speedtest | awk '{print \$1}'")
+
+# 2. Create user with non-interactive flags
+ssh ubuntu@10.0.0.63 "sudo docker exec $CONTAINER_ID php /app/www/artisan make:filament-user \\
+  --name='Admin' --email='admin@admin.com' --password='password'"
+
+# 3. Upgrade to admin role
+PG_CONTAINER=$(ssh ubuntu@10.0.0.60 "sudo docker ps | grep postgres | grep -v backup | awk '{print \$1}'")
+ssh ubuntu@10.0.0.60 "sudo docker exec $PG_CONTAINER psql -U speedtest -d speedtest \\
+  -c \"UPDATE users SET role = 'admin' WHERE email = 'admin@admin.com';\""
+
+# 4. Verify
+ssh ubuntu@10.0.0.60 "sudo docker exec $PG_CONTAINER psql -U speedtest -d speedtest \\
+  -c 'SELECT id, name, email, role FROM users;'"
+```

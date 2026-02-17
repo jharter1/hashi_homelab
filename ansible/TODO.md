@@ -114,10 +114,9 @@ The Vault integration is partially implemented and ready to be completed. Here's
   - [ ] Document Vault deployment process
   - [ ] Add Vault troubleshooting section
   
-- [ ] **Create Vault-specific docs**
-  - [ ] `docs/VAULT_DEPLOYMENT.md` - Step-by-step deployment
-  - [ ] `docs/VAULT_NOMAD_INTEGRATION.md` - Integration guide
-  - [ ] Update existing `docs/VAULT_INTEGRATION.md`
+- [x] **Create Vault-specific docs**
+  - [x] `docs/VAULT.md` - Consolidated deployment & integration guide
+  - [x] `docs/VAULT_QUICK_REFERENCE.md` - Quick commands reference
   
 - [ ] **Security hardening**
   - [ ] Document backup/recovery procedures

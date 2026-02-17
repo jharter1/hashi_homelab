@@ -50,14 +50,14 @@
           url: https://prometheus.lab.hartr.net
 
 - Services:
+    - Docker Registry:
+        icon: docker.png
+        href: https://registry-ui.lab.hartr.net
+        description: Container Registry
     - Gitea:
         icon: gitea.png
         href: https://gitea.lab.hartr.net
         description: Self-hosted Git
-    - IT Tools:
-        icon: it-tools.png
-        href: https://tools.lab.hartr.net
-        description: IT Tools
     - Code Server:
         icon: code.png
         href: https://code.lab.hartr.net
@@ -66,33 +66,35 @@
         icon: gollum.png
         href: https://wiki.lab.hartr.net
         description: Git-backed Wiki
-    - Syncthing:
-        icon: syncthing.png
-        href: https://syncthing.lab.hartr.net
-        description: Decentralized File Sync
-        ping: http://10.0.0.60:8384
+    - Seafile:
+        icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/seafile.png
+        href: https://seafile.lab.hartr.net
+        description: File Sync & Collaboration
     - Speedtest:
         icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/speedtest-tracker.png
         href: https://speedtest.lab.hartr.net
         description: Internet Speed Testing
-        ping: http://10.0.0.63:8765
         widget:
           type: speedtest
-          url: http://10.0.0.63:8765
+          url: https://speedtest.lab.hartr.net
           key: "lVBkCELz5L7PYgyrPEd0BbFn64KEbuFkrmo7q9iGe22c26b4"
     - Audiobookshelf:
         icon: audiobookshelf.png
         href: https://audiobookshelf.lab.hartr.net
         description: Audiobook & Podcast Server
-        ping: http://10.0.0.64:13378
+        ping: http://10.0.0.60:13378
         widget:
           type: audiobookshelf
-          url: http://10.0.0.64:13378
+          url: http://10.0.0.60:13378
           key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXlJZCI6IjA4NDE2ODhlLWEyYzQtNDMzYy05ZmY0LTM3ZTQ0NmJmNWVhZiIsIm5hbWUiOiJ3aWRnZXQiLCJ0eXBlIjoiYXBpIiwiaWF0IjoxNzcwODQxNDEzfQ.DTtiVThhl6n6CQZNs-9dyARRWcPeTvlRS6Ew8Th2rLk"
     - Uptime Kuma:
         icon: uptime-kuma.png
         href: https://uptime-kuma.lab.hartr.net
         description: Uptime Monitoring
+        widget:
+          type: uptimekuma
+          url: https://uptime-kuma.lab.hartr.net
+          slug: default
     - Calibre Web:
         icon: calibre-web.png
         href: https://calibre.lab.hartr.net
@@ -129,52 +131,3 @@
         href: https://authelia.lab.hartr.net
         description: SSO & Authentication
         ping: http://10.0.0.60:9091
-
-- Knowledge Management:
-    - Trilium Notes:
-        icon: trilium.png
-        href: https://trilium.lab.hartr.net
-        description: Personal Knowledge Base
-        ping: http://10.0.0.60:8080
-    - Linkwarden:
-        icon: linkwarden.png
-        href: https://linkwarden.lab.hartr.net
-        description: Bookmark Archiver
-        ping: http://10.0.0.60:3001
-    - Wallabag:
-        icon: wallabag.png
-        href: https://wallabag.lab.hartr.net
-        description: Read-it-Later
-        ping: http://10.0.0.60:8081
-    - FreshRSS:
-        icon: freshrss.png
-        href: https://freshrss.lab.hartr.net
-        description: RSS Aggregator
-        ping: http://10.0.0.60:8082
-    - Paperless-ngx:
-        icon: paperless.png
-        href: https://paperless.lab.hartr.net
-        description: Document Management
-        ping: http://10.0.0.60:8086
-    - BookStack:
-        icon: bookstack.png
-        href: https://bookstack.lab.hartr.net
-        description: Documentation Wiki
-        ping: http://10.0.0.60:8083
-
-- Development:
-    - Woodpecker CI:
-        icon: woodpecker-ci.png
-        href: https://ci.lab.hartr.net
-        description: CI/CD Pipeline
-        ping: http://10.0.0.60:8084
-    - Harbor:
-        icon: harbor.png
-        href: https://harbor.lab.hartr.net
-        description: Container Registry & Scanning
-        ping: http://10.0.0.60:5000
-    - Draw.io:
-        icon: drawio.png
-        href: https://diagrams.lab.hartr.net
-        description: Diagram Editor
-        ping: http://10.0.0.60:8085

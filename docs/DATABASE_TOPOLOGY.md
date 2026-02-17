@@ -24,13 +24,12 @@ Database consolidation is **complete** with a shared PostgreSQL instance serving
 | Authelia | `authelia` | `authelia` | `secret/data/postgres/authelia` | ✅ Active |
 | Gitea | `gitea` | `gitea` | `secret/data/postgres/gitea` | ✅ Active |
 | Grafana | `grafana` | `grafana` | `secret/data/postgres/grafana` | ✅ Active |
-| Nextcloud | `nextcloud` | `nextcloud` | `secret/data/postgres/nextcloud` | ✅ Active |
 | Speedtest | `speedtest` | `speedtest` | `secret/data/postgres/speedtest` | ✅ Active |
 | FreshRSS | `freshrss` | `freshrss` | `secret/data/postgres/freshrss` | ✅ Active |
 | Vaultwarden | `vaultwarden` | `vaultwarden` | `secret/data/postgres/vaultwarden` | ✅ Active |
 
-**Active Databases:** 7  
-**Total Services:** 7 (authelia, gitea, grafana, nextcloud, speedtest, freshrss, vaultwarden)
+**Active Databases:** 6  
+**Total Services:** 6 (authelia, gitea, grafana, speedtest, freshrss, vaultwarden)
 
 ## Abandoned Database Instances
 
@@ -103,7 +102,7 @@ volume_mount {
 
 ### ✅ Completed
 1. ✅ Shared PostgreSQL instance deployed
-2. ✅ 7 services actively using PostgreSQL (Authelia, Gitea, Grafana, Nextcloud, Speedtest, FreshRSS, Vaultwarden)
+2. ✅ 6 services actively using PostgreSQL (Authelia, Gitea, Grafana, Speedtest, FreshRSS, Vaultwarden)
 3. ✅ Automated PostgreSQL backups (daily, 7-day retention)
 4. ✅ All database credentials in Vault
 5. ✅ All PostgreSQL services using Consul service discovery (no hardcoded IPs)

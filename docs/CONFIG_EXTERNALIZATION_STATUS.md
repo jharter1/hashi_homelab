@@ -57,8 +57,8 @@ These configurations MUST remain as Nomad `template` blocks due to secrets or se
 
 ### Databases
 - **PostgreSQL** (`jobs/services/databases/postgresql/postgresql.nomad.hcl`)
-  - **Reason:** Init script contains Vault passwords for 10+ services:
-    - freshrss, gitea, authelia, vaultwarden, grafana, nextcloud, etc.
+  - **Reason:** Init script contains Vault passwords for services:
+    - freshrss, gitea, authelia, vaultwarden, grafana, speedtest, etc.
   - **Pattern:** Database initialization with per-service secrets
   - **Lines:** ~200 lines of SQL with Vault interpolation
 

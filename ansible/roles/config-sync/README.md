@@ -199,6 +199,5 @@ None. Role uses playbook-relative paths and hardcoded destinations.
 
 ## Related Documentation
 
-- [Phase 1 Lessons Learned](../../docs/PHASE1_LESSONS_LEARNED.md) - Issues encountered and solutions
-- [Phase 1 Testing Guide](../../docs/PHASE1_TESTING_GUIDE.md) - How to test config externalization
+- [Phase 1 Config Externalization](../../docs/PHASE1.md) - Complete guide with lessons learned and testing procedures
 - [Config Externalization Status](../../docs/CONFIG_EXTERNALIZATION_STATUS.md) - Which services use external configs

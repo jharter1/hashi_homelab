@@ -5,6 +5,16 @@
 set -x VAULT_ADDR http://10.0.0.30:8200
 set -x NOMAD_ADDR http://10.0.0.50:4646
 
+# Check if VAULT_TOKEN is set
+if not set -q VAULT_TOKEN
+    echo "❌ Error: VAULT_TOKEN not set"
+    echo "Please source credentials first:"
+    echo "  source .credentials"
+    echo "  OR"
+    echo "  source ansible/.vault-hub-credentials"
+    exit 1
+end
+
 echo "==> Creating Vaultwarden database password in Vault..."
 set vw_password "vw_"(openssl rand -hex 16)
 vault kv put secret/postgres/vaultwarden password=$vw_password

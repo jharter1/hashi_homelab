@@ -141,7 +141,7 @@ ansible/inventory/hub.yml            # Hub cluster inventory
 ansible/playbooks/deploy-hub-*.yml   # Vault deployment playbooks
 ansible/roles/vault/                 # Vault Ansible role
 ansible/.vault-hub-credentials       # Credentials (gitignored)
-docs/VAULT_DEPLOYMENT.md            # Detailed deployment guide
+docs/VAULT.md                       # Comprehensive deployment & integration guide
 ```
 
 ## Troubleshooting Quick Fixes

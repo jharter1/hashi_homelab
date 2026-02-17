@@ -108,6 +108,13 @@ nomad alloc logs -f $(nomad job allocs authelia | grep running | awk '{print $1}
 
 # Service not protected
 nomad job inspect SERVICE | grep middleware
+
+# API endpoints getting 401 errors
+# Add bypass rules for /api/*, /opds/*, etc in access_control.rules
+# Example:
+# - domain: calibre.lab.hartr.net
+#   resources: ["^/opds.*$"]
+#   policy: bypass
 ```
 
 ## Useful Vault Commands
@@ -160,4 +167,4 @@ vault kv delete secret/authelia/config
 - Job: `jobs/services/authelia.nomad.hcl`
 - Redis: `jobs/services/redis.nomad.hcl`
 - Scripts: `scripts/setup-authelia-secrets.fish`, `scripts/generate-authelia-password.fish`, `scripts/deploy-authelia-sso.fish`, `scripts/test-authelia-protection.fish`
-- Docs: `docs/AUTHELIA_DEPLOYMENT_READY.md`
+- Docs: `docs/AUTHELIA.md`

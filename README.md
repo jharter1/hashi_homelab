@@ -410,8 +410,8 @@ task vault:test
 
 ### Documentation
 
-- **[Vault Deployment Guide](docs/VAULT_DEPLOYMENT.md)** - Complete deployment walkthrough
-- **[Vault Quick Reference](docs/VAULT_QUICK_REFERENCE.md)** - Common commands and tasks
+- **[Vault Guide](docs/VAULT.md)** - Deployment, integration & usage guide
+- **[Quick Reference](docs/CHEATSHEET.md)** - Command shortcuts for all tools
 - **[Vault Integration Roadmap](ansible/TODO.md)** - Phase 2-4 implementation plan
 
 ### Current Status
@@ -450,7 +450,7 @@ task tailscale:status
 
 ### Documentation
 
-See **[docs/TAILSCALE_SETUP.md](docs/TAILSCALE_SETUP.md)** for complete setup guide including:
+See **[docs/SERVICES.md](docs/SERVICES.md)** for complete setup guide including:
 - DNS configuration options
 - Subnet routing approval
 - Troubleshooting
@@ -480,7 +480,6 @@ hashi_homelab/
 │       ├── prometheus.nomad.hcl        # Metrics
 │       ├── loki.nomad.hcl              # Log aggregation
 │       ├── minio.nomad.hcl             # Object storage
-│       ├── docker-registry.nomad.hcl   # Docker registry + UI
 │       └── whoami.nomad.hcl            # Test service
 ├── packer/
 │   ├── templates/
@@ -513,8 +512,8 @@ hashi_homelab/
 │   ├── configure-vault-nomad-integration.fish  # Vault-Nomad integration (WIP)
 │   └── migrate-vault-dev-to-hub.fish   # Vault migration helper (WIP)
 ├── docs/                                # Documentation
-│   ├── DOCKER_REGISTRY_SETUP.md        # Registry guide
-│   └── PROMETHEUS_SOLUTION.md          # Monitoring guide
+│   ├── SERVICES.md                     # Service deployment guides
+│   └── PROMETHEUS.md                   # Prometheus monitoring guide
 ├── Taskfile.yml                         # Task automation
 ├── .gitignore                           # Excludes secrets
 ├── LICENSE
@@ -748,6 +747,27 @@ Terraform will redistribute VMs across all 3 nodes.
 
 ## Troubleshooting
 
+> **📖 For comprehensive troubleshooting, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)**  
+> Common issues covered: Vault integration, networking, database connectivity, resource allocation, and service-specific gotchas.
+
+### Quick Diagnostics
+
+```bash
+# Check all job statuses
+nomad job status
+
+# View allocation details
+nomad alloc status <alloc-id>
+
+# View logs (stdout and stderr)
+nomad alloc logs <alloc-id>
+nomad alloc logs -stderr <alloc-id>
+
+# Check Consul service registration
+consul catalog services
+consul catalog service <service-name>
+```
+
 ### Packer Build Fails
 
 **SSH Timeout**:
@@ -820,7 +840,25 @@ Solutions:
 - Verify the image works on your CPU: `docker run --rm [image] --version`
 - Check Nomad allocation logs: `nomad alloc logs <allocation-id>`
 
-**Service Not Reachable**:
+### Quick References
+
+- [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) - Common issues, gotchas, and solutions
+- [QUICKSTART.md](docs/QUICKSTART.md) - Fast-track deployment guide
+- [CHEATSHEET.md](docs/CHEATSHEET.md) - Command reference and quick tips
+- [RESOURCE_SURVEY.md](docs/RESOURCE_SURVEY.md) - Resource monitoring and optimization
+
+### Detailed Guides
+
+- [NEW_SERVICES_DEPLOYMENT.md](docs/NEW_SERVICES_DEPLOYMENT.md) - Service architecture and deployment patterns
+- [SERVICES.md](docs/SERVICES.md) - Service-specific setup guides (Tailscale, Docker Registry, Traefik SSL, etc.)
+- [INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md) - Storage architecture and disk configuration
+- [POSTGRESQL.md](docs/POSTGRESQL.md) - Database management (anti-pattern guide)
+
+### Component Documentation
+
+- [packer/templates/ubuntu/README.md](packer/templates/ubuntu/README.md) - Template details and build order
+- [mcp-servers/README.md](mcp-servers/README.md) - MCP server setup for AI integration
+- [ansible/roles/*/README.md](ansible/roles/) - Ansible role documentation
 
 If services aren't accessible after deployment:
 

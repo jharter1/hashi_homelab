@@ -1,8 +1,12 @@
 # Database Consolidation Summary
 
+**⚠️ UPDATE (February 12, 2026):** Uptime-Kuma was **reverted back to SQLite** due to monitoring anti-pattern. See section below.
+
 ## Changes Made
 
 Successfully migrated 4 services from SQLite/embedded databases to the centralized PostgreSQL instance.
+
+*Note: Uptime-Kuma was later reverted (see "Lessons Learned" section below).*
 
 ### Services Migrated
 
@@ -18,6 +22,7 @@ Successfully migrated 4 services from SQLite/embedded databases to the centraliz
 3. **Uptime-Kuma** - Uptime monitoring
    - Before: SQLite database
    - After: Central PostgreSQL with connection string
+   - **⚠️ REVERTED (Feb 12, 2026)**: Back to SQLite due to monitoring anti-pattern (see Lessons Learned)
 
 4. **Vaultwarden** - Password manager (Bitwarden compatible)
    - Before: SQLite database
@@ -225,6 +230,51 @@ Once confirmed working:
 
 ---
 
+## Lessons Learned
+
+### Uptime-Kuma Reversal (February 12, 2026)
+
+**Decision:** Reverted Uptime-Kuma from MariaDB back to SQLite.
+
+**Reason - Monitoring Anti-Pattern:**  
+Using a shared database for monitoring services creates a circular dependency:
+- Monitor tracks database health
+- Database goes down
+- Monitor can't access its own data to report the outage
+- Monitoring system is unavailable exactly when you need it most
+
+**Real Impact:**  
+When MariaDB went down during testing, Uptime-Kuma also went down, defeating the purpose of having a monitoring system.
+
+**Solution:**  
+Monitoring infrastructure should be operationally independent from monitored systems:
+- ✅ **Uptime-Kuma**: SQLite (self-contained)
+- ✅ **Alertmanager**: In-memory + config files
+- ✅ **Prometheus**: Time-series DB (file-based)
+- ✅ **Loki**: File-based log storage
+
+**General Principle:**  
+Database consolidation has diminishing returns and increases system fragility. Monitoring tools should have minimal external dependencies to remain operational during outages.
+
+**Services to Keep Self-Contained:**
+- Uptime monitoring (Uptime-Kuma)
+- Alerting (Alertmanager)  
+- Metrics collection (Prometheus)
+- Log aggregation (Loki)
+- Any service whose primary purpose is detecting failures
+
+**Services Appropriate for Shared Databases:**
+- Application data (Nextcloud, Gitea, Grafana)
+- User authentication (Authelia)
+- Content management (FreshRSS, Seafile)
+- Non-critical utilities (Speedtest, Immich)
+
+**Documentation:**  
+See [TROUBLESHOOTING.md](TROUBLESHOOTING.md#uptime-kuma) for technical details on the migration issues encountered and solutions.
+
+---
+
 **Created**: February 6, 2026  
-**Status**: Ready for deployment  
+**Updated**: February 12, 2026 (Uptime-Kuma reversal)  
+**Status**: Partially implemented - 3 services on PostgreSQL, 1 reverted  
 **Impact**: Medium - requires service redeployment, potential data loss for some services

@@ -154,8 +154,6 @@ tasks:
       - |
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/observability/grafana/grafana.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/development/docker-registry/docker-registry.nomad.hcl
-      - |
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/whoami/whoami.nomad.hcl
       - echo "All service jobs deployed successfully"
 

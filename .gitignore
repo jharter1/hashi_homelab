@@ -135,4 +135,3 @@ SENSITIVE_INFO_ACTUAL.md
 .aws/
 **/*aws*credentials*
 !terraform/aws/README.md
-!docs/TRAEFIK_SSL_SETUP.md

@@ -48,10 +48,8 @@ jobs/
 │   │   │   └── gitea.nomad.hcl         # Git hosting
 │   │   ├── gollum/
 │   │   │   └── gollum.nomad.hcl        # Wiki
-│   │   ├── codeserver/
-│   │   │   └── codeserver.nomad.hcl    # VS Code in browser
-│   │   └── docker-registry/
-│   │       └── docker-registry.nomad.hcl  # Private Docker registry + UI
+│   │   └── codeserver/
+│   │       └── codeserver.nomad.hcl    # VS Code in browser
 │   │
 │   └── infrastructure/                  # Core Infrastructure
 │       ├── minio/

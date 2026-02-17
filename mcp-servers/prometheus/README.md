@@ -121,7 +121,7 @@ Example output:
   ],
   "containers": [
     {
-      "job": "nextcloud",
+      "job": "grafana",
       "memory": "1.23 GB"
     }
   ]
@@ -136,8 +136,8 @@ Get the biggest memory consumers:
 [
   {
     "rank": 1,
-    "job": "nextcloud",
-    "task": "nextcloud",
+    "job": "grafana",
+    "task": "grafana",
     "memory": "1.23 GB"
   },
   {

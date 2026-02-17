@@ -98,7 +98,6 @@ Need to identify which services use databases and how:
 **Known PostgreSQL Users:**
 - Authelia (auth database)
 - Gitea (if deployed)
-- Nextcloud (if deployed)
 - FreshRSS (RSS reader)
 - Speedtest (performance tracking)
 - Uptime-kuma (monitoring status)
@@ -157,7 +156,7 @@ Need to identify which services use databases and how:
 4. **rsync preservation errors** - NFS doesn't support all metadata operations. Fixed with `--omit-dir-times --no-perms --no-owner --no-group`
 5. **Loki schema mismatch** - Loki 3.6.0 requires structured metadata disabled for older schema v11. Required `nomad job stop -purge` + redeploy
 
-**Full details:** See [docs/PHASE1_LESSONS_LEARNED.md](docs/PHASE1_LESSONS_LEARNED.md)
+**Full details:** See [docs/PHASE1.md](docs/PHASE1.md)
 
 ### 📊 Updated Metrics
 - **Services Deployed:** **5/5 healthy** (Traefik, Loki, Prometheus, Grafana, Alertmanager) ✅
@@ -189,12 +188,12 @@ Need to identify which services use databases and how:
 Database consolidation is **mostly complete**! Key findings:
 
 - [x] Audited all 15 running services for database connections ✅
-- [x] Created database topology document ([docs/DATABASE_TOPOLOGY.md](docs/DATABASE_TOPOLOGY.md)) ✅
-- [x] Verified shared PostgreSQL instance healthy with 5 active databases ✅
+- [x] Created database topology document (archived to docs/archive/migrations/) ✅
+- [x] Verified shared PostgreSQL instance healthy with 4 active databases ✅
 - [x] Verified shared MariaDB instance healthy (Seafile) ✅
 - [x] No orphaned/unused database containers found ✅
 
-**PostgreSQL:** 5 active databases (authelia, gitea, grafana, nextcloud, speedtest)  
+**PostgreSQL:** 4 active databases (authelia, gitea, grafana, speedtest)  
 **Uptime-kuma:** Configured for PostgreSQL but using SQLite fallback (DB doesn't exist)  
 **Not Running:** FreshRSS, Vaultwarden (jobs stopped/never deployed)  
 **MariaDB:** 1 active (Seafile)  
@@ -231,7 +230,7 @@ Database consolidation is **mostly complete**! Key findings:
 - [x] Zero embedded database containers (except approved SQLite) ✅
 - [x] Automated backup for PostgreSQL (daily, 7-day retention) ✅
 - [ ] Automated backup for MariaDB (needs implementation)
-- [x] Documentation of database topology ([docs/DATABASE_TOPOLOGY.md](docs/DATABASE_TOPOLOGY.md)) ✅
+- [x] Documentation of database topology (see docs/POSTGRESQL.md) ✅
 
 **Status:** Database consolidation **complete for running services**. Uptime-kuma can migrate to PostgreSQL. FreshRSS/Vaultwarden jobs not running.
 

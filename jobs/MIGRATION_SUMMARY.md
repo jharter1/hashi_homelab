@@ -179,7 +179,7 @@ However, **no rollback needed** - migration is fully compatible with existing de
 **Documentation:**
 - [`_patterns/README.md`](services/_patterns/README.md) - Pattern details & examples
 - [`STRUCTURE.md`](STRUCTURE.md) - Directory reference
-- [`../docs/NOMAD_SERVICES_STRATEGY.md`](../docs/NOMAD_SERVICES_STRATEGY.md) - Service discovery
+- [`../docs/NEW_SERVICES_DEPLOYMENT.md`](../docs/NEW_SERVICES_DEPLOYMENT.md) - Service discovery and architecture
 
 **Creating new services:**
 Follow pattern documentation and reference similar existing services in the same category.

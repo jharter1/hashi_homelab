@@ -94,11 +94,11 @@ if test $FAILED -eq 0
     echo "Next steps:"
     echo "  1. Deploy services: task deploy:system && task deploy:services"
     echo "  2. Run integration tests: task test:services"
-    echo "  3. Check detailed guide: docs/PHASE1_TESTING_GUIDE.md"
+    echo "  3. Check detailed guide: docs/PHASE1.md"
     exit 0
 else
     echo "❌ Some checks failed. Review errors above."
     echo ""
-    echo "See docs/PHASE1_TESTING_GUIDE.md for troubleshooting."
+    echo "See docs/PHASE1.md for troubleshooting."
     exit 1
 end

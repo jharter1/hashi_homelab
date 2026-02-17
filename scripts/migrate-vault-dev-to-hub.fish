@@ -57,7 +57,7 @@ end
 migrate_secret secret/consul/encryption
 
 # Migrate nomad secrets
-for app in codeserver docker-registry grafana minio prometheus
+for app in codeserver grafana minio prometheus
     migrate_secret secret/nomad/$app
 end
 

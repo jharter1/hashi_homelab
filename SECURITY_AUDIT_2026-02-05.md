@@ -12,7 +12,7 @@ Completed comprehensive security audit and remediation of exposed credentials in
 - [`scripts/fix-vault-policy.fish`](scripts/fix-vault-policy.fish) - Now requires sourcing `.credentials`
 - [`scripts/setup-jwt-auth.fish`](scripts/setup-jwt-auth.fish) - Now requires sourcing `.credentials`
 - [`ansible/playbooks/configure-vault-jwt-auth.yml`](ansible/playbooks/configure-vault-jwt-auth.yml) - Uses environment variable
-- [`docs/VAULT_NOMAD_INTEGRATION_STATUS.md`](docs/VAULT_NOMAD_INTEGRATION_STATUS.md) - Redacted exposed tokens
+- [`docs/VAULT.md`](docs/VAULT.md) - Redacted exposed tokens
 
 **Exposed Tokens** (all have been rotated):
 - Root token: Found in 3 script files ❌ ROTATED

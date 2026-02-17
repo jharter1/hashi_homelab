@@ -1,8 +1,16 @@
 job "traefik" {
   datacenters = ["dc1"]
-  type        = "system" # Run on every client node
+  type        = "service" # Run 2 instances for HA (was system)
 
   group "traefik" {
+    count = 2 # Run exactly 2 instances for high availability
+
+    # Spread instances across different nodes for reliability
+    spread {
+      attribute = "${node.unique.id}"
+      weight    = 100
+    }
+
     # Add volume for certificate storage
     volume "traefik_acme" {
       type      = "host"

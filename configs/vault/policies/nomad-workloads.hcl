@@ -18,6 +18,11 @@ path "secret/data/authelia/*" {
   capabilities = ["read", "list"]
 }
 
+# Allow reading bookstack secrets
+path "secret/data/bookstack/*" {
+  capabilities = ["read", "list"]
+}
+
 # Allow reading linkwarden secrets
 path "secret/data/linkwarden/*" {
   capabilities = ["read", "list"]

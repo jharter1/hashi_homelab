@@ -75,7 +75,7 @@ if test $status -eq 0
     echo "2. Save root CA certificate:"
     echo "   terraform output -raw root_ca_cert > ~/homelab-root-ca.crt"
     echo ""
-    echo "3. Update Nomad configuration (see docs/VAULT_INTEGRATION.md)"
+    echo "3. Update Nomad configuration (see docs/VAULT.md)"
     echo ""
 else
     echo "$red❌ Terraform apply failed$normal"

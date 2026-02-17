@@ -163,7 +163,7 @@ EOH
 
 ## Pattern 3: Multi-Container Service (Sidecars)
 
-**Used by:** 2 services (docker-registry with UI, potentially future services)
+**Used by:** Services requiring multiple coordinated containers (main + UI/proxy/sidecar)
 
 **Characteristics:**
 - Multiple tasks in a single group
@@ -171,7 +171,7 @@ EOH
 - Service mesh pattern (main + UI/proxy)
 - Separate Traefik routes per container
 
-**Example:** See [`../development/docker-registry/docker-registry.nomad.hcl`](../development/docker-registry/docker-registry.nomad.hcl)
+**Example:** Harbor (registry with UI), FreshRSS (app + cron)
 
 **Key Components:**
 ```hcl
@@ -350,6 +350,6 @@ network {
 ## References
 
 - [Nomad Job Specification](https://developer.hashicorp.com/nomad/docs/job-specification)
-- [Vault Integration](../../../docs/VAULT_NOMAD_INTEGRATION_STATUS.md)
-- [Service Discovery](../../../docs/NOMAD_SERVICES_STRATEGY.md)
+- [Vault Integration](../../../docs/VAULT.md)
+- [Service Discovery](../../../docs/NEW_SERVICES_DEPLOYMENT.md)
 - [Resource Survey](../../../docs/RESOURCE_SURVEY.md)
