@@ -119,8 +119,12 @@ Optional 3-node Vault HA cluster on hub nodes (10.0.0.30-32). See `ansible/TODO.
 - Check Nomad UI: `http://10.0.0.50:4646`
 - SSH to client: `ssh ubuntu@10.0.0.60` and `nomad alloc logs -stderr <alloc-id>`
 - Check Consul: `consul catalog services`
-- See `docs/TROUBLESHOOTING.md` for common issues and solutions`
-- Check Consul: `consul catalog services`
+- See `docs/TROUBLESHOOTING.md` for common issues and solutions
+
+**Working with Vault:**
+- **ALWAYS** run `source .credentials` before Vault commands to load token
+- Check secrets: `source .credentials; vault kv get secret/path/to/secret`
+- List secrets: `source .credentials; vault kv list secret/postgres`
 
 **Using the Nomad MCP Server:**
 - Build: `task mcp:build:nomad`
