@@ -2,30 +2,6 @@
 version: '3'
 
 tasks:
-  build:ubuntu:
-    desc: Build Ubuntu Nomad template
-    cmds:
-      - |
-        fish -c "source scripts/set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-nomad.pkr.hcl"
-
-  # build:alpine:
-  #   desc: Build Alpine Nomad template
-  #   cmds:
-  #     - |
-  #       bash -lc "PKR_VAR_clone_vm_id=\${PKR_VAR_clone_vm_id:-9001} PACKER_LOG=1 PKR_VAR_ssh_username=\${PKR_VAR_ssh_username:-\"$ALPINE_SSH_USERNAME\"} packer build packer/templates/alpine/alpine.pkr.hcl"
-
-  build:base:
-    desc: Build Ubuntu base image
-    cmds:
-      - |
-        fish -c "source scripts/set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-bare-minimum.pkr.hcl"
-
-  build:minimal:
-    desc: Build minimal Ubuntu cloud agent template (qga + cloud-init)
-    cmds:
-      - |
-        fish -c "source scripts/set-proxmox-password.fish && packer build -var-file=packer/variables/common.pkrvars.hcl -var-file=packer/variables/proxmox-host1.pkrvars.hcl packer/templates/ubuntu/ubuntu-qemu-agent.pkr.hcl"
-
   build:debian:base:
     desc: Create Debian 12 Cloud Base Template (VM 9400)
     cmds:
@@ -46,9 +22,6 @@ tasks:
   validate:
     desc: Validate all Packer templates
     cmds:
-      - packer validate packer/templates/ubuntu/ubuntu-nomad.pkr.hcl
-      # - packer validate packer/templates/alpine/alpine.pkr.hcl
-      - packer validate packer/templates/ubuntu/ubuntu-bare-minimum.pkr.hcl
       - packer validate packer/templates/debian/debian-nomad-client.pkr.hcl
       - packer validate packer/templates/debian/debian-nomad-server.pkr.hcl
 
