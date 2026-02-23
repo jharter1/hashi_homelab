@@ -25,10 +25,13 @@ job "gitea" {
       vault {}
 
       config {
-        image        = "gitea/gitea:latest"
+        image        = "gitea/gitea:latest-rootless"
         network_mode = "host"
         ports        = ["http"]
       }
+      
+      # Run as user 1000 to match NFS ownership
+      user = "1000:1000"
 
       volume_mount {
         volume      = "gitea_data"

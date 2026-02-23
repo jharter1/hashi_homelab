@@ -116,6 +116,9 @@ EOH
         }
       }
 
+      # Run as user 1000 to match NFS ownership and avoid su-exec issues
+      user = "1000:1000"
+
       volume_mount {
         volume      = "bookstack_config"
         destination = "/config"

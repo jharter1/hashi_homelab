@@ -30,13 +30,15 @@ job "authelia" {
         image        = "authelia/authelia:latest"
         network_mode = "host"
         ports        = ["http"]
-        privileged   = true
 
         volumes = [
           "local/configuration.yml:/config/configuration.yml",
           "local/users_database.yml:/config/users_database.yml",
         ]
       }
+
+      # Run as user 1000 to avoid su-exec permission issues (NFS volume ownership is 1000:1000)
+      user = "1000:1000"
 
       volume_mount {
         volume      = "authelia_data"
@@ -161,19 +163,14 @@ regulation:
 storage:
   encryption_key: {{ with secret "secret/data/authelia/config" }}{{ .Data.data.encryption_key }}{{ end }}
   
-  # PostgreSQL backend (shared with other services)
-  postgres:
-    address: tcp://{{ range service "postgresql" }}{{ .Address }}{{ end }}:5432
-    database: authelia
-    schema: public
-    username: authelia
-    password: {{ with secret "secret/data/postgres/authelia" }}{{ .Data.data.password }}{{ end }}
-    timeout: 5s
+  # SQLite local storage - simpler and self-contained
+  local:
+    path: /data/db.sqlite3
 
 notifier:
   disable_startup_check: false
   filesystem:
-    filename: /data/notification.txt
+    filename: /tmp/notification.txt  # Use /tmp to avoid NFS permission issues
 
 # Optional: Enable SMTP for real email notifications
 # notifier:
