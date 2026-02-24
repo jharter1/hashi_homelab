@@ -1,0 +1,106 @@
+---
+# Update Nomad/Consul configs and restart services
+# Run this when:
+#  - Modifying Nomad/Consul configuration templates in roles
+#  - Adding/removing Vault integration
+#  - Updating ACL settings
+#  - Changing datacenter/region settings
+#
+# Usage:
+#   ansible-playbook ansible/playbooks/update-nomad-configs.yml                # All nodes
+#   ansible-playbook ansible/playbooks/update-nomad-configs.yml --limit nomad_servers  # Servers only
+#   ansible-playbook ansible/playbooks/update-nomad-configs.yml --limit nomad_clients  # Clients only
+#
+# Fast execution: ~30-45 seconds (templates configs + restarts)
+
+- name: Update Consul configs on all nodes
+  hosts: nomad_cluster
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Update Consul configuration from template
+      template:
+        src: "{{ playbook_dir }}/../roles/consul/templates/consul.hcl.j2"
+        dest: /etc/consul.d/consul.hcl
+        owner: consul
+        group: consul
+        mode: '0640'
+      register: consul_config
+      
+    - name: Restart Consul if config changed
+      systemd:
+        name: consul
+        state: restarted
+      when: consul_config.changed
+
+- name: Update Nomad server configs
+  hosts: nomad_servers
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Update Nomad server configuration from template
+      template:
+        src: "{{ playbook_dir }}/../roles/nomad-server/templates/nomad-server.hcl.j2"
+        dest: /etc/nomad.d/nomad.hcl
+        owner: nomad
+        group: nomad
+        mode: '0640'
+      register: nomad_server_config
+      
+    - name: Restart Nomad server if config changed
+      systemd:
+        name: nomad
+        state: restarted
+      when: nomad_server_config.changed
+      
+    - name: Wait for Nomad server API
+      uri:
+        url: "http://{{ ansible_host }}:4646/v1/status/leader"
+        method: GET
+        status_code: 200
+      register: nomad_api
+      until: nomad_api.status == 200
+      retries: 12
+      delay: 5
+      when: nomad_server_config.changed
+
+- name: Update Nomad client configs
+  hosts: nomad_clients
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Update Nomad client configuration from template
+      template:
+        src: "{{ playbook_dir }}/../roles/nomad-client/templates/nomad-client.hcl.j2"
+        dest: /etc/nomad.d/nomad.hcl
+        owner: nomad
+        group: nomad
+        mode: '0640'
+      register: nomad_client_config
+      
+    - name: Restart Nomad client if config changed
+      systemd:
+        name: nomad
+        state: restarted
+      when: nomad_client_config.changed
+      
+    - name: Wait for client to reconnect
+      pause:
+        seconds: 10
+      when: nomad_client_config.changed
+  
+  post_tasks:
+    - name: Verify cluster health
+      command: consul members
+      register: cluster_status
+      changed_when: false
+      run_once: true
+      delegate_to: "{{ groups['nomad_servers'][0] }}"
+      
+    - name: Display cluster status
+      debug:
+        msg: "{{ cluster_status.stdout_lines }}"
+      run_once: true

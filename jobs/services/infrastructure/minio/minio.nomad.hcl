@@ -27,7 +27,7 @@ job "minio" {
       env {
         MINIO_ROOT_USER = "minioadmin"
         MINIO_ROOT_PASSWORD = "minioadmin"
-        MINIO_BROWSER_REDIRECT_URL = "http://minio.home:9001"
+        MINIO_BROWSER_REDIRECT_URL = "https://minio.lab.hartr.net"
       }
 
       config {

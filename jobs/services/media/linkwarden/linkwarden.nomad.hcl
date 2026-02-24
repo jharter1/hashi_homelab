@@ -98,9 +98,6 @@ EOH
         privileged   = true
       }
 
-      # Run as user 1000 to match NFS ownership and avoid su-exec issues
-      user = "1000:1000"
-
       volume_mount {
         volume      = "linkwarden_data"
         destination = "/data/data"
@@ -128,6 +125,9 @@ EOH
 
         # Port configuration
         PORT = "3001"
+
+        # Allow registration so the first user can be created
+        NEXT_PUBLIC_ALLOW_REGISTRATION = "true"
       }
 
       resources {
@@ -146,6 +146,7 @@ EOH
           "traefik.http.routers.linkwarden.entrypoints=websecure",
           "traefik.http.routers.linkwarden.tls=true",
           "traefik.http.routers.linkwarden.tls.certresolver=letsencrypt",
+          "traefik.http.routers.linkwarden.middlewares=authelia@file",
         ]
         check {
           type     = "http"

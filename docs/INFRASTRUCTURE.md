@@ -58,7 +58,7 @@ All production services store data on NAS:
 - **Total disk**: 50GB per VM
 - **Reserved (system)**: 500MB
 - **Available for Nomad**: ~49.5GB
-- **Memory**: 10GB RAM per VM (60GB total)
+- **Memory**: 6GB RAM per VM (36GB total)
 
 ### Server VMs (3 nodes: 10.0.0.50-52)
 - **Total disk**: 40GB per VM

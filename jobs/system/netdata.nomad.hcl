@@ -33,11 +33,14 @@ job "netdata" {
     service {
       name = "netdata"
       port = "http"
-      
+
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.netdata.rule=Host(`netdata.home`)",
-        "traefik.http.routers.netdata.entrypoints=web",
+        "traefik.http.routers.netdata.rule=Host(`netdata.lab.hartr.net`)",
+        "traefik.http.routers.netdata.entrypoints=websecure",
+        "traefik.http.routers.netdata.tls=true",
+        "traefik.http.routers.netdata.tls.certresolver=letsencrypt",
+        "traefik.http.routers.netdata.middlewares=authelia@file",
       ]
 
       check {
@@ -62,7 +65,8 @@ job "netdata" {
           "/var/run/docker.sock:/var/run/docker.sock:ro"
         ]
         
-        cap_add = ["SYS_PTRACE"]
+        cap_add    = ["SYS_PTRACE"]
+        privileged = true
       }
 
       env {

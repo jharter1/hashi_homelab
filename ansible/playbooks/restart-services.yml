@@ -1,0 +1,65 @@
+---
+# Quick restart of Consul/Nomad services without config changes
+# Run this when:
+#  - Services are stuck or need a clean restart
+#  - After manual config edits on nodes (not recommended, use update-nomad-configs.yml)
+#  - Troubleshooting service issues
+#
+# Usage: 
+#   ansible-playbook ansible/playbooks/restart-services.yml                    # All services
+#   ansible-playbook ansible/playbooks/restart-services.yml --tags consul      # Consul only
+#   ansible-playbook ansible/playbooks/restart-services.yml --tags nomad       # Nomad only
+#   ansible-playbook ansible/playbooks/restart-services.yml --limit nomad_servers  # Servers only
+#
+# Very fast: ~10-20 seconds
+
+- name: Restart Consul and Nomad services
+  hosts: nomad_cluster
+  become: yes
+  gather_facts: no
+  
+  tasks:
+    - name: Restart Consul service
+      systemd:
+        name: consul
+        state: restarted
+        daemon_reload: yes
+      tags: [consul, all]
+      
+    - name: Wait for Consul to be ready
+      wait_for:
+        port: 8500
+        delay: 2
+        timeout: 30
+      tags: [consul, all]
+    
+    - name: Restart Nomad service
+      systemd:
+        name: nomad
+        state: restarted
+        daemon_reload: yes
+      tags: [nomad, all]
+      
+    - name: Wait for Nomad to be ready (servers)
+      wait_for:
+        port: 4646
+        delay: 2
+        timeout: 30
+      when: node_type == 'server'
+      tags: [nomad, all]
+      
+    - name: Display service status
+      shell: |
+        echo "=== Consul Status ==="
+        systemctl status consul --no-pager | head -n 5
+        echo ""
+        echo "=== Nomad Status ==="
+        systemctl status nomad --no-pager | head -n 5
+      register: status_output
+      changed_when: false
+      tags: [all]
+      
+    - name: Show status
+      debug:
+        msg: "{{ status_output.stdout_lines }}"
+      tags: [all]

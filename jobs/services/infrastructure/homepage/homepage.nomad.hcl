@@ -29,10 +29,10 @@ job "homepage" {
     }
 
     # Host volume for homepage configuration files
-    volume "homepage_data" {
+    volume "homepage_config" {
       type      = "host"
       read_only = false
-      source    = "homepage_data"
+      source    = "homepage_config"
     }
 
     task "homepage" {
@@ -40,7 +40,7 @@ job "homepage" {
 
       # Mount config volume
       volume_mount {
-        volume      = "homepage_data"
+        volume      = "homepage_config"
         destination = "/app/config"
         read_only   = false
       }

@@ -55,17 +55,17 @@ The Prometheus MCP server provides 10 tools for resource monitoring:
 | dev-nomad-server-1 | Server | 4 GB | 1.5 GB | 2 | Running |
 | dev-nomad-server-2 | Server | 4 GB | 1.4 GB | 2 | Running |
 | dev-nomad-server-3 | Server | 4 GB | 1.4 GB | 2 | Running |
-| dev-nomad-client-1 | Client | 10 GB | ~7.5 GB | 4 | Running |
-| dev-nomad-client-2 | Client | 10 GB | ~7.5 GB | 4 | Running |
-| dev-nomad-client-3 | Client | 10 GB | ~7.5 GB | 4 | Running |
+| dev-nomad-client-1 | Client | 6 GB | ~4.5 GB | 4 | Running |
+| dev-nomad-client-2 | Client | 6 GB | ~4.5 GB | 4 | Running |
+| dev-nomad-client-3 | Client | 6 GB | ~4.5 GB | 4 | Running |
 | hub-vault-1 | Vault | 2 GB | 1.3 GB | 2 | Running |
 | hub-vault-2 | Vault | 2 GB | 1.0 GB | 2 | Running |
 | hub-vault-3 | Vault | 2 GB | 1.1 GB | 2 | Running |
 
-**Total:** 48 GB allocated, ~35 GB actually used (~73% utilization)
+**Total:** 36 GB allocated (clients), ~27 GB actually used (~75% utilization)
 
 **Optimization History:**
-- **Feb 10, 2026**: Increased client memory 8→10 GB, reduced 4 service limits, freed ~6.8 GB headroom
+- **Current (Feb 2026)**: Client VMs running with 6 GB RAM each (5.8 GiB actual)
 
 ### Nomad Jobs (Configured Memory Limits)
 

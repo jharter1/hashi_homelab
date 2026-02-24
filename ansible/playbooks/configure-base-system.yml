@@ -1,0 +1,31 @@
+---
+# Configure base system requirements (DNS, packages, NFS mounts, volumes)
+# Run this when:
+#  - Setting up new nodes after binary installation
+#  - Adding new NFS volumes
+#  - Updating DNS configuration
+#  - Installing new base packages
+#
+# Usage: ansible-playbook ansible/playbooks/configure-base-system.yml
+#
+# Fast execution: ~30-60 seconds (no downloads unless missing packages)
+
+- name: Configure base system on all cluster nodes
+  hosts: nomad_cluster
+  become: yes
+  gather_facts: yes
+  
+  roles:
+    - base-system
+  
+  post_tasks:
+    - name: Verify NFS mount (clients only)
+      command: df -h /mnt/nas
+      register: nfs_status
+      changed_when: false
+      when: node_type == 'client'
+      
+    - name: Display mount status
+      debug:
+        msg: "{{ nfs_status.stdout_lines }}"
+      when: node_type == 'client' and nfs_status is defined

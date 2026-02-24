@@ -46,12 +46,12 @@ graph TD
     Server1[Nomad Server 1<br/>10.0.0.50<br/>4 GB RAM]
     Server2[Nomad Server 2<br/>10.0.0.51<br/>4 GB RAM]
     Server3[Nomad Server 3<br/>10.0.0.52<br/>4 GB RAM]
-    Client1[Nomad Client 1<br/>10.0.0.60<br/>10 GB RAM]
-    Client2[Nomad Client 2<br/>10.0.0.61<br/>10 GB RAM]
-    Client3[Nomad Client 3<br/>10.0.0.62<br/>10 GB RAM]
-    Client4[Nomad Client 4<br/>10.0.0.63<br/>10 GB RAM]
-    Client5[Nomad Client 5<br/>10.0.0.64<br/>10 GB RAM]
-    Client6[Nomad Client 6<br/>10.0.0.65<br/>10 GB RAM]
+    Client1[Nomad Client 1<br/>10.0.0.60<br/>6 GB RAM]
+    Client2[Nomad Client 2<br/>10.0.0.61<br/>6 GB RAM]
+    Client3[Nomad Client 3<br/>10.0.0.62<br/>6 GB RAM]
+    Client4[Nomad Client 4<br/>10.0.0.63<br/>6 GB RAM]
+    Client5[Nomad Client 5<br/>10.0.0.64<br/>6 GB RAM]
+    Client6[Nomad Client 6<br/>10.0.0.65<br/>6 GB RAM]
     
     Server1 <-->|Raft Consensus| Server2
     Server2 <-->|Raft Consensus| Server3
@@ -127,9 +127,9 @@ graph TD
 | Component | Count | vCPU | Memory | Notes |
 |-----------|-------|------|--------|-------|
 | Nomad Servers | 3 | 2 | 4 GB | Consul co-located |
-| Nomad Clients | 6 | 4 | 10 GB | Docker + workloads |
+| Nomad Clients | 6 | 4 | 6 GB | Docker + workloads |
 | Vault Hubs (optional) | 3 | 2 | 2 GB | HA cluster |
-| **Total** | **9-12** | **32-38** | **72-78 GB** | **~75% utilization** |
+| **Total** | **9-12** | **32-38** | **48-54 GB** | **~75% utilization** |
 
 **Container Memory Usage:** ~13.6 GB across 28+ services  
 **Optimization History:** See [RESOURCE_SURVEY.md](docs/RESOURCE_SURVEY.md)

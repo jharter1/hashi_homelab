@@ -33,11 +33,14 @@ job "dozzle" {
     service {
       name = "dozzle"
       port = "http"
-      
+
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.dozzle.rule=Host(`dozzle.home`)",
-        "traefik.http.routers.dozzle.entrypoints=web",
+        "traefik.http.routers.dozzle.rule=Host(`dozzle.lab.hartr.net`)",
+        "traefik.http.routers.dozzle.entrypoints=websecure",
+        "traefik.http.routers.dozzle.tls=true",
+        "traefik.http.routers.dozzle.tls.certresolver=letsencrypt",
+        "traefik.http.routers.dozzle.middlewares=authelia@file",
       ]
 
       check {

@@ -10,12 +10,81 @@ job "vaultwarden" {
       port "http" {
         static = 8222
       }
+      port "db" {
+        static = 5438
+      }
     }
 
     volume "vaultwarden_data" {
       type      = "host"
       read_only = false
       source    = "vaultwarden_data"
+    }
+
+    volume "vaultwarden_postgres_data" {
+      type      = "host"
+      read_only = false
+      source    = "vaultwarden_postgres_data"
+    }
+
+    # PostgreSQL database
+    task "postgres" {
+      driver = "docker"
+
+      # Ensure postgres is ready before vaultwarden starts
+      lifecycle {
+        hook    = "prestart"
+        sidecar = true
+      }
+
+      vault {}
+
+      config {
+        image        = "postgres:16-alpine"
+        network_mode = "host"
+        ports        = ["db"]
+        privileged   = true
+        command      = "postgres"
+        args         = ["-p", "5438"]
+      }
+
+      volume_mount {
+        volume      = "vaultwarden_postgres_data"
+        destination = "/var/lib/postgresql/data"
+      }
+
+      template {
+        destination = "secrets/postgres.env"
+        env         = true
+        data        = <<EOH
+POSTGRES_DB=vaultwarden
+POSTGRES_USER=vaultwarden
+POSTGRES_PASSWORD={{ with secret "secret/data/postgres/vaultwarden" }}{{ .Data.data.password }}{{ end }}
+EOH
+      }
+
+      env {
+        PGDATA = "/var/lib/postgresql/data/pgdata"
+        POSTGRES_HOST_AUTH_METHOD = "scram-sha-256"
+        POSTGRES_PORT = "5438"
+      }
+
+      resources {
+        cpu    = 500
+        memory = 256
+      }
+
+      service {
+        name = "vaultwarden-postgres"
+        port = "db"
+        tags = ["database", "postgres"]
+        
+        check {
+          type     = "tcp"
+          interval = "10s"
+          timeout  = "2s"
+        }
+      }
     }
 
     task "vaultwarden" {
@@ -35,17 +104,12 @@ job "vaultwarden" {
         destination = "/data"
       }
 
-      # Vault + Consul template for database password
+      # Vault template for database password
       template {
         destination = "secrets/db.env"
         env         = true
         data        = <<EOH
-{{ with secret "secret/data/postgres/vaultwarden" }}
-{{- $password := .Data.data.password }}
-{{- range service "postgresql" }}
-DATABASE_URL=postgresql://vaultwarden:{{ $password }}@{{ .Address }}:{{ .Port }}/vaultwarden
-{{- end }}
-{{- end }}
+DATABASE_URL=postgresql://vaultwarden:{{ with secret "secret/data/postgres/vaultwarden" }}{{ .Data.data.password }}{{ end }}@localhost:5438/vaultwarden
 EOH
       }
 

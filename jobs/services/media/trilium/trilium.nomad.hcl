@@ -36,6 +36,10 @@ job "trilium" {
       env {
         TRILIUM_PORT = "8087"
         TZ           = "America/Chicago"
+        
+        # Authelia SSO note: Trilium doesn't natively support proxy auth headers
+        # It uses its own authentication system. Consider using same password for consistency.
+        # For full SSO, would need custom proxy or Trilium plugin development.
       }
 
       resources {
@@ -54,6 +58,7 @@ job "trilium" {
           "traefik.http.routers.trilium.entrypoints=websecure",
           "traefik.http.routers.trilium.tls=true",
           "traefik.http.routers.trilium.tls.certresolver=letsencrypt",
+          "traefik.http.routers.trilium.middlewares=authelia@file",
         ]
         check {
           type     = "http"

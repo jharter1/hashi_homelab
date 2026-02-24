@@ -4,7 +4,7 @@ datasources:
   - name: Prometheus
     type: prometheus
     access: proxy
-    url: http://prometheus.service.consul:9090
+    url: https://prometheus.lab.hartr.net
     isDefault: true
     editable: true
     jsonData:
@@ -13,5 +13,5 @@ datasources:
   - name: Loki
     type: loki
     access: proxy
-    url: http://loki.service.consul:3100
+    url: https://loki.lab.hartr.net
     editable: true

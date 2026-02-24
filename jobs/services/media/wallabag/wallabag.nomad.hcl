@@ -8,7 +8,7 @@ job "wallabag" {
     network {
       mode = "host"
       port "http" {
-        static = 8081
+        static = 8084
       }
       port "db" {
         static = 5434
@@ -91,7 +91,7 @@ EOH
       }
     }
 
-    # Wallabag application
+    # Wallabag application (migrations must be run manually on first deploy)
     task "wallabag" {
       driver = "docker"
 
@@ -102,6 +102,13 @@ EOH
         network_mode = "host"
         ports        = ["http"]
         privileged   = true
+
+        # Override nginx.conf to listen on port 8084 instead of default 80
+        mount {
+          type   = "bind"
+          source = "local/nginx.conf"
+          target = "/etc/nginx/nginx.conf"
+        }
       }
 
       volume_mount {
@@ -132,6 +139,73 @@ SYMFONY__ENV__SECRET={{ with secret "secret/data/wallabag/secret" }}{{ .Data.dat
 EOH
       }
 
+      # Custom nginx config to listen on port 8084 (wallabag/wallabag image defaults to port 80)
+      template {
+        destination = "local/nginx.conf"
+        data        = <<EOH
+user nginx;
+worker_processes 1;
+pid /var/run/nginx.pid;
+
+events {
+    worker_connections 2048;
+    multi_accept on;
+    use epoll;
+}
+
+http {
+    server_tokens off;
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 15;
+    types_hash_max_size 2048;
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    access_log off;
+    error_log off;
+    gzip on;
+    gzip_disable "msie6";
+    open_file_cache max=100;
+    client_max_body_size 100M;
+
+    map {{`$`}}http_x_forwarded_proto {{`$`}}fe_https {
+        default {{`$`}}https;
+        https on;
+    }
+
+    upstream php-upstream {
+        server 127.0.0.1:9000;
+    }
+
+    server {
+        listen [::]:8084 ipv6only=off;
+        server_name _;
+        root /var/www/wallabag/web;
+
+        location / {
+            try_files {{`$`}}uri /app.php{{`$`}}is_args{{`$`}}args;
+        }
+
+        location ~ ^/app\.php(/|{{`$`}}) {
+            fastcgi_pass php-upstream;
+            fastcgi_split_path_info ^(.+\.php)(/.*{{`$`}});
+            include fastcgi_params;
+            fastcgi_param  SCRIPT_FILENAME  {{`$`}}realpath_root{{`$`}}fastcgi_script_name;
+            fastcgi_param DOCUMENT_ROOT {{`$`}}realpath_root;
+            fastcgi_read_timeout 300s;
+            internal;
+        }
+
+        access_log /var/log/nginx/access.log;
+        error_log /var/log/nginx/error.log;
+    }
+}
+
+daemon off;
+EOH
+      }
+
       env {
         # Domain configuration
         SYMFONY__ENV__DOMAIN_NAME = "https://wallabag.lab.hartr.net"
@@ -147,8 +221,8 @@ EOH
         # Locale settings
         SYMFONY__ENV__LOCALE = "en"
 
-        # Port override
-        SYMFONY__ENV__SERVER_NAME = "0.0.0.0:8081"
+        # Authelia SSO Integration - Trusted proxies for header authentication
+        SYMFONY__ENV__TRUSTED_PROXIES = "10.0.0.0/24,127.0.0.1,REMOTE_ADDR"
       }
 
       resources {
@@ -167,12 +241,18 @@ EOH
           "traefik.http.routers.wallabag.entrypoints=websecure",
           "traefik.http.routers.wallabag.tls=true",
           "traefik.http.routers.wallabag.tls.certresolver=letsencrypt",
+          "traefik.http.routers.wallabag.middlewares=authelia@file",
         ]
         check {
           type     = "http"
           path     = "/"
           interval = "30s"
-          timeout  = "5s"
+          timeout  = "10s"
+          check_restart {
+            limit = 3
+            grace = "120s"
+            ignore_warnings = false
+          }
         }
       }
     }

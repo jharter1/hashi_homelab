@@ -83,6 +83,60 @@ tasks:
       - |
         cd ansible && ansible-playbook playbooks/test-connectivity.yml
 
+  ansible:install:binaries:
+    desc: "Install HashiCorp binaries (Consul, Nomad, Vault) - slow, run once or on upgrades"
+    cmds:
+      - |
+        cd ansible && ansible-playbook playbooks/install-hashicorp-binaries.yml
+
+  ansible:configure:base:
+    desc: "Configure base system (DNS, packages, NFS, volumes) - fast"
+    cmds:
+      - |
+        cd ansible && ansible-playbook playbooks/configure-base-system.yml
+
+  ansible:configure:services:
+    desc: "Configure Consul and Nomad services - moderate speed"
+    cmds:
+      - |
+        cd ansible && ansible-playbook playbooks/configure-services.yml
+
+  ansible:restart:
+    desc: "Quick restart of Consul/Nomad services - very fast"
+    cmds:
+      - |
+        cd ansible && ansible-playbook playbooks/restart-services.yml
+
+  ansible:restart:consul:
+    desc: "Restart only Consul services - very fast"
+    cmds:
+      - |
+        cd ansible && ansible-playbook playbooks/restart-services.yml --tags consul
+
+  ansible:restart:nomad:
+    desc: "Restart only Nomad services - very fast"
+    cmds:
+      - |
+        cd ansible && ansible-playbook playbooks/restart-services.yml --tags nomad
+
+  ansible:update:configs:
+    desc: "Update Nomad/Consul configs and restart if changed - fast"
+    cmds:
+      - |
+        cd ansible && ansible-playbook playbooks/update-nomad-configs.yml
+
+  ansible:update:configs:servers:
+    desc: "Update configs on servers only - fast"
+    cmds:
+      - |
+        cd ansible && ansible-playbook playbooks/update-nomad-configs.yml --limit nomad_servers
+
+  ansible:update:configs:clients:
+    desc: "Update configs on clients only - fast"
+    cmds:
+      - |
+        cd ansible && ansible-playbook playbooks/update-nomad-configs.yml --limit nomad_clients
+
   tailscale:deploy:
     desc: "Deploy Tailscale on Nomad clients for remote access"
     cmds:
@@ -128,6 +182,20 @@ tasks:
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/observability/grafana/grafana.nomad.hcl
       - |
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/whoami/whoami.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/speedtest/speedtest.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/media/freshrss/freshrss.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/development/gitea/gitea.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/auth/vaultwarden/vaultwarden.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/auth/redis/redis.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/auth/authelia/authelia.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/media/bookstack/bookstack.nomad.hcl
       - echo "All service jobs deployed successfully"
 
   deploy:speedtest:
@@ -175,6 +243,32 @@ tasks:
     cmds:
       - task: deploy:system
       - task: deploy:services
+
+  status:db-migration:
+    desc: "Check status of services converted from centralized to embedded PostgreSQL"
+    cmds:
+      - |
+        echo "🔍 Checking PostgreSQL migration status..."
+        echo ""
+        NOMAD_ADDR=http://10.0.0.50:4646
+        for service in speedtest freshrss grafana gitea vaultwarden; do
+          status=$(nomad job status $service 2>/dev/null | grep "^Status" | awk '{print $3}')
+          if [ "$status" = "running" ]; then
+            echo "✅ $service: $status"
+          elif [ "$status" = "dead" ]; then
+            echo "❌ $service: $status"
+          else
+            echo "⚠️  $service: $status"
+          fi
+        done
+        echo ""
+        echo "📊 Centralized PostgreSQL:"
+        pg_status=$(nomad job status postgresql 2>/dev/null | grep "^Status" | awk '{print $3}' || echo "not found")
+        if [ "$pg_status" = "dead" ] || [ "$pg_status" = "not found" ]; then
+          echo "✅ postgresql: $pg_status (expected after migration)"
+        else
+          echo "⚠️  postgresql: $pg_status (should be stopped)"
+        fi
 
   bootstrap:check:
     desc: "Validate bootstrap prerequisites without executing"

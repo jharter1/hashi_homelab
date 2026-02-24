@@ -38,7 +38,7 @@ client {
   }
   
   host_volume "uptime_kuma_data" {
-    path = "{{ nas_mount_point }}/uptime-kuma"
+    path = "{{ nas_mount_point }}/uptime_kuma_data"
     read_only = false
   }
   
@@ -147,7 +147,7 @@ client {
   }
 
   host_volume "mariadb_data" {
-    path = "{{ nas_mount_point }}/mariadb"
+    path = "{{ nas_mount_point }}/mariadb_data"
     read_only = false
   }
 
@@ -175,6 +175,71 @@ client {
     path = "/opt/traefik/acme"
     read_only = false
   }
+
+  host_volume "linkwarden_data" {
+    path = "{{ nas_mount_point }}/linkwarden"
+    read_only = false
+  }
+
+  host_volume "linkwarden_postgres_data" {
+    path = "{{ nas_mount_point }}/linkwarden_postgres"
+    read_only = false
+  }
+
+  host_volume "syncthing_config" {
+    path = "{{ nas_mount_point }}/syncthing/config"
+    read_only = false
+  }
+
+  host_volume "syncthing_data" {
+    path = "{{ nas_mount_point }}/syncthing/data"
+    read_only = false
+  }
+
+  host_volume "trilium_data" {
+    path = "{{ nas_mount_point }}/trilium"
+    read_only = false
+  }
+
+  host_volume "wallabag_data" {
+    path = "{{ nas_mount_point }}/wallabag"
+    read_only = false
+  }
+
+  host_volume "wallabag_images" {
+    path = "{{ nas_mount_point }}/wallabag_images"
+    read_only = false
+  }
+
+  host_volume "wallabag_postgres_data" {
+    path = "{{ nas_mount_point }}/wallabag_postgres"
+    read_only = false
+  }
+
+  host_volume "speedtest_postgres_data" {
+    path = "{{ nas_mount_point }}/speedtest_postgres"
+    read_only = false
+  }
+
+  host_volume "freshrss_postgres_data" {
+    path = "{{ nas_mount_point }}/freshrss_postgres"
+    read_only = false
+  }
+
+  host_volume "grafana_postgres_data" {
+    path = "{{ nas_mount_point }}/grafana_postgres"
+    read_only = false
+  }
+
+  host_volume "gitea_postgres_data" {
+    path = "{{ nas_mount_point }}/gitea_postgres"
+    read_only = false
+  }
+
+  host_volume "vaultwarden_postgres_data" {
+    path = "{{ nas_mount_point }}/vaultwarden_postgres"
+    read_only = false
+  }
 }
 
 bind_addr = "0.0.0.0"
@@ -195,7 +260,7 @@ consul {
 plugin "docker" {
   config {
     allow_privileged = true
-    allow_caps = ["SYS_PTRACE"]
+    allow_caps = ["SYS_PTRACE", "SETUID", "SETGID"]
     volumes {
       enabled = true
     }

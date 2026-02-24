@@ -37,7 +37,7 @@ job "bookstack" {
     volume "bookstack_mariadb_data" {
       type      = "host"
       read_only = false
-      source    = "bookstack_mariadb_data"
+      source    = "bookstack_db_data"
     }
 
     # MariaDB database sidecar
@@ -116,8 +116,9 @@ EOH
         }
       }
 
-      # Run as user 1000 to match NFS ownership and avoid su-exec issues
-      user = "1000:1000"
+      # NOTE: LinuxServer.io images handle user switching internally via PUID/PGID
+      # Do NOT set user here - let container run as root then drop privileges
+      # user = "1000:1000"
 
       volume_mount {
         volume      = "bookstack_config"
@@ -137,35 +138,37 @@ APP_KEY={{ with secret "secret/data/bookstack/app" }}{{ .Data.data.key }}{{ end 
 EOH
       }
 
-      # Custom nginx config for port 8083
+      # Custom nginx config for port 8083 - mirrors linuxserver default but on non-standard port
       template {
         destination = "local/nginx-default.conf"
         data        = <<EOH
 server {
     listen 8083 default_server;
     listen [::]:8083 default_server;
-    
+
     server_name _;
-    
-    root /app/www/public;
-    index index.php index.html;
-    
-    client_max_body_size 0;
-    
-    location / {
-        try_files {{`$`}}uri {{`$`}}uri/ /index.php{{`$`}}is_args{{`$`}}args;
+
+    set {{`$`}}root /app/www/public;
+    if (!-d /app/www/public) {
+        set {{`$`}}root /config/www;
     }
-    
-    location ~ \.php{{`$`}} {
-        fastcgi_split_path_info ^(.+\.php)(/.+){{`$`}};
+    root {{`$`}}root;
+    index index.html index.htm index.php;
+
+    client_max_body_size 0;
+
+    location / {
+        try_files {{`$`}}uri {{`$`}}uri/ /index.html /index.htm /index.php{{`$`}}is_args{{`$`}}args;
+    }
+
+    location ~ ^(.+\.php)(.*){{`$`}} {
+        fastcgi_split_path_info ^(.+\.php)(.*){{`$`}};
+        if (!-f {{`$`}}document_root{{`$`}}fastcgi_script_name) { return 404; }
         fastcgi_pass 127.0.0.1:9000;
         fastcgi_index index.php;
         include /etc/nginx/fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME {{`$`}}document_root{{`$`}}fastcgi_script_name;
-        fastcgi_param PATH_INFO {{`$`}}fastcgi_path_info;
-        fastcgi_param QUERY_STRING {{`$`}}query_string;
     }
-    
+
     location ~ /\.ht {
         deny all;
     }
@@ -202,6 +205,12 @@ EOH
 
         # Queue configuration
         QUEUE_CONNECTION = "sync"
+        
+        # Authelia SSO Integration via Proxy Authentication headers
+        AUTH_METHOD = "standard"
+        AUTH_REVERSE_PROXY_HEADER = "Remote-User"
+        AUTH_REVERSE_PROXY_EMAIL_HEADER = "Remote-Email"
+        AUTH_REVERSE_PROXY_NAME_HEADER = "Remote-Name"
       }
 
       resources {
@@ -220,6 +229,7 @@ EOH
           "traefik.http.routers.bookstack.entrypoints=websecure",
           "traefik.http.routers.bookstack.tls=true",
           "traefik.http.routers.bookstack.tls.certresolver=letsencrypt",
+          "traefik.http.routers.bookstack.middlewares=authelia@file",
         ]
         check {
           type     = "http"

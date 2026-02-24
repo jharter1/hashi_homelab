@@ -1,0 +1,33 @@
+---
+# One-time installation of HashiCorp binaries (Consul, Nomad, Vault)
+# Run this ONLY when:
+#  - First setting up new nodes
+#  - Upgrading HashiCorp tool versions
+# 
+# Usage: ansible-playbook ansible/playbooks/install-hashicorp-binaries.yml
+#
+# This is slow (~5-10 min) due to downloads. For config changes, use other playbooks.
+
+- name: Install HashiCorp binaries on all cluster nodes
+  hosts: nomad_cluster
+  become: yes
+  gather_facts: yes
+  
+  roles:
+    - hashicorp-binaries
+    - node-exporter
+  
+  post_tasks:
+    - name: Verify installations
+      command: "{{ item }} version"
+      loop:
+        - consul
+        - nomad
+        - vault
+        - node_exporter
+      register: version_check
+      changed_when: false
+      
+    - name: Display versions
+      debug:
+        msg: "{{ version_check.results | map(attribute='stdout_lines') | list }}"

@@ -6,9 +6,12 @@ job "speedtest" {
     count = 1
 
     network {
+      mode = "host"
       port "http" {
         static = 8765
-        to     = 80
+      }
+      port "db" {
+        static = 5439
       }
     }
 
@@ -16,6 +19,72 @@ job "speedtest" {
       type      = "host"
       read_only = false
       source    = "speedtest_data"
+    }
+
+    volume "speedtest_postgres_data" {
+      type      = "host"
+      read_only = false
+      source    = "speedtest_postgres_data"
+    }
+
+    # PostgreSQL database
+    task "postgres" {
+      driver = "docker"
+
+      # Ensure postgres is ready before speedtest starts
+      lifecycle {
+        hook    = "prestart"
+        sidecar = true
+      }
+
+      vault {}
+
+      config {
+        image        = "postgres:16-alpine"
+        network_mode = "host"
+        ports        = ["db"]
+        privileged   = true
+        command      = "postgres"
+        args         = ["-p", "5439"]
+      }
+
+      volume_mount {
+        volume      = "speedtest_postgres_data"
+        destination = "/var/lib/postgresql/data"
+      }
+
+      template {
+        destination = "secrets/postgres.env"
+        env         = true
+        data        = <<EOH
+POSTGRES_DB=speedtest
+POSTGRES_USER=speedtest
+POSTGRES_PASSWORD={{ with secret "secret/data/postgres/speedtest" }}{{ .Data.data.password }}{{ end }}
+EOH
+      }
+
+      env {
+        PGDATA = "/var/lib/postgresql/data/pgdata"
+        POSTGRES_HOST_AUTH_METHOD = "scram-sha-256"
+        POSTGRES_PORT = "5439"
+      }
+
+      resources {
+        cpu    = 500
+        memory = 256
+      }
+
+      service {
+        name = "speedtest-postgres"
+        port = "db"
+        tags = ["database", "postgres"]
+        
+        check {
+          type     = "tcp"
+          interval = "10s"
+          timeout  = "2s"
+        }
+      }
     }
 
     task "speedtest" {
@@ -26,8 +95,16 @@ job "speedtest" {
 
       config {
         image        = "lscr.io/linuxserver/speedtest-tracker:latest"
+        network_mode = "host"
         ports        = ["http"]
         privileged   = true
+
+        # Mount custom nginx config for port 8765
+        mount {
+          type   = "bind"
+          source = "local/nginx-default.conf"
+          target = "/config/nginx/site-confs/default.conf"
+        }
       }
 
       volume_mount {
@@ -41,7 +118,46 @@ job "speedtest" {
         env         = true
         data        = <<EOH
 DB_PASSWORD={{ with secret "secret/data/postgres/speedtest" }}{{ .Data.data.password }}{{ end }}
-DB_HOST={{ range service "postgresql" }}{{ .Address }}{{ end }}
+EOH
+      }
+
+      # Custom nginx config for port 8765 - mirrors linuxserver default but HTTP only
+      template {
+        destination = "local/nginx-default.conf"
+        data        = <<EOH
+server {
+    listen 8765 default_server;
+    listen [::]:8765 default_server;
+
+    server_name _;
+
+    set {{`$`}}root /app/www/public;
+    if (!-d /app/www/public) {
+        set {{`$`}}root /config/www;
+    }
+    root {{`$`}}root;
+    index index.html index.htm index.php;
+
+    client_max_body_size 0;
+
+    location / {
+        try_files {{`$`}}uri {{`$`}}uri/ /index.html /index.htm /index.php{{`$`}}is_args{{`$`}}args;
+    }
+
+    location ~ ^(.+\.php)(.*){{`$`}} {
+        fastcgi_split_path_info ^(.+\.php)(.*){{`$`}};
+        if (!-f {{`$`}}document_root{{`$`}}fastcgi_script_name) { return 404; }
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+        fastcgi_buffers 16 4k;
+        fastcgi_buffer_size 16k;
+        include /etc/nginx/fastcgi_params;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
 EOH
       }
 
@@ -51,9 +167,10 @@ EOH
         APP_KEY = "base64:4cVfJ7AmsGsW1DLHcn4VzvfA3bq6kOglrkTgVIZTKWU="
         APP_TIMEZONE = "America/Chicago"
         APP_URL = "https://speedtest.lab.hartr.net"
-        # PostgreSQL configuration (DB_HOST and DB_PASSWORD from Vault template above)
+        # PostgreSQL configuration
         DB_CONNECTION = "pgsql"
-        DB_PORT = "5432"
+        DB_HOST = "localhost"
+        DB_PORT = "5439"
         DB_DATABASE = "speedtest"
         DB_USERNAME = "speedtest"
         SPEEDTEST_SCHEDULE = "0 */6 * * *"  # Every 6 hours
@@ -84,10 +201,11 @@ EOH
           type     = "http"
           path     = "/"
           interval = "30s"
-          timeout  = "5s"
+          timeout  = "10s"
           check_restart {
             limit = 3
-            grace = "30s"
+            grace = "90s"
+            ignore_warnings = false
           }
         }
       }

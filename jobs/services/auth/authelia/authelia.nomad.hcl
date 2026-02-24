@@ -29,16 +29,18 @@ job "authelia" {
       config {
         image        = "authelia/authelia:latest"
         network_mode = "host"
+        userns_mode  = "host"
+        privileged   = true
         ports        = ["http"]
 
         volumes = [
           "local/configuration.yml:/config/configuration.yml",
           "local/users_database.yml:/config/users_database.yml",
         ]
-      }
 
-      # Run as user 1000 to avoid su-exec permission issues (NFS volume ownership is 1000:1000)
-      user = "1000:1000"
+        # Capabilities needed for su-exec to switch users
+        cap_add = ["SETUID", "SETGID"]
+      }
 
       volume_mount {
         volume      = "authelia_data"
@@ -122,6 +124,10 @@ access_control:
         - calibre.lab.hartr.net
         - audiobookshelf.lab.hartr.net
         - freshrss.lab.hartr.net
+        - bookstack.lab.hartr.net
+        - trilium.lab.hartr.net
+        - linkwarden.lab.hartr.net
+        - wallabag.lab.hartr.net
         - seafile.lab.hartr.net
         - minio.lab.hartr.net
         - registry-ui.lab.hartr.net

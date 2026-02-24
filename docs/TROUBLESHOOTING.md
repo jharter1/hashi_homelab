@@ -1,6 +1,6 @@
 # Troubleshooting Guide: Common Pitfalls & Solutions
 
-**Last Updated:** February 16, 2026  
+**Last Updated:** February 23, 2026  
 **Purpose:** Document common issues, gotchas, and their solutions
 
 ## Table of Contents
@@ -25,10 +25,15 @@
     - [PostgreSQL](#postgresql)
     - [Authelia](#authelia)
     - [Nginx-Based Containers](#nginx-based-containers)
+    - [LinuxServer.io Images — Custom Port Configuration](#linuxserverio-images--custom-port-configuration-critical)
     - [Alpine/LinuxServer.io Containers (s6-overlay)](#alpinelinuxserverio-containers-s6-overlay)
+    - [BookStack](#bookstack)
     - [Homepage Dashboard](#homepage-dashboard)
     - [Uptime-Kuma](#uptime-kuma)
     - [Speedtest Tracker](#speedtest-tracker)
+    - [Netdata](#netdata)
+    - [System Jobs (netdata, dozzle) — Traefik Route Not Appearing](#system-jobs-netdata-dozzle--traefik-route-not-appearing)
+    - [Grafana — Datasources Using Consul DNS](#grafana--datasources-using-consul-dns)
     - [Nomad Template Syntax \& Escaping](#nomad-template-syntax--escaping)
   - [General Best Practices](#general-best-practices)
     - [When Adding New Services](#when-adding-new-services)
@@ -257,13 +262,27 @@ tags = [
 ]
 ```
 
-**Port Allocation Reference:**
-- Traefik: 80, 443, 8080
-- PostgreSQL: 5432
+**Port Allocation Reference (Application HTTP ports):**
+- Traefik: 80, 443, 8080 (dashboard)
+- PostgreSQL: 5432 (central, if used)
 - Prometheus: 9090
 - FreshRSS: 8082
-- Speedtest: 8081
-- *(Add more as services are deployed)*
+- Bookstack: 8083
+- Speedtest Tracker: 8765
+- Netdata: 19999 (dynamic, mapped to host)
+- Dozzle: 8080 (dynamic, mapped to host)
+
+**Sidecar PostgreSQL/MariaDB port inventory (host mode — must be unique cluster-wide):**
+- 3307: bookstack (MariaDB)
+- 5433: linkwarden
+- 5434: wallabag
+- 5435: freshrss — NOTE: paperless also used 5435 (conflict if co-scheduled on same node)
+- 5436: grafana
+- 5437: gitea
+- 5438: vaultwarden
+- 5439: speedtest
+
+**When adding a new service with a sidecar database, pick a port not in the list above and document it here.**
 
 ---
 
@@ -833,6 +852,103 @@ curl -I http://<node_ip>:<port>/login
 - Always check error logs after deployment
 - Add health checks that verify successful responses (not just TCP)
 
+### LinuxServer.io Images — Custom Port Configuration (CRITICAL)
+
+**Symptom:**
+```
+Service health check fails continuously
+curl http://<node-ip>:<static-port>/ → Connection refused
+nginx is running inside container but not on the expected port
+```
+
+**Root Cause:**
+All linuxserver.io images default nginx to listen on **port 80** (and 443). With host networking and a static port (e.g. 8083, 8765), nothing binds to that port — nginx is listening on 80, but the Nomad health check hits the static port. The health check fails, `check_restart` triggers, and the service loops.
+
+**Solution: Mount a custom nginx config via bind mount.**
+
+Add to the `config {}` block:
+```hcl
+config {
+  image        = "lscr.io/linuxserver/myservice:latest"
+  network_mode = "host"
+  ports        = ["http"]
+  privileged   = true
+
+  mount {
+    type   = "bind"
+    source = "local/nginx-default.conf"
+    target = "/config/nginx/site-confs/default.conf"
+  }
+}
+```
+
+Add a template that renders the config to `local/nginx-default.conf`:
+```hcl
+template {
+  destination = "local/nginx-default.conf"
+  data        = <<EOH
+server {
+    listen 8765 default_server;
+    listen [::]:8765 default_server;
+
+    server_name _;
+
+    set {{`$`}}root /app/www/public;
+    if (!-d /app/www/public) {
+        set {{`$`}}root /config/www;
+    }
+    root {{`$`}}root;
+    index index.html index.htm index.php;
+
+    client_max_body_size 0;
+
+    location / {
+        try_files {{`$`}}uri {{`$`}}uri/ /index.html /index.htm /index.php{{`$`}}is_args{{`$`}}args;
+    }
+
+    location ~ ^(.+\.php)(.*){{`$`}} {
+        fastcgi_split_path_info ^(.+\.php)(.*){{`$`}};
+        if (!-f {{`$`}}document_root{{`$`}}fastcgi_script_name) { return 404; }
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+        include /etc/nginx/fastcgi_params;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
+EOH
+}
+```
+
+Replace `8765` with the actual static port for your service. See bookstack.nomad.hcl (port 8083) and speedtest.nomad.hcl (port 8765) for reference implementations.
+
+**PHP-FPM "Primary script unknown" — Use the correct location block pattern:**
+
+The PHP location block must use `^(.+\.php)(.*)$` (greedy `.*`) **not** `\.php$`:
+
+```nginx
+# ✅ Correct — handles both /index.php and /foo.php/pathinfo
+location ~ ^(.+\.php)(.*)$ {
+    fastcgi_split_path_info ^(.+\.php)(.*)$;
+    if (!-f $document_root$fastcgi_script_name) { return 404; }
+    fastcgi_pass 127.0.0.1:9000;
+    fastcgi_index index.php;
+    include /etc/nginx/fastcgi_params;
+}
+
+# ❌ Wrong — (/.+) requires something after .php, so plain /index.php fails
+location ~ \.php$ {
+    fastcgi_split_path_info ^(.+\.php)(/.+)$;
+    ...
+}
+```
+
+With the wrong pattern, PHP-FPM logs `Primary script unknown` and nginx returns 404 for all PHP requests.
+
+---
+
 ### Alpine/LinuxServer.io Containers (s6-overlay)
 
 **Issue: s6-overlay Permission Errors**
@@ -883,7 +999,8 @@ Without privileged mode, these operations fail with "Operation not permitted" er
    chown: changing ownership of '/config': Operation not permitted
    ```
 
-**Solution:**  
+**Solution Option 1: Use Privileged Mode (Most Common)**
+
 Add `privileged = true` to the Docker config:
 
 ```hcl
@@ -897,6 +1014,38 @@ task "myservice" {
   }
 }
 ```
+
+**Solution Option 2: Use User Directive (LinuxServer.io Only)**
+
+For LinuxServer.io containers, you can also use the `user` directive if you don't want privileged mode:
+
+```hcl
+task "myservice" {
+  driver = "docker"
+  
+  config {
+    image = "lscr.io/linuxserver/bookstack:latest"
+    ports = ["http"]
+    privileged = true  # ✅ Still recommended even with user directive
+  }
+  
+  user = "1000:1000"  # ✅ Match NFS volume ownership
+}
+```
+
+**Why This Works for LinuxServer.io:**
+- LinuxServer.io containers are designed to run as non-root users
+- They use PUID/PGID environment variables to set user permissions
+- The `user` directive bypasses su-exec issues by running the entire container as that user
+- Still needs `privileged = true` for s6-overlay init system
+
+**When to Use Each Approach:**
+
+| Approach | Use When | NFS Ownership | Example Services |
+|----------|----------|---------------|------------------|
+| `privileged = true` only | Standard s6-overlay containers | Container manages ownership | Calibre, Redis, PostgreSQL |
+| `privileged = true` + `user = "1000:1000"` | LinuxServer.io containers | Pre-set to 1000:1000 | Bookstack, Speedtest, Audiobookshelf |
+| Rootless image + `user = "1000:1000"` | Containers with explicit rootless variants | Pre-set to 1000:1000 | Gitea (see below) |
 
 **Why This Happens:**
 
@@ -1117,6 +1266,171 @@ ps -ef | grep <pid>  # Find parent PID
 - Evaluate if PID namespace isolation prevents escape
 - Consider automated cleanup scripts for node maintenance
 
+### BookStack
+
+**Issue: HTTP 500 — "Auth guard [http] is not defined"**
+
+**Symptom:**
+```
+Laravel log: Auth guard [http] is not defined.
+Service health check critical with 500 responses
+```
+
+**Root Cause:**
+`AUTH_METHOD=http` was removed in BookStack v25 (Laravel 12). Valid options are now only: `standard`, `ldap`, `saml2`, `oidc`. Any job using the old value will fail immediately on startup.
+
+**Additionally:** `AUTH_AUTO_INITIATE=true` only works with `saml2` or `oidc`. Setting it with `standard` has no effect and should be removed to avoid confusion.
+
+**Fix:**
+```hcl
+env {
+  AUTH_METHOD = "standard"  # ✅ was "http" in older configs — now invalid
+  # Remove AUTH_AUTO_INITIATE entirely unless using saml2/oidc
+}
+```
+
+If you also want Authelia SSO headers passed through, use:
+```hcl
+AUTH_REVERSE_PROXY_HEADER       = "Remote-User"
+AUTH_REVERSE_PROXY_EMAIL_HEADER = "Remote-Email"
+AUTH_REVERSE_PROXY_NAME_HEADER  = "Remote-Name"
+```
+These are read-only hints and don't replace the AUTH_METHOD selection.
+
+---
+
+### Gitea
+
+**Issue: Standard Image Requires Root for s6-overlay Init System**
+
+**Symptom:**
+```
+chown: /app/gitea/gitea: Operation not permitted
+chown: /app/gitea: Operation not permitted
+su-exec: setgroups: Operation not permitted
+s6-svscan: fatal: unable to open .s6-svscan/lock: Permission denied
+Docker container exited with non-zero exit code: 111
+```
+
+**Root Cause:**  
+The standard `gitea/gitea:latest` image uses s6-overlay as its init system, which requires:
+1. **Root privileges during initialization** to set up the s6 supervision tree
+2. **Ability to chown files** in `/app/gitea` directory
+3. **Ability to use su-exec/setgroups** to drop privileges to the gitea user (UID 1000)
+
+This conflicts with Nomad's Docker driver in multiple ways:
+- Nomad doesn't support `CAP_SETUID` / `CAP_SETGID` capability additions
+- Using `user = "1000:1000"` directive prevents s6-overlay from initializing (needs root first)
+- Even with `privileged = true`, the standard image may conflict with NFS ownership expectations
+
+**Failed Approaches (Documented for Posterity):**
+
+1. **Attempt: Add user directive to match NFS ownership**
+   ```hcl
+   user = "1000:1000"  # ❌ Prevents s6-overlay from running as root
+   ```
+   **Result:** `s6-svscan: fatal: unable to open .s6-svscan/lock: Permission denied`
+
+2. **Attempt: Use ubuntu user (common in base images)**
+   ```hcl
+   user = "ubuntu"  # ❌ User doesn't exist in Gitea container
+   ```
+   **Result:** `unable to find user ubuntu: no matching entries in passwd file`
+
+3. **Attempt: Remove user directive, rely on internal USER_UID env var**
+   ```hcl
+   # No user directive
+   env {
+     USER_UID = "1000"
+     USER_GID = "1000"
+   }
+   ```
+   **Result:** Still hit chown and su-exec permission errors (exit code 111)
+
+**Solution: Use Gitea Rootless Image**
+
+Gitea provides a dedicated rootless image designed for restricted environments:
+
+```hcl
+task "gitea" {
+  driver = "docker"
+  
+  config {
+    image        = "gitea/gitea:latest-rootless"  # ✅ Use rootless variant
+    network_mode = "host"
+    ports        = ["http"]
+  }
+  
+  # Run as user 1000 to match NFS ownership
+  user = "1000:1000"  # ✅ Now works because rootless doesn't need root init
+  
+  volume_mount {
+    volume      = "gitea_data"
+    destination = "/data"
+  }
+  
+  env {
+    USER_UID = "1000"
+    USER_GID = "1000"
+    # ... other config ...
+  }
+}
+```
+
+**Why This Works:**
+
+| Standard Image | Rootless Image |
+|----------------|----------------|
+| Uses s6-overlay init system | Uses direct process execution |
+| Requires root → drops to UID 1000 | Runs as UID 1000 from start |
+| Needs chown/setgroups capabilities | No privilege changes needed |
+| Conflicts with `user` directive | Compatible with `user` directive |
+| May conflict with NFS permissions | Matches NFS ownership (1000:1000) |
+
+**Deployment Results:**
+- ✅ **Version 4 deployment: SUCCESSFUL** (after 158 historical failures)
+- ✅ Healthy status achieved within 30 seconds
+- ✅ Service accessible at `https://gitea.lab.hartr.net`
+- ✅ Database connectivity confirmed (PostgreSQL on host mode)
+
+**Key Lessons Learned:**
+
+1. **Check for rootless variants first** - Many popular containers (Gitea, Nexus, GitLab) offer rootless images specifically for restricted environments
+2. **s6-overlay init systems are incompatible with user directives** - The init must run as root before dropping privileges
+3. **Exit code 111 often indicates su-exec/setgroups issues** - Look for permission errors in logs
+4. **Rootless images trade features for compatibility** - Some advanced features may be unavailable (SSH server, specific bindings)
+
+**When to Use Each Approach:**
+
+| Use Case | Image Choice | User Directive | Privileged Mode |
+|----------|--------------|----------------|-----------------|
+| Standard homelab, full features | `gitea:latest` | ❌ No | ✅ Yes |
+| Kubernetes/restricted envs | `gitea:latest-rootless` | ✅ `1000:1000` | ❌ No |
+| NFS storage with 1000:1000 ownership | `gitea:latest-rootless` | ✅ `1000:1000` | ❌ No |
+| Requires SSH server on port 22 | `gitea:latest` | ❌ No | ✅ Yes |
+
+**Verification Commands:**
+```bash
+# Check deployment status
+nomad job status gitea
+
+# Verify container is running as correct user
+nomad alloc exec <alloc-id> id
+# Should show: uid=1000(git) gid=1000(git) groups=1000(git)
+
+# Test database connectivity
+nomad alloc logs <alloc-id> gitea 2>&1 | grep -i "database"
+
+# Access UI
+curl -I https://gitea.lab.hartr.net
+# Should return: HTTP/2 200
+```
+
+**Related Documentation:**
+- Gitea rootless docs: https://docs.gitea.io/en-us/install-with-docker-rootless/
+- s6-overlay GitHub: https://github.com/just-containers/s6-overlay
+- NFS permissions guide: `docs/INFRASTRUCTURE.md`
+
 ### Homepage Dashboard
 
 **Issue 1: Configuration Changes Not Appearing**
@@ -1297,6 +1611,28 @@ Keep volume names and directory paths consistent to avoid confusion.
 
 ### Speedtest Tracker
 
+**Issue 0: Job Stuck in "pending" / Sidecar Postgres Port Conflict**
+
+**Symptom:**
+```
+Job Status = pending (never places), repeated failed allocations
+Postgres sidecar log: could not bind IPv4 address 0.0.0.0:5434: Address in use
+```
+
+**Root Cause:**
+Speedtest was originally configured with postgres on port 5434, which is also used by wallabag's postgres sidecar. With host networking, two jobs on the same node can't share a static port. Since these are `service` type jobs (not `system`), Nomad may schedule them on the same node.
+
+**Fix:**
+Change the postgres sidecar to use port 5439 (or any unallocated port from the inventory above). Update in four places:
+1. `port "db" { static = 5439 }`
+2. `args = ["-p", "5439"]`
+3. `env { POSTGRES_PORT = "5439" }`
+4. `env { DB_PORT = "5439" }`
+
+**Lesson:** Always check the port inventory before assigning a static sidecar port. Port conflicts cause silent placement failures — the job stays `pending` with no clear error until you inspect allocation logs.
+
+---
+
 **Issue 1: 404 Error on First Access**
 
 **Symptom:**  
@@ -1404,6 +1740,103 @@ When troubleshooting, remember that Fish shell **does not support heredocs** (`<
 - Multiple single commands with `-c` flag (as shown above)
 - Echo piped to command: `echo "SQL COMMAND" | nomad alloc exec ...`
 - Temp files: `echo "SQL" > /tmp/sql.txt && cat /tmp/sql.txt | nomad alloc exec ...`
+
+---
+
+### Netdata
+
+**Issue: Container crashes with exit code 1 — "groupadd failure writing to /etc/gshadow"**
+
+**Symptom:**
+```
+stderr: groupadd: failure while writing changes to /etc/gshadow
+fatal: `/sbin/groupadd -g 989 docker' returned error code 10. Exiting.
+Docker container exited with non-zero exit code: 1
+```
+
+**Root Cause:**
+The netdata/netdata image detects the mounted docker.sock and tries to run `groupadd -g <gid> docker` to add the docker group so netdata can access the socket. Writing `/etc/gshadow` inside the container requires root-level system privileges that are blocked without privileged mode.
+
+**Fix:**
+```hcl
+config {
+  image      = "netdata/netdata:latest"
+  cap_add    = ["SYS_PTRACE"]
+  privileged = true  # ✅ Required for groupadd to succeed
+}
+```
+
+---
+
+### System Jobs (netdata, dozzle) — Traefik Route Not Appearing
+
+**Symptom:**
+```
+https://netdata.lab.hartr.net → 404 (not found in Traefik)
+Traefik API shows router for "netdata-<nodename>.home" but not "netdata.lab.hartr.net"
+```
+
+**Root Cause:**
+System jobs (type = "system") deploy one allocation per node and can define multiple service blocks. The per-node service uses `${node.unique.name}-service.home` with the `web` (HTTP) entrypoint. The generic load-balanced service must use `*.lab.hartr.net` with `websecure` and TLS — but if it was accidentally configured with `web` and a `.home` hostname, Traefik won't expose it externally.
+
+**Correct pattern for system jobs:**
+```hcl
+# Per-node service (internal only)
+service {
+  name = "netdata-${node.unique.name}"
+  tags = [
+    "traefik.enable=true",
+    "traefik.http.routers.netdata-${node.unique.name}.rule=Host(`${node.unique.name}-netdata.home`)",
+    "traefik.http.routers.netdata-${node.unique.name}.entrypoints=web",
+  ]
+}
+
+# Load-balanced service (externally accessible)
+service {
+  name = "netdata"
+  tags = [
+    "traefik.enable=true",
+    "traefik.http.routers.netdata.rule=Host(`netdata.lab.hartr.net`)",
+    "traefik.http.routers.netdata.entrypoints=websecure",
+    "traefik.http.routers.netdata.tls=true",
+    "traefik.http.routers.netdata.tls.certresolver=letsencrypt",
+    "traefik.http.routers.netdata.middlewares=authelia@file",
+  ]
+}
+```
+
+**Note:** System job deployments show `Status = failed` in the `nomad job run` output even when allocations are starting correctly. This is because the progress_deadline may expire before all nodes pull the image. Check alloc status directly (`nomad job status netdata`) — if allocations show `running`, the job is working fine.
+
+---
+
+### Grafana — Datasources Using Consul DNS
+
+**Symptom:**
+Grafana dashboards show "No data" / datasource connection errors. Grafana logs show DNS resolution failures for `prometheus.service.consul` or `loki.service.consul`.
+
+**Root Cause:**
+The provisioned datasources file (`configs/observability/grafana/datasources.yml`, synced to NFS) uses Consul DNS addresses. If Grafana's configured DNS server (10.0.0.10) isn't resolving `.consul` names correctly, all datasources fail.
+
+**Fix:**
+Use the externally-accessible HTTPS URLs instead of Consul DNS:
+```yaml
+datasources:
+  - name: Prometheus
+    type: prometheus
+    url: https://prometheus.lab.hartr.net  # ✅ not http://prometheus.service.consul:9090
+
+  - name: Loki
+    type: loki
+    url: https://loki.lab.hartr.net        # ✅ not http://loki.service.consul:3100
+```
+
+Both Prometheus and Loki have no Authelia middleware, so Grafana's server-side proxy calls work without authentication. The Loki redirect middleware only triggers on the bare root path, not on `/loki/api/v1/*` paths that Grafana uses.
+
+**After updating the file, sync to NFS and redeploy:**
+```bash
+scp configs/observability/grafana/datasources.yml ubuntu@10.0.0.60:/mnt/nas/configs/observability/grafana/datasources.yml
+NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/observability/grafana/grafana.nomad.hcl
+```
 
 ---
 

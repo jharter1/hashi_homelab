@@ -10,12 +10,81 @@ job "freshrss" {
       port "http" {
         static = 8082
       }
+      port "db" {
+        static = 5435
+      }
     }
 
     volume "freshrss_data" {
       type      = "host"
       read_only = false
       source    = "freshrss_data"
+    }
+
+    volume "freshrss_postgres_data" {
+      type      = "host"
+      read_only = false
+      source    = "freshrss_postgres_data"
+    }
+
+    # PostgreSQL database
+    task "postgres" {
+      driver = "docker"
+
+      # Ensure postgres is ready before freshrss starts
+      lifecycle {
+        hook    = "prestart"
+        sidecar = true
+      }
+
+      vault {}
+
+      config {
+        image        = "postgres:16-alpine"
+        network_mode = "host"
+        ports        = ["db"]
+        privileged   = true
+        command      = "postgres"
+        args         = ["-p", "5435"]
+      }
+
+      volume_mount {
+        volume      = "freshrss_postgres_data"
+        destination = "/var/lib/postgresql/data"
+      }
+
+      template {
+        destination = "secrets/postgres.env"
+        env         = true
+        data        = <<EOH
+POSTGRES_DB=freshrss
+POSTGRES_USER=freshrss
+POSTGRES_PASSWORD={{ with secret "secret/data/postgres/freshrss" }}{{ .Data.data.password }}{{ end }}
+EOH
+      }
+
+      env {
+        PGDATA = "/var/lib/postgresql/data/pgdata"
+        POSTGRES_HOST_AUTH_METHOD = "scram-sha-256"
+        POSTGRES_PORT = "5435"
+      }
+
+      resources {
+        cpu    = 500
+        memory = 256
+      }
+
+      service {
+        name = "freshrss-postgres"
+        port = "db"
+        tags = ["database", "postgres"]
+        
+        check {
+          type     = "tcp"
+          interval = "10s"
+          timeout  = "2s"
+        }
+      }
     }
 
     task "freshrss" {
@@ -41,8 +110,8 @@ job "freshrss" {
         data        = <<EOH
 # Database configuration
 DB_BASE=freshrss
-DB_HOST=postgresql.home
-DB_PORT=5432
+DB_HOST=localhost
+DB_PORT=5435
 DB_USER=freshrss
 DB_PASSWORD={{ with secret "secret/data/postgres/freshrss" }}{{ .Data.data.password }}{{ end }}
 EOH
@@ -66,10 +135,12 @@ EOH
         ADMIN_API_PASSWORD = "changeme_api"
         
         # Application URL
-        BASE_URL = "http://freshrss.home"
+        BASE_URL = "https://freshrss.lab.hartr.net"
         
-        # Security
+        # Security settings
         TRUSTED_PROXY = "10.0.0.0/24"
+        # Form-based auth; initial setup was run via CLI with this auth type
+        AUTH_TYPE = "form"
       }
 
       resources {
@@ -87,8 +158,7 @@ EOH
           "traefik.http.routers.freshrss.rule=Host(`freshrss.lab.hartr.net`)",
           "traefik.http.routers.freshrss.entrypoints=websecure",
           "traefik.http.routers.freshrss.tls=true",
-          "traefik.http.routers.freshrss.tls.certresolver=letsencrypt",
-        ]
+          "traefik.http.routers.freshrss.tls.certresolver=letsencrypt",          "traefik.http.routers.freshrss.middlewares=authelia@file",        ]
         check {
           type     = "http"
           path     = "/i/"
@@ -124,8 +194,8 @@ EOH
         env         = true
         data        = <<EOH
 DB_BASE=freshrss
-DB_HOST=postgresql.home
-DB_PORT=5432
+DB_HOST=localhost
+DB_PORT=5435
 DB_USER=freshrss
 DB_PASSWORD={{ with secret "secret/data/postgres/freshrss" }}{{ .Data.data.password }}{{ end }}
 EOH

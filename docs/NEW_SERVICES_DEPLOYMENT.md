@@ -1,6 +1,8 @@
 # New Services Deployment Guide
 
-This guide covers the architecture, deployment strategy, and specific instructions for running services on the Nomad cluster.
+**Last Updated:** February 23, 2026
+
+This guide covers the architecture, deployment strategy, container permission patterns, and specific instructions for running services on the Nomad cluster.
 
 ## Architecture: The "Holy Trinity"
 
@@ -87,6 +89,256 @@ See [SERVICES.md](SERVICES.md) for detailed Traefik SSL configuration.
 - **Speedtest Tracker**: Network speed monitoring
 - **Uptime-Kuma**: Service availability monitoring
 - **Tailscale**: VPN remote access
+
+## Container Permission Patterns & Gotchas
+
+When deploying new services, understanding container permission patterns is critical for avoiding deployment failures. This section documents common patterns learned from troubleshooting 150+ failed allocations.
+
+### Understanding Docker Driver Limitations
+
+**Nomad's Docker driver has restricted capabilities:**
+
+```hcl
+# ❌ This won't work - Nomad rejects capability additions
+config {
+  cap_add = ["SETUID", "SETGID", "CHOWN"]
+}
+# Error: driver does not allow the following capabilities: setgid, setuid, chown
+```
+
+**Why this matters:**
+- Many containers need to change user/group IDs during initialization
+- Init systems (s6-overlay, tini) often require root → drop privileges
+- NFS volumes may have specific ownership requirements (1000:1000)
+- Containers using su-exec, gosu, or setgroups will fail without proper configuration
+
+### Common Error Patterns
+
+#### 1. su-exec/setgroups Failures
+
+**Symptoms:**
+```
+su-exec: setgroups: Operation not permitted
+chown: Operation not permitted
+s6-svscan: fatal: unable to open .s6-svscan/lock: Permission denied
+Exit Code: 111 or 256
+```
+
+**Root Cause:** Container needs SETUID/SETGID capabilities for privilege dropping.
+
+**Solution Pattern 1 - Use Privileged Mode:**
+```hcl
+config {
+  image = "linuxserver/bookstack:latest"
+  network_mode = "host"
+  ports = ["http"]
+  privileged = true  # ✅ Grants necessary capabilities
+}
+user = "1000:1000"  # Match NFS ownership
+```
+
+**Solution Pattern 2 - Use Rootless Image:**
+```hcl
+config {
+  image = "gitea/gitea:latest-rootless"  # ✅ Designed for restricted envs
+  network_mode = "host"
+  ports = ["http"]
+}
+user = "1000:1000"  # Runs as this user from start
+```
+
+#### 2. NFS Permission Denied Errors
+
+**Symptoms:**
+```
+Error: EACCES: permission denied, open '/data/config.json'
+mkdir: cannot create directory '/data/uploads': Permission denied
+```
+
+**Root Cause:** NFS ownership doesn't match container user.
+
+**Solution:** Pre-create volumes with correct ownership in Ansible:
+```yaml
+- name: Create host volume directories
+  ansible.builtin.file:
+    path: "/mnt/nas/{{ item.name }}"
+    state: directory
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+  loop:
+    - { name: 'gitea_data', owner: '1000', group: '1000' }
+    - { name: 'postgres_data', owner: '70', group: '70' }    # PostgreSQL user
+    - { name: 'prometheus_data', owner: '65534', group: '65534' }  # nobody user
+```
+
+#### 3. Init System Conflicts
+
+**Symptoms:**
+```
+s6-applyuidgid: fatal: unable to set supplementary group list
+Container fails when using: user = "1000:1000"
+Works without user directive but has wrong NFS permissions
+```
+
+**Root Cause:** s6-overlay and similar init systems MUST start as root, then drop privileges.
+
+**Decision Matrix:**
+
+| Container Type | Use `privileged=true` | Use`user` Directive | Use Rootless Image |
+|----------------|------------------------|---------------------|---------------------|
+| LinuxServer.io | ✅ Yes | ✅ Yes (both!) | ❌ N/A |
+| Official Alpine | ✅ Yes | ❌ No | Check for -rootless tag |
+| Standard images with s6 | ✅ Yes | ❌ No | Check for -rootless tag |
+| Rootless variants | ❌ No | ✅ Yes | ✅ Use these |
+| Simple stateless apps | ❌ Optional | ✅ Yes | ❌ N/A |
+
+### Service-Specific Patterns
+
+#### LinuxServer.io Containers (Bookstack, Calibre, Speedtest)
+
+**Pattern:**
+```hcl
+config {
+  image = "lscr.io/linuxserver/bookstack:latest"
+  network_mode = "host"
+  ports = ["http"]
+  privileged = true  # ✅ Required for s6-overlay
+}
+user = "1000:1000"  # ✅ Also needed - LinuxServer.io supports both
+
+env {
+  PUID = "1000"  # May also be needed depending on image
+  PGID = "1000"
+}
+```
+
+**Why both?**
+- `privileged = true` - Allows s6-overlay init system to function
+- `user = "1000:1000"` - Ensures file operations match NFS ownership
+
+#### Gitea (Special Case)
+
+**❌ Standard image fails:**
+```hcl
+config {
+  image = "gitea/gitea:latest"  # Has s6-overlay
+}
+user = "1000:1000"  # Breaks s6 initialization
+# Result: s6-svscan: fatal: unable to open .s6-svscan/lock
+```
+
+**✅ Use rootless instead:**
+```hcl
+config {
+  image = "gitea/gitea:latest-rootless"  # No s6-overlay
+}
+user = "1000:1000"  # Works perfectly
+```
+
+**Gitea Lessons Learned:**
+- Standard image: 153 failed allocations over 3 deployment attempts
+- Rootless image: Successful on first try
+- Always check for `-rootless` tags when containers have init systems
+
+#### PostgreSQL
+
+**Pattern:**
+```hcl
+config {
+  image = "postgres:16-alpine"
+  ports = ["db"]
+  privileged = true  # ✅ Required for su-exec
+}
+# No user directive - runs as UID 70 internally
+```
+
+**NFS ownership:**
+```yaml
+- { name: 'postgres_data', owner: '70', group: '70' }
+```
+
+#### Prometheus & Node Exporters
+
+**Pattern:**
+```hcl
+config {
+  image = "prom/prometheus:latest"
+  ports = ["http"]
+  privileged = true  # ✅ Needed for process monitoring
+}
+# Runs as UID 65534 (nobody) internally
+```
+
+**NFS ownership:**
+```yaml
+- { name: 'prometheus_data', owner: '65534', group: '65534' }
+```
+
+### Quick Reference: When to Use What
+
+**Start with this checklist for every new service:**
+
+1. **Is it a LinuxServer.io image?**
+   - ✅ Yes → Add `privileged = true` AND `user = "1000:1000"`
+   - ✅ Yes → **Mount a custom nginx config** if your static port is not 80. See TROUBLESHOOTING.md "LinuxServer.io Images — Custom Port Configuration". All lscr.io images default nginx to port 80 regardless of the Nomad static port.
+
+2. **Does it use s6-overlay, tini, or similar init?**
+   - ✅ Yes → Check for rootless image first, otherwise use `privileged = true`
+   - ❌ No → Safe to use `user = "1000:1000"` without privileged
+
+3. **What UID does the container run as?**
+   - Check image docs or `docker inspect`
+   - Set NFS ownership to match in Ansible
+
+4. **Does it bind privileged ports (<1024)?**
+   - ✅ Yes → Need `privileged = true` (e.g., Traefik on 80/443)
+
+5. **Is there a -rootless or -unprivileged tag?**
+   - ✅ Yes → Strongly prefer these for easier permission management
+
+6. **Does it have a sidecar database?**
+   - ✅ Yes → Pick an unused port from the port inventory above and document it there. Port conflicts cause silent placement failures with host networking.
+
+### Debugging Permission Issues
+
+**Step-by-step troubleshooting:**
+
+```bash
+# 1. Check allocation logs for permission errors
+nomad alloc logs -stderr <alloc-id> | grep -i "permission\|denied\|setgroups\|chown"
+
+# 2. Verify NFS ownership
+ssh ubuntu@10.0.0.60 "ls -ld /mnt/nas/<volume>_data"
+
+# 3. Check what user container expects
+nomad alloc exec -task <taskname> <alloc-id> id
+# Compare to NFS ownership
+
+# 4. Look for s6-overlay or init system
+nomad alloc logs <alloc-id> | grep -i "s6-\|tini\|su-exec"
+
+# 5. Try privileged mode first
+# Add: privileged = true to config block
+# Redeploy and check logs again
+```
+
+### Prevention Checklist
+
+**Before deploying a new service:**
+
+- [ ] Check image documentation for required uid/gid
+- [ ] Search for rootless/unprivileged image variants
+- [ ] Add volume directories to Ansible with correct ownership
+- [ ] Add host_volume blocks to Nomad client template
+- [ ] Start with `privileged = true` for s6-overlay containers
+- [ ] Use `user = "1000:1000"` for most app data
+- [ ] Test deployment and check logs for permission errors
+- [ ] Remove `privileged = true` only if it works without it
+
+**For more details, see:**
+- Full troubleshooting guide: `docs/TROUBLESHOOTING.md`
+- Gitea-specific lessons: Section "Gitea" in TROUBLESHOOTING.md
+- NFS configuration: `docs/INFRASTRUCTURE.md`
 
 ## Recent Services Deployed
 
@@ -355,24 +607,31 @@ All services are accessible via their respective URLs:
 
 ## Port Allocations
 
-Th5433 - Linkwarden PostgreSQL
+**Application HTTP ports:**
 - 8081 - Wallabag
-- 5434 - Wallabag PostgreSQL
-- 8082 - FreshRSS (existing)
-- 8086 - Paperless-ngx
-- 5435 - Paperless PostgreSQL
-- 6380 - Paperless Redis
+- 8082 - FreshRSS
 - 8083 - BookStack
 - 8084 - Woodpecker CI (HTTP)
-- 9000 - Woodpecker CI (gRPC)
-- 5000 - Harbor (HTTP)
-- 5436 - Harbor PostgreSQLis
-- 8083 - BookStack
-- 8084 - Woodpecker CI (HTTP)
-- 9000 - Woodpecker CI (gRPC)
-- 5000 - Harbor (HTTP)
-- 6381 - Harbor Redis
 - 8085 - Draw.io
+- 8086 - Paperless-ngx
+- 8765 - Speedtest Tracker
+- 9000 - Woodpecker CI (gRPC)
+- 5000 - Harbor (HTTP)
+
+**Sidecar database ports (must be unique across all jobs on a node — host networking):**
+- 3307 - BookStack (MariaDB)
+- 5433 - Linkwarden (PostgreSQL)
+- 5434 - Wallabag (PostgreSQL)
+- 5435 - FreshRSS (PostgreSQL) — NOTE: paperless also used 5435; potential conflict if co-scheduled
+- 5436 - Grafana (PostgreSQL)
+- 5437 - Gitea (PostgreSQL)
+- 5438 - Vaultwarden (PostgreSQL)
+- 5439 - Speedtest Tracker (PostgreSQL)
+- 6380 - Paperless (Redis)
+- 6381 - Harbor (Redis)
+- Harbor PostgreSQL: 5436 (conflicts with Grafana — update before deploying Harbor)
+
+**When adding a new service with a sidecar database, pick an unused port and add it to this list.**
 
 ## Initial Setup
 

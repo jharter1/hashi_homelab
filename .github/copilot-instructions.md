@@ -12,12 +12,12 @@ This is a production-ready HashiCorp homelab deploying containerized workloads o
 
 **Cluster Topology:**
 - 3 Nomad servers (10.0.0.50-52) with co-located Consul for Raft consensus
-- 6 Nomad clients (10.0.0.60-65) running Docker workloads, 10 GB RAM each
+- 6 Nomad clients (10.0.0.60-65) running Docker workloads, 6 GB RAM each
 - NFS storage (10.0.0.100) mounted at `/mnt/nas/` for persistent volumes
 - Traefik reverse proxy with automatic Consul catalog integration
 
 **Resource Allocation (as of Feb 2026):**
-- Client VMs: 10 GB RAM each (60 GB total), ~75% utilization
+- Client VMs: 6 GB RAM each (36 GB total), ~75% utilization
 - Container memory: ~13.6 GB across 28+ services
 - See `docs/RESOURCE_SURVEY.md` for optimization history
 

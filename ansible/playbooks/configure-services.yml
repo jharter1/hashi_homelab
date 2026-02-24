@@ -1,0 +1,59 @@
+---
+# Configure Consul and Nomad services with their systemd units
+# Run this when:
+#  - Setting up new nodes after base system configuration
+#  - Updating Consul/Nomad configuration templates
+#  - Changing cluster topology (adding/removing nodes)
+#
+# Usage: ansible-playbook ansible/playbooks/configure-services.yml
+#
+# Moderate execution: ~1-2 minutes (creates configs, systemd units, starts services)
+
+- name: Configure Consul on all cluster nodes
+  hosts: nomad_cluster
+  become: yes
+  gather_facts: yes
+  
+  roles:
+    - consul
+
+- name: Configure Nomad servers
+  hosts: nomad_servers
+  become: yes
+  gather_facts: yes
+  
+  roles:
+    - nomad-server
+  
+  post_tasks:
+    - name: Wait for Nomad server API
+      uri:
+        url: "http://{{ ansible_host }}:4646/v1/status/leader"
+        method: GET
+        status_code: 200
+      register: nomad_api
+      until: nomad_api.status == 200
+      retries: 12
+      delay: 5
+
+- name: Configure Nomad clients
+  hosts: nomad_clients
+  become: yes
+  gather_facts: yes
+  
+  roles:
+    - nomad-client
+  
+  post_tasks:
+    - name: Verify Nomad client status
+      command: nomad node status -self
+      register: node_status
+      changed_when: false
+      ignore_errors: yes
+      environment:
+        NOMAD_ADDR: "http://10.0.0.50:4646"
+    
+    - name: Display node status
+      debug:
+        msg: "{{ node_status.stdout_lines }}"
+      when: node_status.rc == 0

@@ -8,7 +8,10 @@ job "gitea" {
     network {
       mode = "host"
       port "http" {
-        static = 3000
+        static = 3001
+      }
+      port "db" {
+        static = 5437
       }
     }
 
@@ -16,6 +19,72 @@ job "gitea" {
       type      = "host"
       read_only = false
       source    = "gitea_data"
+    }
+
+    volume "gitea_postgres_data" {
+      type      = "host"
+      read_only = false
+      source    = "gitea_postgres_data"
+    }
+
+    # PostgreSQL database
+    task "postgres" {
+      driver = "docker"
+
+      # Ensure postgres is ready before gitea starts
+      lifecycle {
+        hook    = "prestart"
+        sidecar = true
+      }
+
+      vault {}
+
+      config {
+        image        = "postgres:16-alpine"
+        network_mode = "host"
+        ports        = ["db"]
+        privileged   = true
+        command      = "postgres"
+        args         = ["-p", "5437"]
+      }
+
+      volume_mount {
+        volume      = "gitea_postgres_data"
+        destination = "/var/lib/postgresql/data"
+      }
+
+      template {
+        destination = "secrets/postgres.env"
+        env         = true
+        data        = <<EOH
+POSTGRES_DB=gitea
+POSTGRES_USER=gitea
+POSTGRES_PASSWORD={{ with secret "secret/data/postgres/gitea" }}{{ .Data.data.password }}{{ end }}
+EOH
+      }
+
+      env {
+        PGDATA = "/var/lib/postgresql/data/pgdata"
+        POSTGRES_HOST_AUTH_METHOD = "scram-sha-256"
+        POSTGRES_PORT = "5437"
+      }
+
+      resources {
+        cpu    = 500
+        memory = 256
+      }
+
+      service {
+        name = "gitea-postgres"
+        port = "db"
+        tags = ["database", "postgres"]
+        
+        check {
+          type     = "tcp"
+          interval = "10s"
+          timeout  = "2s"
+        }
+      }
     }
 
     task "gitea" {
@@ -44,7 +113,6 @@ job "gitea" {
         env         = true
         data        = <<EOH
 GITEA__database__PASSWD={{ with secret "secret/data/postgres/gitea" }}{{ .Data.data.password }}{{ end }}
-GITEA__database__HOST={{ range service "postgresql" }}{{ .Address }}{{ end }}:5432
 EOH
       }
 
@@ -53,23 +121,28 @@ EOH
         USER_GID = "1000"
         
         # PostgreSQL database configuration
-        # GITEA__database__HOST and PASSWD come from template above
         GITEA__database__DB_TYPE = "postgres"
+        GITEA__database__HOST = "localhost:5437"
         GITEA__database__NAME = "gitea"
         GITEA__database__USER = "gitea"
         GITEA__database__SSL_MODE = "disable"
         
         # Server configuration - HTTPS only, no SSH
         GITEA__server__DOMAIN = "gitea.lab.hartr.net"
-        GITEA__server__HTTP_PORT = "3000"
+        GITEA__server__HTTP_PORT = "3001"
         GITEA__server__ROOT_URL = "https://gitea.lab.hartr.net"
         GITEA__server__DISABLE_SSH = "true"
         GITEA__server__START_SSH_SERVER = "false"
         GITEA__server__OFFLINE_MODE = "false"
         
-        # Trust Authelia's forwarded authentication headers (optional - not required for login)
-        GITEA__service__ENABLE_REVERSE_PROXY_AUTHENTICATION = "false"
-        GITEA__service__ENABLE_REVERSE_PROXY_AUTO_REGISTRATION = "false"
+        # Trust Authelia's forwarded authentication headers for SSO
+        GITEA__service__ENABLE_REVERSE_PROXY_AUTHENTICATION = "true"
+        GITEA__service__ENABLE_REVERSE_PROXY_AUTO_REGISTRATION = "true"
+        GITEA__service__REVERSE_PROXY_AUTHENTICATION_USER = "Remote-User"
+        GITEA__service__REVERSE_PROXY_AUTHENTICATION_EMAIL = "Remote-Email"
+        GITEA__service__REVERSE_PROXY_AUTHENTICATION_FULL_NAME = "Remote-Name"
+        GITEA__service__REVERSE_PROXY_LIMIT = "1"
+        GITEA__service__REVERSE_PROXY_TRUSTED_PROXIES = "10.0.0.0/24"
       }
 
       resources {
