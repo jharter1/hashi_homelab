@@ -56,6 +56,7 @@ job "speedtest" {
       template {
         destination = "secrets/postgres.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 POSTGRES_DB=speedtest
 POSTGRES_USER=speedtest
@@ -116,6 +117,7 @@ EOH
       template {
         destination = "secrets/db.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 DB_PASSWORD={{ with secret "secret/data/postgres/speedtest" }}{{ .Data.data.password }}{{ end }}
 EOH
@@ -191,11 +193,18 @@ EOH
         port = "http"
         tags = [
           "traefik.enable=true",
+          # UI router — protected by Authelia
           "traefik.http.routers.speedtest.rule=Host(`speedtest.lab.hartr.net`)",
           "traefik.http.routers.speedtest.entrypoints=websecure",
           "traefik.http.routers.speedtest.tls=true",
           "traefik.http.routers.speedtest.tls.certresolver=letsencrypt",
           "traefik.http.routers.speedtest.middlewares=authelia@file",
+          # API router — no auth so homepage widget can query results
+          # Priority is auto-calculated from rule length; the longer rule wins over the UI router
+          "traefik.http.routers.speedtest-api.rule=Host(`speedtest.lab.hartr.net`) && PathPrefix(`/api/`)",
+          "traefik.http.routers.speedtest-api.entrypoints=websecure",
+          "traefik.http.routers.speedtest-api.tls=true",
+          "traefik.http.routers.speedtest-api.tls.certresolver=letsencrypt",
         ]
         check {
           type     = "http"

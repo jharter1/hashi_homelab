@@ -56,6 +56,7 @@ job "vaultwarden" {
       template {
         destination = "secrets/postgres.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 POSTGRES_DB=vaultwarden
 POSTGRES_USER=vaultwarden
@@ -108,6 +109,7 @@ EOH
       template {
         destination = "secrets/db.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 DATABASE_URL=postgresql://vaultwarden:{{ with secret "secret/data/postgres/vaultwarden" }}{{ .Data.data.password }}{{ end }}@localhost:5438/vaultwarden
 EOH

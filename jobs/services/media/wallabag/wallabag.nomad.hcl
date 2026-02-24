@@ -60,6 +60,7 @@ job "wallabag" {
       template {
         destination = "secrets/postgres.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 POSTGRES_DB=wallabag
 POSTGRES_USER=wallabag
@@ -125,6 +126,7 @@ EOH
       template {
         destination = "secrets/app.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 # Database configuration
 SYMFONY__ENV__DATABASE_DRIVER=pdo_pgsql

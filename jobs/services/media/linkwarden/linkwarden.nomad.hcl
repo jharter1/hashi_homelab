@@ -54,6 +54,7 @@ job "linkwarden" {
       template {
         destination = "secrets/postgres.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 POSTGRES_DB=linkwarden
 POSTGRES_USER=linkwarden
@@ -85,6 +86,34 @@ EOH
       }
     }
 
+    # Install Playwright browsers to local volatile storage before linkwarden starts.
+    # Playwright binaries cannot be executed from NFS (ETXTBSY), so we use the
+    # alloc directory which lives on local disk.
+    task "playwright-install" {
+      driver = "docker"
+
+      lifecycle {
+        hook    = "prestart"
+        sidecar = false
+      }
+
+      config {
+        image        = "ghcr.io/linkwarden/linkwarden:latest"
+        network_mode = "host"
+        command      = "/data/node_modules/.bin/playwright"
+        args         = ["install", "chromium"]
+      }
+
+      env {
+        PLAYWRIGHT_BROWSERS_PATH = "${NOMAD_ALLOC_DIR}/playwright_browsers"
+      }
+
+      resources {
+        cpu    = 1000
+        memory = 512
+      }
+    }
+
     # Linkwarden application
     task "linkwarden" {
       driver = "docker"
@@ -107,6 +136,7 @@ EOH
       template {
         destination = "secrets/db.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 # Database URL for PostgreSQL
 DATABASE_URL=postgresql://linkwarden:{{ with secret "secret/data/postgres/linkwarden" }}{{ .Data.data.password }}{{ end }}@localhost:5433/linkwarden
@@ -128,11 +158,14 @@ EOH
 
         # Allow registration so the first user can be created
         NEXT_PUBLIC_ALLOW_REGISTRATION = "true"
+
+        # Use local volatile storage for Playwright (NFS causes ETXTBSY on exec)
+        PLAYWRIGHT_BROWSERS_PATH = "${NOMAD_ALLOC_DIR}/playwright_browsers"
       }
 
       resources {
         cpu    = 500
-        memory = 512
+        memory = 1024
       }
 
       service {

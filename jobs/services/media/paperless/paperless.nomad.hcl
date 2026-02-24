@@ -2,6 +2,11 @@ job "paperless-ngx" {
   datacenters = ["dc1"]
   type        = "service"
 
+  update {
+    healthy_deadline  = "10m"
+    progress_deadline = "15m"
+  }
+
   group "paperless" {
     count = 1
 
@@ -11,7 +16,7 @@ job "paperless-ngx" {
         static = 8086
       }
       port "db" {
-        static = 5435
+        static = 5440
       }
       port "redis" {
         static = 6380
@@ -52,12 +57,19 @@ job "paperless-ngx" {
     task "postgres" {
       driver = "docker"
 
+      lifecycle {
+        hook    = "prestart"
+        sidecar = true
+      }
+
       vault {}
 
       config {
         image        = "postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
+        command      = "postgres"
+        args         = ["-p", "5440"]
       }
 
       volume_mount {
@@ -68,6 +80,7 @@ job "paperless-ngx" {
       template {
         destination = "secrets/postgres.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 POSTGRES_DB=paperless
 POSTGRES_USER=paperless
@@ -76,7 +89,9 @@ EOH
       }
 
       env {
-        PGDATA = "/var/lib/postgresql/data/pgdata"
+        PGDATA                    = "/var/lib/postgresql/data/pgdata"
+        POSTGRES_HOST_AUTH_METHOD = "scram-sha-256"
+        POSTGRES_PORT             = "5440"
       }
 
       resources {
@@ -133,6 +148,7 @@ EOH
       config {
         image        = "ghcr.io/paperless-ngx/paperless-ngx:latest"
         network_mode = "host"
+        privileged   = true
         ports        = ["http"]
       }
 
@@ -160,10 +176,11 @@ EOH
       template {
         destination = "secrets/paperless.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 # Database configuration
 PAPERLESS_DBHOST=localhost
-PAPERLESS_DBPORT=5435
+PAPERLESS_DBPORT=5440
 PAPERLESS_DBNAME=paperless
 PAPERLESS_DBUSER=paperless
 PAPERLESS_DBPASS={{ with secret "secret/data/postgres/paperless" }}{{ .Data.data.password }}{{ end }}

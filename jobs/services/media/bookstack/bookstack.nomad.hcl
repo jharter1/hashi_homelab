@@ -67,6 +67,7 @@ job "bookstack" {
       template {
         destination = "secrets/mariadb.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 MYSQL_ROOT_PASSWORD={{ with secret "secret/data/mariadb/bookstack" }}{{ .Data.data.password }}{{ end }}
 MYSQL_DATABASE=bookstack
@@ -129,6 +130,7 @@ EOH
       template {
         destination = "secrets/app.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 # Database password - linuxserver.io uses DB_PASSWORD
 DB_PASSWORD={{ with secret "secret/data/mariadb/bookstack" }}{{ .Data.data.password }}{{ end }}

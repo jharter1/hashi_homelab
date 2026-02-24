@@ -24,9 +24,19 @@ job "minio" {
     task "minio" {
       driver = "docker"
 
+      vault {}
+
+      template {
+        destination = "secrets/minio.env"
+        env         = true
+        change_mode = "noop"
+        data        = <<EOH
+MINIO_ROOT_USER={{ with secret "secret/data/minio/root" }}{{ .Data.data.username }}{{ end }}
+MINIO_ROOT_PASSWORD={{ with secret "secret/data/minio/root" }}{{ .Data.data.password }}{{ end }}
+EOH
+      }
+
       env {
-        MINIO_ROOT_USER = "minioadmin"
-        MINIO_ROOT_PASSWORD = "minioadmin"
         MINIO_BROWSER_REDIRECT_URL = "https://minio.lab.hartr.net"
       }
 

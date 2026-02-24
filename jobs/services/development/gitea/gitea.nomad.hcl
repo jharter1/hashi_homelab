@@ -56,6 +56,7 @@ job "gitea" {
       template {
         destination = "secrets/postgres.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 POSTGRES_DB=gitea
 POSTGRES_USER=gitea
@@ -111,6 +112,7 @@ EOH
       template {
         destination = "secrets/db.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 GITEA__database__PASSWD={{ with secret "secret/data/postgres/gitea" }}{{ .Data.data.password }}{{ end }}
 EOH

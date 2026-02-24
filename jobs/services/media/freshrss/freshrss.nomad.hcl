@@ -56,6 +56,7 @@ job "freshrss" {
       template {
         destination = "secrets/postgres.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 POSTGRES_DB=freshrss
 POSTGRES_USER=freshrss
@@ -107,6 +108,7 @@ EOH
       template {
         destination = "secrets/db.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 # Database configuration
 DB_BASE=freshrss
@@ -127,12 +129,6 @@ EOH
         
         # Database type
         DB_PREFIX = "freshrss_"
-        
-        # FreshRSS admin credentials (initial setup)
-        # After first login, change these via the web UI
-        ADMIN_EMAIL    = "admin@home.local"
-        ADMIN_PASSWORD = "changeme"
-        ADMIN_API_PASSWORD = "changeme_api"
         
         # Application URL
         BASE_URL = "https://freshrss.lab.hartr.net"
@@ -192,6 +188,7 @@ EOH
       template {
         destination = "secrets/db.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 DB_BASE=freshrss
 DB_HOST=localhost

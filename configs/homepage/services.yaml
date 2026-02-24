@@ -96,11 +96,15 @@
         widget:
           type: speedtest
           url: https://speedtest.lab.hartr.net
-          key: "lVBkCELz5L7PYgyrPEd0BbFn64KEbuFkrmo7q9iGe22c26b4"
+          key: "1|49lo5MNH8ZdyFhrHPJWqT5kVBfKExEvAzjAXxGI5e92c8d62"
     - Linkwarden:
         icon: linkwarden.png
         href: https://linkwarden.lab.hartr.net
         description: Bookmark Manager
+    - Paperless-ngx:
+        icon: paperless.png
+        href: https://paperless.lab.hartr.net
+        description: Document Management
     - Wallabag:
         icon: wallabag.png
         href: https://wallabag.lab.hartr.net

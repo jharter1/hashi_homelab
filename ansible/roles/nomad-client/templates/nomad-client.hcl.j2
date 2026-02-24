@@ -240,6 +240,31 @@ client {
     path = "{{ nas_mount_point }}/vaultwarden_postgres"
     read_only = false
   }
+
+  host_volume "paperless_data" {
+    path = "{{ nas_mount_point }}/paperless/data"
+    read_only = false
+  }
+
+  host_volume "paperless_media" {
+    path = "{{ nas_mount_point }}/paperless/media"
+    read_only = false
+  }
+
+  host_volume "paperless_consume" {
+    path = "{{ nas_mount_point }}/paperless/consume"
+    read_only = false
+  }
+
+  host_volume "paperless_export" {
+    path = "{{ nas_mount_point }}/paperless/export"
+    read_only = false
+  }
+
+  host_volume "paperless_postgres_data" {
+    path = "{{ nas_mount_point }}/paperless_postgres"
+    read_only = false
+  }
 }
 
 bind_addr = "0.0.0.0"

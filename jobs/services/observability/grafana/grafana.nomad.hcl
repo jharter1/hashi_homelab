@@ -56,6 +56,7 @@ job "grafana" {
       template {
         destination = "secrets/postgres.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 POSTGRES_DB=grafana
 POSTGRES_USER=grafana
@@ -124,6 +125,7 @@ EOH
       template {
         destination = "secrets/db.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 GF_DATABASE_PASSWORD={{ with secret "secret/data/postgres/grafana" }}{{ .Data.data.password }}{{ end }}
 GF_DATABASE_HOST=localhost:5436
