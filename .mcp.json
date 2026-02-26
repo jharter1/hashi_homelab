@@ -1,0 +1,82 @@
+{
+  "mcpServers": {
+    "nomad": {
+      "command": "node",
+      "args": ["mcp-servers/nomad/dist/index.js"],
+      "env": {
+        "NOMAD_ADDR": "http://10.0.0.50:4646"
+      }
+    },
+    "consul": {
+      "command": "node",
+      "args": ["mcp-servers/consul/dist/index.js"],
+      "env": {
+        "CONSUL_ADDR": "http://10.0.0.50:8500"
+      }
+    },
+    "vault": {
+      "command": "node",
+      "args": ["mcp-servers/vault/dist/index.js"],
+      "env": {
+        "VAULT_ADDR": "http://10.0.0.30:8200",
+        "VAULT_TOKEN": "${VAULT_TOKEN}"
+      }
+    },
+    "prometheus": {
+      "command": "node",
+      "args": ["mcp-servers/prometheus/dist/index.js"],
+      "env": {
+        "PROMETHEUS_ADDR": "https://prometheus.lab.hartr.net"
+      }
+    },
+    "grafana": {
+      "command": "docker",
+      "args": ["run", "--rm", "-i",
+        "-e", "GRAFANA_URL",
+        "-e", "GRAFANA_SERVICE_ACCOUNT_TOKEN",
+        "grafana/mcp-grafana",
+        "-transport", "stdio"],
+      "env": {
+        "GRAFANA_URL": "https://grafana.lab.hartr.net",
+        "GRAFANA_SERVICE_ACCOUNT_TOKEN": "${GRAFANA_TOKEN}"
+      }
+    },
+    "traefik": {
+      "command": "node",
+      "args": ["mcp-servers/traefik/dist/index.js"],
+      "env": {
+        "TRAEFIK_API": "http://10.0.0.60:8080"
+      }
+    },
+    "proxmox": {
+      "command": "node",
+      "args": ["mcp-servers/proxmox/dist/index.js"],
+      "env": {
+        "PROXMOX_HOST": "https://10.0.0.21:8006",
+        "PROXMOX_USER": "root@pam",
+        "PROXMOX_PASSWORD": "${PROXMOX_PASSWORD}"
+      }
+    },
+    "ansible": {
+      "command": "node",
+      "args": ["mcp-servers/ansible/dist/index.js"],
+      "env": {
+        "ANSIBLE_DIR": "ansible"
+      }
+    },
+    "terraform": {
+      "command": "node",
+      "args": ["mcp-servers/terraform/dist/index.js"],
+      "env": {
+        "TERRAFORM_DIR": "terraform/environments/dev"
+      }
+    },
+    "gitea": {
+      "command": "gitea-mcp-server",
+      "args": ["-host", "https://gitea.lab.hartr.net"],
+      "env": {
+        "GITEA_TOKEN": "${GITEA_TOKEN}"
+      }
+    }
+  }
+}

@@ -2,6 +2,10 @@ job "linkwarden" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "linkwarden" {
     count = 1
 
@@ -69,8 +73,9 @@ EOH
       }
 
       resources {
-        cpu    = 500
-        memory = 256
+        cpu        = 200
+        memory     = 32
+        memory_max = 128
       }
 
       service {
@@ -108,9 +113,16 @@ EOH
         PLAYWRIGHT_BROWSERS_PATH = "${NOMAD_ALLOC_DIR}/playwright_browsers"
       }
 
+      restart {
+        attempts = 2
+        delay    = "30s"
+        mode     = "delay"
+      }
+
       resources {
-        cpu    = 1000
-        memory = 512
+        cpu        = 500
+        memory     = 256
+        memory_max = 512
       }
     }
 
@@ -164,8 +176,9 @@ EOH
       }
 
       resources {
-        cpu    = 500
-        memory = 1024
+        cpu        = 500
+        memory     = 512
+        memory_max = 1024
       }
 
       service {

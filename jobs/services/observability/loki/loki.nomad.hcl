@@ -2,6 +2,10 @@ job "loki" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "loki" {
     count = 1
 
@@ -48,8 +52,9 @@ job "loki" {
       # This eliminates the HEREDOC pattern and centralizes configuration
 
       resources {
-        cpu    = 500
-        memory = 512
+        cpu        = 200
+        memory     = 128
+        memory_max = 256
       }
 
       service {

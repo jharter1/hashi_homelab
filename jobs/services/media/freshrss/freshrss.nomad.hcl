@@ -2,6 +2,10 @@ job "freshrss" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "freshrss" {
     count = 1
 
@@ -71,8 +75,9 @@ EOH
       }
 
       resources {
-        cpu    = 500
-        memory = 256
+        cpu        = 200
+        memory     = 32
+        memory_max = 128
       }
 
       service {
@@ -140,8 +145,9 @@ EOH
       }
 
       resources {
-        cpu    = 500
-        memory = 256
+        cpu        = 200
+        memory     = 64
+        memory_max = 128
       }
 
       service {
@@ -176,13 +182,15 @@ EOH
       }
 
       config {
-        image   = "freshrss/freshrss:latest"
-        command = "cron"
-        args    = ["-f"]
+        image        = "freshrss/freshrss:latest"
+        network_mode = "host"
+        command      = "cron"
+        args         = ["-f"]
+      }
 
-        volumes = [
-          "${NOMAD_ALLOC_DIR}/../freshrss_data:/var/www/FreshRSS/data"
-        ]
+      volume_mount {
+        volume      = "freshrss_data"
+        destination = "/var/www/FreshRSS/data"
       }
 
       template {
@@ -204,8 +212,9 @@ EOH
       }
 
       resources {
-        cpu    = 100
-        memory = 128
+        cpu        = 100
+        memory     = 32
+        memory_max = 64
       }
     }
   }

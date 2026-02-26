@@ -67,19 +67,60 @@
     group: "{{ item.group | default('root') }}"
     mode: "{{ item.mode | default('0755') }}"
   loop:
-    - { name: 'grafana', owner: '472', group: '472', mode: '0755' }
-    - { name: 'loki', owner: '10001', group: '10001', mode: '0755' }
-    - { name: 'minio', mode: '0755' }
-    - { name: 'prometheus', owner: '65534', group: '65534', mode: '0777' }
-    - { name: 'registry', mode: '0755' }
-    - { name: 'homepage', mode: '0755' }
-    - { name: 'calibre', mode: '0755' }
-    - { name: 'seafile', mode: '0755' }
-    - { name: 'postgres', mode: '0755' }
-    - { name: 'mariadb', owner: '999', group: '999', mode: '0755' }
-    - { name: 'speedtest', owner: '1000', group: '1000', mode: '0755' }
-    - { name: 'immich/upload', owner: '1000', group: '1000', mode: '0755' }
-    - { name: 'immich/postgres', owner: '1000', group: '1000', mode: '0755' }
+    # Observability
+    - { name: 'grafana',          owner: '472',   group: '472',   mode: '0755' }
+    - { name: 'grafana_postgres', owner: '999',   group: '999',   mode: '0755' }
+    - { name: 'loki',             owner: '10001', group: '10001', mode: '0755' }
+    - { name: 'prometheus',       owner: '65534', group: '65534', mode: '0777' }
+    - { name: 'alertmanager',     owner: '1000',  group: '1000',  mode: '0755' }
+    - { name: 'tempo',            owner: '10001', group: '10001', mode: '0755' }
+    - { name: 'uptime_kuma_data', owner: '1000',  group: '1000',  mode: '0755' }
+    # Infrastructure
+    - { name: 'minio',            mode: '0755' }
+    - { name: 'homepage',         mode: '0755' }
+    - { name: 'registry',         mode: '0755' }
+    - { name: 'traefik-acme',     mode: '0700' }
+    # Auth
+    - { name: 'authelia',         owner: '1000', group: '1000', mode: '0755' }
+    # Databases (shared)
+    - { name: 'postgres',         owner: '999',  group: '999',  mode: '0755' }
+    - { name: 'mariadb',          owner: '999',  group: '999',  mode: '0755' }
+    # Development
+    - { name: 'gitea',            owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'gitea_postgres',   owner: '999',  group: '999',  mode: '0755' }
+    - { name: 'codeserver',       owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'gollum',           owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'woodpecker',       owner: '1000', group: '1000', mode: '0755' }
+    # Media / apps
+    - { name: 'audiobookshelf/config',   owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'audiobookshelf/metadata', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'audiobookshelf/audiobooks', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'audiobookshelf/podcasts', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'bookstack/config', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'bookstack/db',     owner: '999',  group: '999',  mode: '0755' }
+    - { name: 'calibre',          owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'freshrss',         owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'freshrss_postgres', owner: '999', group: '999',  mode: '0755' }
+    - { name: 'linkwarden',       owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'linkwarden_postgres', owner: '999', group: '999', mode: '0755' }
+    - { name: 'paperless/data',   owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'paperless/media',  owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'paperless/consume', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'paperless/export', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'paperless_postgres', owner: '999', group: '999', mode: '0755' }
+    - { name: 'seafile',          mode: '0755' }
+    - { name: 'speedtest',        owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'speedtest_postgres', owner: '999', group: '999', mode: '0755' }
+    - { name: 'syncthing/config', owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'syncthing/data',   owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'trilium',          owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'vaultwarden',      owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'vaultwarden_postgres', owner: '999', group: '999', mode: '0755' }
+    - { name: 'wallabag',         owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'wallabag_images',  owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'wallabag_postgres', owner: '999', group: '999',  mode: '0755' }
+    - { name: 'immich/upload',    owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'immich/postgres',  owner: '1000', group: '1000', mode: '0755' }
   when: node_type == 'client' and nas_mount_source is defined
 
 - name: Sync homepage configuration files

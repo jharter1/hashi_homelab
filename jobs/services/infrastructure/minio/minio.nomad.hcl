@@ -2,6 +2,10 @@ job "minio" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "minio" {
     count = 1
 
@@ -61,8 +65,9 @@ EOH
       }
 
       resources {
-        cpu    = 500
-        memory = 512
+        cpu        = 300
+        memory     = 128
+        memory_max = 512
       }
 
       service {

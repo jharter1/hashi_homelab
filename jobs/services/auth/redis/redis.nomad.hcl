@@ -2,6 +2,10 @@ job "redis" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "redis" {
     count = 1
 
@@ -31,8 +35,9 @@ job "redis" {
       }
 
       resources {
-        cpu    = 100
-        memory = 256
+        cpu        = 100
+        memory     = 32
+        memory_max = 64
       }
 
       service {

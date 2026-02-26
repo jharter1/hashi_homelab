@@ -2,6 +2,10 @@ job "codeserver" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "codeserver" {
     count = 1
 
@@ -57,8 +61,9 @@ job "codeserver" {
       }
 
       resources {
-        cpu    = 500
-        memory = 256
+        cpu        = 500
+        memory     = 128
+        memory_max = 512
       }
 
       service {

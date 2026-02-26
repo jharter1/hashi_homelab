@@ -1,0 +1,29 @@
+---
+- name: Configure Docker Hub authentication on all clients
+  hosts: nomad_clients
+  become: yes
+  gather_facts: no
+
+  tasks:
+    - name: Create Docker config directory
+      file:
+        path: /root/.docker
+        state: directory
+        owner: root
+        group: root
+        mode: '0700'
+
+    - name: Configure Docker Hub authentication
+      copy:
+        dest: /root/.docker/config.json
+        content: |
+          {
+            "auths": {
+              "https://index.docker.io/v1/": {
+                "auth": "{{ docker_hub_auth }}"
+              }
+            }
+          }
+        owner: root
+        group: root
+        mode: '0600'

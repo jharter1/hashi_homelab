@@ -2,6 +2,10 @@ job "postgresql" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   constraint {
     attribute = "${node.unique.name}"
     value     = "dev-nomad-client-1"
@@ -45,6 +49,7 @@ job "postgresql" {
       template {
         destination = "secrets/postgres.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 # PostgreSQL superuser password
 POSTGRES_PASSWORD={{ with secret "secret/data/postgres/admin" }}{{ .Data.data.password }}{{ end }}
@@ -64,8 +69,9 @@ EOH
       }
 
       resources {
-        cpu    = 1000
-        memory = 512
+        cpu        = 500
+        memory     = 256
+        memory_max = 512
       }
 
       service {
@@ -122,6 +128,7 @@ EOH
       template {
         destination = "secrets/postgres.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 POSTGRES_PASSWORD={{ with secret "secret/data/postgres/admin" }}{{ .Data.data.password }}{{ end }}
 EOH
@@ -247,8 +254,9 @@ EOH
       }
 
       resources {
-        cpu    = 500
-        memory = 256
+        cpu        = 200
+        memory     = 64
+        memory_max = 128
       }
     }
 
@@ -310,14 +318,16 @@ EOF
       template {
         destination = "secrets/postgres.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 POSTGRES_PASSWORD={{ with secret "secret/data/postgres/admin" }}{{ .Data.data.password }}{{ end }}
 EOH
       }
 
       resources {
-        cpu    = 100
-        memory = 256
+        cpu        = 100
+        memory     = 64
+        memory_max = 128
       }
     }
   }

@@ -2,6 +2,10 @@ job "audiobookshelf" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "audiobookshelf" {
     count = 1
 
@@ -101,8 +105,9 @@ job "audiobookshelf" {
       }
 
       resources {
-        cpu    = 1000
-        memory = 512
+        cpu        = 200
+        memory     = 64
+        memory_max = 256
       }
 
       service {

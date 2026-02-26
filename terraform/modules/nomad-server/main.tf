@@ -100,7 +100,7 @@ resource "null_resource" "wait_for_servers" {
   provisioner "local-exec" {
     command = <<-EOT
       echo "Waiting for server ${count.index + 1} at ${split("/", local.server_ips[count.index])[0]} to be ready..."
-      timeout 120 bash -c 'until nc -z ${split("/", local.server_ips[count.index])[0]} 22; do sleep 2; done'
+      timeout 300 bash -c 'until nc -z ${split("/", local.server_ips[count.index])[0]} 22; do sleep 2; done'
       echo "Server ${count.index + 1} is ready!"
     EOT
   }

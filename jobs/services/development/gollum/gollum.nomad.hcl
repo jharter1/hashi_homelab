@@ -2,6 +2,10 @@ job "gollum" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "gollum" {
     count = 1
 
@@ -37,8 +41,9 @@ job "gollum" {
       }
 
       resources {
-        cpu    = 200
-        memory = 128
+        cpu        = 100
+        memory     = 128
+        memory_max = 256
       }
 
       service {

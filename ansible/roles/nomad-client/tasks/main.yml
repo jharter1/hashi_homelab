@@ -74,6 +74,30 @@
     mode: '0644'
   notify: restart nomad
 
+- name: Create Docker config directory
+  file:
+    path: /root/.docker
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Configure Docker Hub authentication
+  copy:
+    dest: /root/.docker/config.json
+    content: |
+      {
+        "auths": {
+          "https://index.docker.io/v1/": {
+            "auth": "{{ docker_hub_auth }}"
+          }
+        }
+      }
+    owner: root
+    group: root
+    mode: '0600'
+  when: docker_hub_auth is defined
+
 - name: Configure Docker daemon for automatic cleanup
   copy:
     dest: /etc/docker/daemon.json
@@ -110,6 +134,12 @@
     state: started
     daemon_reload: yes
 
+- name: Remove old Docker cleanup cron entry
+  cron:
+    name: "Docker system cleanup"
+    state: absent
+    user: root
+
 - name: Deploy Docker cleanup script
   copy:
     src: docker-cleanup.sh
@@ -118,11 +148,19 @@
     owner: root
     group: root
 
-- name: Create cron job for Docker cleanup
+- name: Create daily cron job for Docker cleanup
   cron:
-    name: "Docker system cleanup"
+    name: "Docker daily cleanup"
     minute: "0"
     hour: "2"
-    job: "/usr/local/bin/docker-cleanup.sh >> /var/log/docker-cleanup.log 2>&1"
+    job: "/usr/local/bin/docker-cleanup.sh 70"
+    user: root
+    state: present
+
+- name: Create hourly cron job for Docker cleanup when disk is high
+  cron:
+    name: "Docker emergency cleanup"
+    minute: "30"
+    job: "/usr/local/bin/docker-cleanup.sh 85"
     user: root
     state: present

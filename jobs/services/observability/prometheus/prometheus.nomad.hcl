@@ -1,6 +1,11 @@
 job "prometheus" {
   datacenters = ["dc1"]
   type        = "service"
+
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   priority    = 60
 
   group "prometheus" {
@@ -55,8 +60,9 @@ job "prometheus" {
       # This eliminates the HEREDOC pattern and centralizes configuration
 
       resources {
-        cpu    = 500
-        memory = 512
+        cpu        = 300
+        memory     = 256
+        memory_max = 512
       }
 
       service {

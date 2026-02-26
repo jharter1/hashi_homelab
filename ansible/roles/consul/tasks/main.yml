@@ -73,6 +73,104 @@
     mode: '0640'
   notify: restart consul
 
+- name: Register Consul UI service in Consul catalog
+  copy:
+    dest: /etc/consul.d/consul-ui.hcl
+    content: |
+      service {
+        name = "consul-ui"
+        port = 8500
+        tags = [
+          "traefik.enable=true",
+          "traefik.http.routers.consul-ui.rule=Host(`consul.lab.hartr.net`)",
+          "traefik.http.routers.consul-ui.entrypoints=websecure",
+          "traefik.http.routers.consul-ui.tls=true",
+          "traefik.http.routers.consul-ui.tls.certresolver=letsencrypt",
+          "traefik.http.routers.consul-ui.middlewares=authelia@file",
+        ]
+        check {
+          name     = "consul-api"
+          http     = "http://localhost:8500/v1/status/leader"
+          interval = "10s"
+          timeout  = "2s"
+        }
+      }
+    owner: consul
+    group: consul
+    mode: '0640'
+  when: consul_server | default(false)
+  notify: reload consul
+
+- name: Register external services in Consul catalog
+  copy:
+    dest: /etc/consul.d/external-services.hcl
+    content: |
+      services = [
+        {
+          name    = "nas"
+          id      = "nas-nfs"
+          address = "10.0.0.220"
+          port    = 2049
+          tags    = ["nas", "nfs", "storage", "external"]
+          checks = [
+            {
+              name     = "nas-rpcbind"
+              notes    = "NFS portmapper - required for NFS mount negotiation"
+              tcp      = "10.0.0.220:111"
+              interval = "30s"
+              timeout  = "5s"
+            },
+            {
+              name     = "nas-nfsd"
+              notes    = "NFS daemon port"
+              tcp      = "10.0.0.220:2049"
+              interval = "30s"
+              timeout  = "5s"
+            }
+          ]
+        },
+        {
+          name    = "proxmox"
+          id      = "proxmox-api"
+          address = "10.0.0.21"
+          port    = 8006
+          tags    = ["proxmox", "hypervisor", "infrastructure", "external"]
+          check = {
+            name            = "proxmox-https"
+            http            = "https://10.0.0.21:8006"
+            tls_skip_verify = true
+            interval        = "30s"
+            timeout         = "5s"
+          }
+        }
+      ]
+    owner: consul
+    group: consul
+    mode: '0640'
+  when: consul_server | default(false)
+  notify: reload consul
+
+- name: Register NFS mount health check on Nomad clients
+  copy:
+    dest: /etc/consul.d/nas-mount.hcl
+    content: |
+      service {
+        name = "nas-mount"
+        tags = ["nas", "nfs", "storage", "mount-check"]
+        check {
+          name     = "nfs-mount-reachable"
+          notes    = "Verifies /mnt/nas is mounted and accessible on this client"
+          args     = ["/bin/sh", "-c", "mountpoint -q /mnt/nas && test -r /mnt/nas"]
+          interval = "30s"
+          timeout  = "10s"
+        }
+      }
+    owner: consul
+    group: consul
+    mode: '0640'
+  when: not (consul_server | default(false))
+  notify: reload consul
+
 - name: Enable and start Consul service
   systemd:
     name: consul

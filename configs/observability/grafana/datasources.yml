@@ -2,6 +2,7 @@ apiVersion: 1
 
 datasources:
   - name: Prometheus
+    uid: prometheus
     type: prometheus
     access: proxy
     url: https://prometheus.lab.hartr.net
@@ -11,7 +12,22 @@ datasources:
       timeInterval: 15s
 
   - name: Loki
+    uid: loki
     type: loki
     access: proxy
     url: https://loki.lab.hartr.net
     editable: true
+
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: http://tempo.service.consul:3200
+    editable: true
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: loki
+      lokiSearch:
+        datasourceUid: loki
+      nodeGraph:
+        enabled: true

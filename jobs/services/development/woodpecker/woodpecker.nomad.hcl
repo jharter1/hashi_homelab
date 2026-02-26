@@ -2,16 +2,20 @@ job "woodpecker" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "woodpecker" {
     count = 1
 
     network {
       mode = "host"
       port "http" {
-        static = 8084
+        static = 8088
       }
       port "grpc" {
-        static = 9000
+        static = 9002
       }
     }
 
@@ -21,9 +25,14 @@ job "woodpecker" {
       source    = "woodpecker_data"
     }
 
-    # Woodpecker Server
+    # Woodpecker Server — prestart sidecar so it starts before the agent
     task "server" {
       driver = "docker"
+
+      lifecycle {
+        hook    = "prestart"
+        sidecar = true
+      }
 
       vault {}
 
@@ -42,6 +51,7 @@ job "woodpecker" {
       template {
         destination = "secrets/woodpecker.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 # Agent secret for server-agent communication
 WOODPECKER_AGENT_SECRET={{ with secret "secret/data/woodpecker/agent" }}{{ .Data.data.secret }}{{ end }}
@@ -55,8 +65,8 @@ EOH
       env {
         # Server configuration
         WOODPECKER_HOST = "https://ci.lab.hartr.net"
-        WOODPECKER_SERVER_ADDR = ":8084"
-        WOODPECKER_GRPC_ADDR = ":9000"
+        WOODPECKER_SERVER_ADDR = ":8088"
+        WOODPECKER_GRPC_ADDR = ":9002"
 
         # Gitea integration
         WOODPECKER_GITEA = "true"
@@ -123,6 +133,7 @@ EOH
       template {
         destination = "secrets/agent.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 # Agent secret must match server
 WOODPECKER_AGENT_SECRET={{ with secret "secret/data/woodpecker/agent" }}{{ .Data.data.secret }}{{ end }}
@@ -131,14 +142,23 @@ EOH
 
       env {
         # Server connection
-        WOODPECKER_SERVER = "localhost:9000"
+        WOODPECKER_SERVER = "localhost:9002"
 
         # Agent configuration
         WOODPECKER_MAX_WORKFLOWS = "4"
         WOODPECKER_HEALTHCHECK   = "true"
 
+        # Force Docker SDK to negotiate API >= 1.44 (required by Docker 29.x)
+        DOCKER_API_VERSION = "1.47"
+
         # Log level
-        WOODPECKER_LOG_LEVEL = "info"
+        WOODPECKER_LOG_LEVEL = "debug"
+      }
+
+      restart {
+        attempts = 5
+        delay    = "30s"
+        mode     = "delay"
       }
 
       resources {

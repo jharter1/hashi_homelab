@@ -74,8 +74,9 @@ job "netdata" {
       }
 
       resources {
-        cpu    = 200
-        memory = 256
+        cpu        = 200
+        memory     = 256
+        memory_max = 512
       }
     }
   }

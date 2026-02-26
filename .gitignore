@@ -104,6 +104,7 @@ packer/downloaded_iso_path/
 *.iso.lock
 
 # Ansible
+ansible/.vault_pass
 ansible/.vault-credentials
 ansible/.vault-hub-credentials
 ansible/.vault-*-credentials
@@ -123,6 +124,7 @@ manifest.json
 !*credentials.example
 SENSITIVE_INFO_ACTUAL.md
 .vault-tokens
+scripts/set-mcp-env.fish
 .nomad-tokens
 
 # Terraform state files (comprehensive)

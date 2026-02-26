@@ -1,5 +1,10 @@
 job "uptime-kuma" {
   datacenters = ["dc1"]
+  type        = "service"
+
+  spread {
+    attribute = "${node.unique.name}"
+  }
 
   group "uptime-kuma-group" {
     count = 1
@@ -74,8 +79,9 @@ job "uptime-kuma" {
       }
 
       resources {
-        cpu    = 500
-        memory = 512
+        cpu        = 200
+        memory     = 128
+        memory_max = 256
       }
     }
   }

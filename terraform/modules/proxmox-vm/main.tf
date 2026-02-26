@@ -51,6 +51,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
   cpu {
     cores   = var.cores
     sockets = var.sockets
+    type    = "host"
   }
 
   memory {
@@ -99,6 +100,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
       network_device,
       initialization[0].datastore_id, # Ignore cloud-init storage changes (per-node differences)
       network_device[0].mac_address,  # MAC addresses assigned by Proxmox
+      disk[0].datastore_id,           # Disk may be manually migrated (e.g. pve3 → NAS-SharedStorage)
     ]
   }
 }

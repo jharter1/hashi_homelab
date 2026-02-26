@@ -36,8 +36,10 @@ job "alloy" {
           # For Docker discovery and log scraping
           "/var/run/docker.sock:/var/run/docker.sock:ro",
           "/var/lib/docker/containers:/var/lib/docker/containers:ro",
-          # For file log scraping (e.g., /var/log/*.log)
-          "/var/log:/var/log:ro",
+          # For journald log scraping
+          "/var/log/journal:/var/log/journal:ro",
+          "/run/log/journal:/run/log/journal:ro",
+          "/etc/machine-id:/etc/machine-id:ro",
         ]
       }
 
@@ -51,47 +53,71 @@ logging {
   level = "info"
 }
 
-// Write logs to a Loki endpoint (assuming it's running as a service named "loki")
+// Forward traces to Tempo via Consul DNS
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo.service.consul:4317"
+    tls {
+      insecure = true
+    }
+  }
+}
+
+// Export Alloy's own internal traces to Tempo (10% sampling)
+tracing {
+  sampling_fraction = 0.1
+  write_to          = [otelcol.exporter.otlp.tempo.input]
+}
+
+// Write logs to Loki via Consul service discovery
 loki.write "default" {
   endpoint {
     url = "http://{{ range service "loki" }}{{ .Address }}:{{ .Port }}{{ end }}/loki/api/v1/push"
   }
 }
 
-// Scrape system logs from the host
-loki.source.file "system_logs" {
-  targets = [
-    {__path__ = "/var/log/*.log", job = "host_logs"},
-  ]
-  forward_to = [loki.write.default.receiver]
-}
-
-// Scrape Docker container logs (using your existing logic)
+// Docker container discovery
 discovery.docker "containers" {
   host = "unix:///var/run/docker.sock"
 }
 
-loki.relabel "docker_relabel" {
-  forward_to = [loki.write.default.receiver]
-  
+// Relabel discovery targets to set stream labels BEFORE log collection.
+// loki.source.docker strips __meta_* labels, so labels must be promoted here.
+discovery.relabel "docker" {
+  targets = discovery.docker.containers.targets
+
   rule {
     source_labels = ["__meta_docker_container_name"]
-    regex = "/(.*)"
-    target_label = "container"
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  rule {
+    target_label = "job"
+    replacement  = "docker"
   }
 }
 
+// Collect Docker container logs using the pre-labeled targets
 loki.source.docker "containers" {
-  host = "unix:///var/run/docker.sock"
-  targets = discovery.docker.containers.targets
-  forward_to = [loki.relabel.docker_relabel.receiver]
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.docker.output
+  forward_to = [loki.write.default.receiver]
+}
+
+// Collect systemd journal logs
+loki.source.journal "system" {
+  path      = "/var/log/journal"
+  labels    = { job = "systemd" }
+  forward_to = [loki.write.default.receiver]
 }
 EOH
       }
 
       resources {
-        cpu    = 200
-        memory = 256
+        cpu        = 200
+        memory     = 128
+        memory_max = 256
       }
 
       service {

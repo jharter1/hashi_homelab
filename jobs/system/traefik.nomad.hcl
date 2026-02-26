@@ -1,14 +1,14 @@
 job "traefik" {
   datacenters = ["dc1"]
-  type        = "service" # Run 2 instances for HA (was system)
+  type        = "service"
 
   group "traefik" {
-    count = 2 # Run exactly 2 instances for high availability
+    count = 1
 
-    # Spread instances across different nodes for reliability
-    spread {
-      attribute = "${node.unique.id}"
-      weight    = 100
+    # Pin to client-1 so DNS (*.lab.hartr.net → 10.0.0.60) always resolves correctly
+    constraint {
+      attribute = "${node.unique.name}"
+      value     = "dev-nomad-client-1"
     }
 
     # Add volume for certificate storage
@@ -111,8 +111,9 @@ EOF
       }
 
       resources {
-        cpu    = 200
-        memory = 256
+        cpu        = 200
+        memory     = 64
+        memory_max = 256
       }
     }
   }

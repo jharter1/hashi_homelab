@@ -2,6 +2,10 @@ job "trilium" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "trilium" {
     count = 1
 
@@ -43,8 +47,9 @@ job "trilium" {
       }
 
       resources {
-        cpu    = 500
-        memory = 512
+        cpu        = 200
+        memory     = 64
+        memory_max = 256
       }
 
       service {

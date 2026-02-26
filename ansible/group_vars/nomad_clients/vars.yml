@@ -1,0 +1,2 @@
+# Non-secret vars for nomad_clients group
+# Secrets live in vault.yml (ansible-vault encrypted)

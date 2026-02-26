@@ -94,7 +94,7 @@ resource "null_resource" "wait_for_clients" {
 
   provisioner "local-exec" {
     command = <<-EOT
-      timeout 120 bash -c 'until nc -z ${split("/", local.client_ips[count.index])[0]} 22; do sleep 2; done'
+      timeout 300 bash -c 'until nc -z ${split("/", local.client_ips[count.index])[0]} 22; do sleep 2; done'
     EOT
   }
 }

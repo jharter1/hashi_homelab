@@ -1,6 +1,11 @@
 job "alertmanager" {
   datacenters = ["dc1"]
   type        = "service"
+
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   priority    = 70
 
   group "alertmanager" {
@@ -48,8 +53,9 @@ job "alertmanager" {
       # This eliminates the HEREDOC pattern and centralizes configuration
 
       resources {
-        cpu    = 200
-        memory = 256
+        cpu        = 100
+        memory     = 64
+        memory_max = 128
       }
 
       service {

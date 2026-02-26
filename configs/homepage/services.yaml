@@ -6,7 +6,7 @@
         description: Container Orchestration
     - Consul:
         icon: consul.png
-        href: http://10.0.0.50:8500
+        href: https://consul.lab.hartr.net
         description: Service Discovery
     - Vault:
         icon: vault.png

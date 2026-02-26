@@ -2,6 +2,10 @@ job "it-tools" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "it-tools" {
     count = 1
 
@@ -36,8 +40,9 @@ job "it-tools" {
       }
 
       resources {
-        cpu    = 200
-        memory = 128
+        cpu        = 100
+        memory     = 16
+        memory_max = 64
       }
 
       service {

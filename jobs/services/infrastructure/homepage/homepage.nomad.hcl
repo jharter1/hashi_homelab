@@ -2,6 +2,10 @@ job "homepage" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "homepage" {
     count = 1
 
@@ -60,8 +64,9 @@ job "homepage" {
       }
 
       resources {
-        cpu    = 200
-        memory = 256
+        cpu        = 100
+        memory     = 128
+        memory_max = 256
       }
 
       service {

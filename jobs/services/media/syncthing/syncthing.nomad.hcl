@@ -2,6 +2,10 @@ job "syncthing" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "syncthing" {
     count = 1
 
@@ -52,8 +56,9 @@ job "syncthing" {
       }
 
       resources {
-        cpu    = 500
-        memory = 512
+        cpu        = 200
+        memory     = 64
+        memory_max = 256
       }
 
       service {

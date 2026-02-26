@@ -1,6 +1,6 @@
 # Troubleshooting Guide: Common Pitfalls & Solutions
 
-**Last Updated:** February 23, 2026  
+**Last Updated:** February 25, 2026
 **Purpose:** Document common issues, gotchas, and their solutions
 
 ## Table of Contents
@@ -2063,6 +2063,289 @@ Check this guide first, then consult:
 - [NEW_SERVICES_DEPLOYMENT.md](NEW_SERVICES_DEPLOYMENT.md) for architecture and service discovery
 - [POSTGRESQL.md](POSTGRESQL.md) for database setup
 - GitHub issues or HashiCorp community forums
+
+---
+
+---
+
+## Docker Version & API Compatibility
+
+### Woodpecker Agent Fails: "client version 1.43 is too old"
+
+**Symptom:**
+```
+"error":"Error response from daemon: client version 1.43 is too old. Minimum supported API version is 1.44"
+"message":"cannot load backend engine"
+```
+
+**Root Cause:**
+The `woodpeckerci/woodpecker-agent` image bundles a Go Docker SDK that negotiates API 1.43 by default. Docker 29.x raised the daemon's minimum supported client API to 1.44, so the agent's internal Docker client is rejected when it tries to connect to `/var/run/docker.sock`.
+
+This is distinct from the node's Docker version — even with Docker 29.x installed on the node, the agent image itself must be told to use a higher API version.
+
+**Solution:**
+Add `DOCKER_API_VERSION` to the agent task's env block:
+
+```hcl
+task "agent" {
+  config {
+    volumes = ["/var/run/docker.sock:/var/run/docker.sock"]
+  }
+  env {
+    DOCKER_API_VERSION = "1.47"  # Force SDK to negotiate >= 1.44
+  }
+}
+```
+
+**Why This Works:**
+The Go Docker SDK respects the `DOCKER_API_VERSION` environment variable. Setting it to a version >= 1.44 causes the client to negotiate at that version, satisfying the daemon's minimum requirement.
+
+**Note:** When upgrading Docker on cluster nodes, the woodpecker agent image may also need updating or this env var may need adjusting if the API version changes further.
+
+---
+
+### Nomad Docker Plugin Not Using Registry Credentials
+
+**Symptom:**
+```
+Driver Failure: Failed to find docker auth for repo "some/image": Failed to parse auth config file: illegal base64 data at input byte 0
+```
+or
+```
+toomanyrequests: You have reached your pull rate limit
+```
+…even though `/root/.docker/config.json` exists on the node with valid credentials.
+
+**Root Cause:**
+Two separate issues can cause this:
+
+1. **Nomad Docker plugin not wired to credentials file** — The Docker plugin config in `/etc/nomad.d/nomad.hcl` must explicitly reference the auth file. Just having `/root/.docker/config.json` on disk is not enough; Nomad's Docker driver reads it only when `auth.config` is set.
+
+2. **Corrupted/empty config.json** — Writing the file via ad-hoc shell commands with unquoted variables (e.g., `echo $AUTH > /root/.docker/config.json`) can produce empty or malformed JSON.
+
+**Solution:**
+
+Add the `auth` block to the Docker plugin config in `ansible/roles/nomad-client/templates/nomad-client.hcl.j2`:
+
+```hcl
+plugin "docker" {
+  config {
+    allow_privileged = true
+    volumes { enabled = true }
+    auth {
+      config = "/root/.docker/config.json"
+    }
+  }
+}
+```
+
+Deploy credentials via Ansible using Ansible Vault (never via ad-hoc shell variable expansion):
+
+```yaml
+# ansible/roles/nomad-client/tasks/main.yml
+- name: Configure Docker Hub authentication
+  copy:
+    dest: /root/.docker/config.json
+    content: |
+      {
+        "auths": {
+          "https://index.docker.io/v1/": {
+            "auth": "{{ docker_hub_auth }}"
+          }
+        }
+      }
+    mode: '0600'
+```
+
+**Ansible Vault for docker_hub_auth:**
+Credentials are stored encrypted in `ansible/inventory/group_vars/nomad_clients/vault.yml`. The vault password file is at `ansible/.vault_pass` (gitignored). The `docker_hub_auth` value is the base64-encoded `username:token` string from `~/.docker/config.json` on your local machine after running `docker login`.
+
+**Key lesson:** After any Docker upgrade or node reprovisioning, run the `configure-docker-auth.yml` playbook to ensure all nodes have valid credentials, then restart affected services.
+
+---
+
+## Consul Service Registration Issues
+
+### ServicePort: 0 with Host Networking
+
+**Symptom:**
+Service registers in Consul with port 0. Traefik returns 502 Bad Gateway. Direct HTTP access works fine but traffic through Traefik fails.
+
+**Root Cause:**
+Using `address_mode = "driver"` on a service in a task that uses host networking. In host mode, Nomad cannot determine a separate "driver" address — the result is `ServicePort: 0` in Consul, so Traefik has no valid port to route to.
+
+**Solution:**
+Remove `address_mode = "driver"` entirely. With host networking, Nomad automatically registers the correct host IP and static port:
+
+```hcl
+service {
+  name = "myservice-http"
+  port = "http"
+  # No address_mode needed — host networking registers correctly by default
+  tags = [...]
+}
+```
+
+---
+
+## Traefik External Routing
+
+### Traefik Floating Away From Its DNS Node
+
+**Symptom:**
+All services return 502 Bad Gateway or "connection refused" after a Nomad re-schedule event. The Traefik UI is accessible from the Nomad console but services aren't reachable externally.
+
+**Root Cause:**
+The cluster's wildcard DNS (`*.lab.hartr.net → 10.0.0.60`) is static and points to `dev-nomad-client-1`. If Nomad reschedules Traefik to a different node, external traffic still arrives at `10.0.0.60` but Traefik is no longer listening there.
+
+Consul handles internal service-to-service discovery dynamically, but **external DNS is not updated automatically when Nomad moves a job**.
+
+**Solution:**
+Pin Traefik to the node that matches the DNS record:
+
+```hcl
+group "traefik" {
+  constraint {
+    attribute = "${node.unique.name}"
+    value     = "dev-nomad-client-1"
+  }
+  ...
+}
+```
+
+**Note:** If the node IP ever changes or you want to move DNS to a different node, update both the constraint and the DNS record together.
+
+---
+
+## Gitea
+
+### Rootless Image Shows Install Page Despite Existing Data
+
+**Symptom:**
+Gitea serves the initial install page even though data already exists at the mount path. Clicking "Install Gitea" returns a 500 error.
+
+**Root Cause:**
+The `gitea/gitea:latest-rootless` image defaults to:
+- `GITEA_WORK_DIR=/var/lib/gitea`
+- `GITEA_APP_INI=/etc/gitea/app.ini`
+
+If the volume is mounted at `/data`, Gitea never finds the existing `app.ini` and treats itself as uninitialized.
+
+**Solution:**
+Override the path env vars to point to the actual mount location:
+
+```hcl
+env {
+  GITEA_WORK_DIR   = "/data/gitea"
+  GITEA_APP_INI    = "/data/gitea/conf/app.ini"
+  GITEA_CUSTOM     = "/data/gitea/custom"
+}
+```
+
+### Gitea Admin User Recovery
+
+If Gitea starts successfully but no admin user exists (fresh DB or wiped state), create one via CLI:
+
+```bash
+# SSH to the node running Gitea, then exec into the container
+docker exec -it <container-id> gitea admin user create \
+  --username admin \
+  --password changeme123 \
+  --email admin@lab.hartr.net \
+  --admin \
+  --must-change-password=false
+```
+
+---
+
+## Ansible group_vars Path
+
+### Variables Undefined When Running Playbooks
+
+**Symptom:**
+```
+fatal: [nomad-client-1]: FAILED! => {"msg": "'docker_hub_auth' is undefined"}
+```
+…even though the variable exists in `group_vars/nomad_clients/vault.yml`.
+
+**Root Cause:**
+Ansible looks for `group_vars/` relative to the **inventory file**, not the current working directory. When inventory is at `ansible/inventory/hosts.yml`, Ansible expects group_vars at `ansible/inventory/group_vars/`, not `ansible/group_vars/`.
+
+**Solution:**
+Place group_vars inside the inventory directory:
+
+```
+ansible/
+  inventory/
+    hosts.yml
+    group_vars/
+      nomad_clients/        ← correct location
+        vault.yml
+        vars.yml
+      nomad_clients.yml     ← flat file also works (loaded alongside directory)
+```
+
+The top-level `ansible/group_vars/` is only loaded when playbooks explicitly set a `vars_files` path or when using older Ansible inventory patterns.
+
+---
+
+---
+
+## Proxmox LVM Thin Pool Capacity
+
+### pve3 local-lvm Fills Up, VMs Freeze
+
+**Symptom:**
+- Nomad clients on pve3 go `down` / unreachable
+- 100% packet loss to their IPs
+- VMs show as `running` in Proxmox but the OS is frozen (I/O stalled)
+- `lvs` shows: `data  pve  twi-aotzD-  68.53g  100.00`
+
+**Root Cause:**
+pve3's local-lvm thin pool is only ~68GB. When thin-provisioned VM disks collectively hit 100% actual usage, the hypervisor can't allocate new storage blocks. All VMs in the pool experience I/O errors / freezes simultaneously — even VMs that show free space inside their filesystem.
+
+This has happened twice:
+1. First time: VM 100 (client-3) was cloned with a 60GB disk; combined with other VMs it saturated the pool.
+2. Second time: After recovery, new client-6 and client-9 VMs accumulated ~17GB of Docker image layers each (from image pulling during setup) before the daily cleanup cron ran.
+
+**Diagnosis:**
+```bash
+ssh root@10.0.0.23 "pvesm status && lvs --units g | grep data"
+# local-lvm at 100% = frozen VMs
+```
+
+**Recovery:**
+Move the largest VM disk to NAS-SharedStorage (11TB free):
+```bash
+# Live migration — VM stays running during copy
+ssh root@10.0.0.23 "qm move-disk 100 scsi0 NAS-SharedStorage --delete"
+
+# Monitor progress
+ssh root@10.0.0.23 "du -sh /mnt/pve/NAS-SharedStorage/images/100/vm-100-disk-0.raw"
+# Pool stays at 100% until source volume is deleted at the end of migration
+
+# After migration completes, frozen VMs may need a reset:
+ssh root@10.0.0.23 "qm reset 110 && qm reset 112"
+```
+
+**Permanent Fix (pve3 layout after remediation):**
+- VM 100 (client-3): disk on NAS-SharedStorage
+- VM 102 (server-3): disk on local-lvm (30GB, ~12GB actual)
+- VM 107 (vault-3): disk on local-lvm (20GB, ~2GB actual)
+- VM 110 (client-6): disk on NAS-SharedStorage
+- Template 9505: local-lvm (20GB, ~2GB actual)
+- **Total local-lvm actual usage: ~16GB / 68GB = 23%** — sustainable
+
+**Prevention:**
+1. Never clone new VMs to `local-lvm` on pve3 — use `NAS-SharedStorage` instead
+2. The `vm_storage_pool = "local-lvm"` in `terraform.tfvars` applies to pve1/pve2 where pools are larger; pve3 clients should be created manually on NAS or via a pve3-specific override
+3. The daily `docker system prune -af` cron (runs at 2am) handles image accumulation — new nodes just need to survive until their first cleanup run
+
+**Note on Docker image accumulation:**
+New Nomad client nodes that go through heavy setup activity (Docker upgrades, many failed job retries re-pulling images) can fill their 20GB disk to 85%+ before the 2am cron runs. If deploying many new clients at once, manually run:
+```bash
+ansible nomad_clients -m command -a "docker system prune -af" -b
+```
 
 ---
 

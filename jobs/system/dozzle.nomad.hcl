@@ -65,8 +65,9 @@ job "dozzle" {
       }
 
       resources {
-        cpu    = 100
-        memory = 128
+        cpu        = 100
+        memory     = 32
+        memory_max = 128
       }
     }
   }

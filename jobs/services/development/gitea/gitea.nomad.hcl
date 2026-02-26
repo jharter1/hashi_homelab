@@ -2,6 +2,10 @@ job "gitea" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "gitea" {
     count = 1
 
@@ -71,8 +75,9 @@ EOH
       }
 
       resources {
-        cpu    = 500
-        memory = 256
+        cpu        = 200
+        memory     = 32
+        memory_max = 128
       }
 
       service {
@@ -121,7 +126,12 @@ EOH
       env {
         USER_UID = "1000"
         USER_GID = "1000"
-        
+
+        # Tell the rootless image where to find config and data (default is /var/lib/gitea)
+        GITEA_WORK_DIR   = "/data/gitea"
+        GITEA_APP_INI    = "/data/gitea/conf/app.ini"
+        GITEA_CUSTOM     = "/data/gitea/custom"
+
         # PostgreSQL database configuration
         GITEA__database__DB_TYPE = "postgres"
         GITEA__database__HOST = "localhost:5437"
@@ -148,14 +158,14 @@ EOH
       }
 
       resources {
-        cpu    = 500
-        memory = 512
+        cpu        = 200
+        memory     = 128
+        memory_max = 256
       }
 
       service {
-        name         = "gitea-http"
-        port         = "http"
-        address_mode = "driver"
+        name = "gitea-http"
+        port = "http"
         tags = [
           "git",
           "development",

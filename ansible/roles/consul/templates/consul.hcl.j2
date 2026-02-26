@@ -8,6 +8,7 @@ server = true
 bootstrap_expect = {{ consul_bootstrap_expect }}
 {% else %}
 server = false
+enable_local_script_checks = true
 {% endif %}
 
 retry_join = [{% for addr in consul_retry_join %}"{{ addr }}"{% if not loop.last %}, {% endif %}{% endfor %}]

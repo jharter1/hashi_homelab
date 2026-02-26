@@ -2,6 +2,10 @@ job "bookstack" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   update {
     max_parallel     = 1
     min_healthy_time = "30s"
@@ -81,8 +85,9 @@ EOH
       }
 
       resources {
-        cpu    = 500
-        memory = 256
+        cpu        = 500
+        memory     = 256
+        memory_max = 512
       }
 
       service {
@@ -216,8 +221,9 @@ EOH
       }
 
       resources {
-        cpu    = 500
-        memory = 512
+        cpu        = 200
+        memory     = 128
+        memory_max = 256
       }
 
       service {

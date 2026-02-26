@@ -2,6 +2,10 @@ job "mariadb" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   constraint {
     attribute = "${node.unique.name}"
     value     = "dev-nomad-client-1"
@@ -59,6 +63,7 @@ job "mariadb" {
       template {
         destination = "secrets/mariadb.env"
         env         = true
+        change_mode = "noop"
         data        = <<EOH
 # MariaDB root password
 MYSQL_ROOT_PASSWORD={{ with secret "secret/data/mariadb/admin" }}{{ .Data.data.password }}{{ end }}
@@ -107,8 +112,9 @@ EOH
       }
 
       resources {
-        cpu    = 1000
-        memory = 1024
+        cpu        = 500
+        memory     = 256
+        memory_max = 512
       }
 
       service {

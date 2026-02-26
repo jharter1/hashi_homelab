@@ -162,41 +162,83 @@ tasks:
         cd ansible && ansible nomad_clients -m command -a "tailscale ip -4" -b
 
   deploy:system:
-    desc: "Deploy system jobs (Traefik, Alloy)"
+    desc: "Deploy system jobs (Traefik, Alloy, Netdata, Dozzle, cAdvisor)"
     cmds:
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/system/traefik.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/system/traefik.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/system/alloy.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/system/alloy.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/system/cadvisor.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/system/dozzle.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/system/netdata.nomad.hcl
+      - echo "System jobs submitted"
 
   deploy:services:
-    desc: "Deploy service jobs (monitoring stack, registry, apps)"
+    desc: "Deploy all service jobs"
     cmds:
+      # Infrastructure
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/observability/loki/loki.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/infrastructure/whoami/whoami.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/minio/minio.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/infrastructure/homepage/homepage.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/observability/prometheus/prometheus.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/infrastructure/minio/minio.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/observability/grafana/grafana.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/infrastructure/speedtest/speedtest.nomad.hcl
+      # Observability
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/whoami/whoami.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/observability/loki/loki.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/speedtest/speedtest.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/observability/prometheus/prometheus.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/media/freshrss/freshrss.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/observability/alertmanager/alertmanager.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/development/gitea/gitea.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/observability/grafana/grafana.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/auth/vaultwarden/vaultwarden.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/observability/uptime-kuma/uptime-kuma.nomad.hcl
+      # Auth stack (redis must be submitted before authelia)
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/auth/redis/redis.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/auth/redis/redis.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/auth/authelia/authelia.nomad.hcl
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/auth/vaultwarden/vaultwarden.nomad.hcl
       - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/media/bookstack/bookstack.nomad.hcl
-      - echo "All service jobs deployed successfully"
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/auth/authelia/authelia.nomad.hcl
+      # Development
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/development/gitea/gitea.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/development/woodpecker/woodpecker.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/development/it-tools/it-tools.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/development/gollum/gollum.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/development/codeserver/codeserver.nomad.hcl
+      # Media & apps
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/media/bookstack/bookstack.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/media/freshrss/freshrss.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/media/trilium/trilium.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/media/wallabag/wallabag.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/media/linkwarden/linkwarden.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/media/audiobookshelf/audiobookshelf.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/media/calibre/calibre.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/media/paperless/paperless.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/media/syncthing/syncthing.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/media/drawio/drawio.nomad.hcl
+      - echo "All service jobs submitted (use 'nomad job status <name>' to check progress)"
 
   deploy:speedtest:
     desc: "Deploy Speedtest Tracker"
@@ -510,16 +552,6 @@ tasks:
         cd mcp-servers/nomad && npx @modelcontextprotocol/inspector node dist/index.js
 
   deploy:
-    desc: "Deploy all Nomad jobs in correct order"
+    desc: "Alias for deploy:all"
     cmds:
-      - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/system/traefik.nomad.hcl
-      - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/minio/minio.nomad.hcl
-      - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/observability/prometheus/prometheus.nomad.hcl
-      - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/observability/grafana/grafana.nomad.hcl
-      - |
-        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/whoami/whoami.nomad.hcl
-      - echo "All jobs deployed successfully"
+      - task: deploy:all

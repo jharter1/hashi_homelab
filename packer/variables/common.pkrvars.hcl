@@ -5,12 +5,12 @@
 consul_version = "1.18.0"
 vault_version  = "1.16.0"
 nomad_version  = "1.10.3"
-docker_version = "24.0.7"
+docker_version = "29.2.1"
 
 # Base VM Configuration
 vm_name      = "ubuntu-hashicorp-template"
 vm_cores     = 2
-vm_disk_size = "20G"
+vm_disk_size = "30G"
 
 # Storage Configuration
 # Note: iso_storage_pool must support ISO content type (e.g., 'local', not 'local-lvm')

@@ -2,6 +2,10 @@ job "grafana" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "grafana" {
     count = 1
 
@@ -71,8 +75,9 @@ EOH
       }
 
       resources {
-        cpu    = 500
-        memory = 256
+        cpu        = 200
+        memory     = 64
+        memory_max = 128
       }
 
       service {
@@ -177,8 +182,9 @@ EOH
       }
 
       resources {
-        cpu    = 500
-        memory = 512
+        cpu        = 200
+        memory     = 128
+        memory_max = 256
       }
 
       service {

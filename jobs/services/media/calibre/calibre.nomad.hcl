@@ -1,5 +1,10 @@
 job "calibre" {
   datacenters = ["dc1"]
+  type        = "service"
+
+  spread {
+    attribute = "${node.unique.name}"
+  }
 
   group "calibre-group" {
     count = 1
@@ -78,8 +83,9 @@ job "calibre" {
       mode     = "fail"
     }
       resources {
-        cpu    = 500
-        memory = 768
+        cpu        = 200
+        memory     = 256
+        memory_max = 512
       }
     }
   }

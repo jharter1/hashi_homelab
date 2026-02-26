@@ -2,6 +2,10 @@ job "authelia" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "authelia" {
     count = 1
 
@@ -218,8 +222,9 @@ EOH
       }
 
       resources {
-        cpu    = 200
-        memory = 256
+        cpu        = 100
+        memory     = 64
+        memory_max = 128
       }
 
       service {

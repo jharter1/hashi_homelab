@@ -2,6 +2,10 @@ job "paperless-ngx" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   update {
     healthy_deadline  = "10m"
     progress_deadline = "15m"
@@ -95,8 +99,9 @@ EOH
       }
 
       resources {
-        cpu    = 500
-        memory = 256
+        cpu        = 300
+        memory     = 32
+        memory_max = 128
       }
 
       service {
@@ -124,8 +129,9 @@ EOH
       }
 
       resources {
-        cpu    = 200
-        memory = 128
+        cpu        = 100
+        memory     = 16
+        memory_max = 64
       }
 
       service {
@@ -226,8 +232,9 @@ EOH
       }
 
       resources {
-        cpu    = 1000
-        memory = 1024
+        cpu        = 1000
+        memory     = 512
+        memory_max = 1024
       }
 
       service {
@@ -241,6 +248,7 @@ EOH
           "traefik.http.routers.paperless.entrypoints=websecure",
           "traefik.http.routers.paperless.tls=true",
           "traefik.http.routers.paperless.tls.certresolver=letsencrypt",
+          "traefik.http.routers.paperless.middlewares=authelia@file",
         ]
         check {
           type     = "http"

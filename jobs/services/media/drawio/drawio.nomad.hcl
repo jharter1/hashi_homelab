@@ -2,6 +2,10 @@ job "drawio" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "drawio" {
     count = 1
 

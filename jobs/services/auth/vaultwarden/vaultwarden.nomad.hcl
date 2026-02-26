@@ -2,6 +2,10 @@ job "vaultwarden" {
   datacenters = ["dc1"]
   type        = "service"
 
+  spread {
+    attribute = "${node.unique.name}"
+  }
+
   group "vaultwarden" {
     count = 1
 
@@ -71,8 +75,9 @@ EOH
       }
 
       resources {
-        cpu    = 500
-        memory = 256
+        cpu        = 200
+        memory     = 32
+        memory_max = 128
       }
 
       service {
@@ -136,8 +141,9 @@ EOH
       }
 
       resources {
-        cpu    = 500
-        memory = 512
+        cpu        = 100
+        memory     = 32
+        memory_max = 128
       }
 
       service {
