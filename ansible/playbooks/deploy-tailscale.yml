@@ -1,45 +1,44 @@
 ---
-# Deploy Tailscale on Nomad clients for remote access
-# 
+# Deploy Tailscale subnet routers on client-1 and client-2 for resilient remote access.
+# Both nodes advertise 10.0.0.0/24 — Tailscale automatically fails over if one goes down.
+#
 # Usage:
-#   # Deploy on all clients
-#   ansible-playbook playbooks/deploy-tailscale.yml
-#
-#   # Deploy only on the Traefik node (recommended first step)
-#   ansible-playbook playbooks/deploy-tailscale.yml --limit nomad-client-1
-#
-#   # Use auth key for unattended install (get from https://login.tailscale.com/admin/settings/keys)
 #   ansible-playbook playbooks/deploy-tailscale.yml -e "tailscale_auth_key=tskey-auth-xxxxx"
+#
+# Get a reusable auth key from: https://login.tailscale.com/admin/settings/keys
+# After running, approve subnet routes for BOTH machines at:
+#   https://login.tailscale.com/admin/machines
 
-- name: Install Tailscale on Nomad clients
-  hosts: nomad_clients
+- name: Install Tailscale subnet routers on client-1 and client-2
+  hosts:
+    - nomad-client-1
+    - nomad-client-2
   become: yes
-  
+
   vars:
-    # Primary node advertises subnet routes to entire homelab network
-    tailscale_advertise_routes: "{{ '10.0.0.0/24' if inventory_hostname == 'nomad-client-1' else omit }}"
-    
-    # Don't accept Tailscale DNS (use local DNS instead)
+    # Both nodes advertise the full homelab subnet for failover
+    tailscale_advertise_routes: "10.0.0.0/24"
+
+    # Use local Consul DNS, not Tailscale's
     tailscale_accept_dns: false
-    
-    # Set hostname based on inventory name
+
     tailscale_hostname: "{{ inventory_hostname }}"
-    
-    # Optional: Set auth key via -e flag or uncomment below
+
+    # Pass via: -e "tailscale_auth_key=tskey-auth-xxxxx"
     # Get from: https://login.tailscale.com/admin/settings/keys
-    # tailscale_auth_key: "tskey-auth-xxxxx-yyyyy"
+    # Use a reusable (non-ephemeral) key so nodes survive reboots without re-auth
 
   roles:
     - tailscale
 
   post_tasks:
-    - name: Display Tailscale status
+    - name: Get Tailscale status
       ansible.builtin.command: tailscale status
       register: ts_status
       failed_when: false
       changed_when: false
 
-    - name: Show Tailscale IPs
+    - name: Get Tailscale IP
       ansible.builtin.command: tailscale ip -4
       register: ts_ip
       failed_when: false
@@ -48,21 +47,9 @@
     - name: Summary
       ansible.builtin.debug:
         msg: |
-          
-          ✅ Tailscale installed on {{ inventory_hostname }}
-          
-          Tailscale IPv4: {{ ts_ip.stdout if ts_ip.rc == 0 else 'Not yet authenticated' }}
-          
-          {% if inventory_hostname == 'nomad-client-1' %}
-          ⚠️  IMPORTANT: Approve subnet routes!
-          
-          This node is advertising routes to 10.0.0.0/24
-          You must approve this in Tailscale admin:
-          
-          1. Go to: https://login.tailscale.com/admin/machines
-          2. Find machine: {{ tailscale_hostname }}
-          3. Click "Edit route settings" or the three dots menu
-          4. Toggle 10.0.0.0/24 from "Advertised" to "Approved"
-          
-          {% endif %}
-          Status: {{ ts_status.stdout_lines[0] if ts_status.rc == 0 else 'Run `tailscale status` to check' }}
+          Tailscale on {{ inventory_hostname }}
+          IP: {{ ts_ip.stdout if ts_ip.rc == 0 else 'Not yet authenticated' }}
+          Status: {{ ts_status.stdout_lines[0] if ts_status.stdout_lines else 'unknown' }}
+
+          NEXT: Approve subnet routes at https://login.tailscale.com/admin/machines
+            - Find {{ inventory_hostname }} → Edit route settings → enable 10.0.0.0/24

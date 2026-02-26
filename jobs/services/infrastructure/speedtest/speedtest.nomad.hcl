@@ -214,7 +214,7 @@ EOH
         ]
         check {
           type     = "http"
-          path     = "/"
+          path     = "/api/healthcheck"
           interval = "30s"
           timeout  = "10s"
           check_restart {

@@ -72,7 +72,7 @@
           url: https://uptime-kuma.lab.hartr.net
           slug: default
 
-- Applications:
+- Knowledge:
     - Bookstack:
         icon: bookstack.png
         href: https://bookstack.lab.hartr.net
@@ -84,43 +84,25 @@
     - Trilium:
         icon: trilium.png
         href: https://trilium.lab.hartr.net
-        description: Note Taking App
-    - IT Tools:
-        icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/it-tools.png
-        href: https://tools.lab.hartr.net
-        description: Developer Tools Collection
-    - Speedtest:
-        icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/speedtest-tracker.png
-        href: https://speedtest.lab.hartr.net
-        description: Internet Speed Testing
-        widget:
-          type: speedtest
-          url: https://speedtest.lab.hartr.net
-          key: "1|49lo5MNH8ZdyFhrHPJWqT5kVBfKExEvAzjAXxGI5e92c8d62"
-    - Linkwarden:
-        icon: linkwarden.png
-        href: https://linkwarden.lab.hartr.net
-        description: Bookmark Manager
+        description: Note Taking
     - Paperless-ngx:
         icon: paperless.png
         href: https://paperless.lab.hartr.net
         description: Document Management
-    - Wallabag:
-        icon: wallabag.png
-        href: https://wallabag.lab.hartr.net
-        description: Read-it-later Service
-    - FreshRSS:
-        icon: freshrss.png
-        href: https://freshrss.lab.hartr.net
-        description: RSS Reader
+    - Linkwarden:
+        icon: linkwarden.png
+        href: https://linkwarden.lab.hartr.net
+        description: Bookmark Manager
+
+- Media:
     - Audiobookshelf:
         icon: audiobookshelf.png
         href: https://audiobookshelf.lab.hartr.net
         description: Audiobook & Podcast Server
-        ping: http://10.0.0.60:13378
+        ping: http://10.0.0.61:13378
         widget:
           type: audiobookshelf
-          url: http://10.0.0.60:13378
+          url: http://10.0.0.61:13378
           key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXlJZCI6IjA4NDE2ODhlLWEyYzQtNDMzYy05ZmY0LTM3ZTQ0NmJmNWVhZiIsIm5hbWUiOiJ3aWRnZXQiLCJ0eXBlIjoiYXBpIiwiaWF0IjoxNzcwODQxNDEzfQ.DTtiVThhl6n6CQZNs-9dyARRWcPeTvlRS6Ew8Th2rLk"
     - Calibre Web:
         icon: calibre-web.png
@@ -129,6 +111,24 @@
         widget:
           type: calibreweb
           url: https://calibre.lab.hartr.net
+    - FreshRSS:
+        icon: freshrss.png
+        href: https://freshrss.lab.hartr.net
+        description: RSS Reader
+
+- Tools:
+    - IT Tools:
+        icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/it-tools.png
+        href: https://tools.lab.hartr.net
+        description: Developer Tools
+    - Speedtest:
+        icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/speedtest-tracker.png
+        href: https://speedtest.lab.hartr.net
+        description: Internet Speed Testing
+        widget:
+          type: speedtest
+          url: https://speedtest.lab.hartr.net
+          key: "1|49lo5MNH8ZdyFhrHPJWqT5kVBfKExEvAzjAXxGI5e92c8d62"
     - Syncthing:
         icon: syncthing.png
         href: https://syncthing.lab.hartr.net

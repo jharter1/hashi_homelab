@@ -5,7 +5,7 @@ datasources:
     uid: prometheus
     type: prometheus
     access: proxy
-    url: https://prometheus.lab.hartr.net
+    url: http://prometheus.service.consul:9090
     isDefault: true
     editable: true
     jsonData:
@@ -15,7 +15,7 @@ datasources:
     uid: loki
     type: loki
     access: proxy
-    url: https://loki.lab.hartr.net
+    url: http://loki.service.consul:3100
     editable: true
 
   - name: Tempo
@@ -24,10 +24,3 @@ datasources:
     access: proxy
     url: http://tempo.service.consul:3200
     editable: true
-    jsonData:
-      tracesToLogsV2:
-        datasourceUid: loki
-      lokiSearch:
-        datasourceUid: loki
-      nodeGraph:
-        enabled: true
