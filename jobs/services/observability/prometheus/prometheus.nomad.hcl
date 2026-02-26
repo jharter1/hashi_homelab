@@ -41,8 +41,8 @@ job "prometheus" {
         ]
 
         volumes = [
-          # Config now loaded from centralized location
           "/mnt/nas/configs/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro",
+          "/mnt/nas/configs/observability/prometheus/rules:/etc/prometheus/rules:ro",
         ]
       }
 

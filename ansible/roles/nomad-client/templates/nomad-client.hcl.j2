@@ -81,6 +81,12 @@ client {
     path = "{{ nas_mount_point }}/tempo"
     read_only = false
   }
+
+  host_volume "ntfy_data" {
+    path = "{{ nas_mount_point }}/ntfy"
+    read_only = false
+  }
+
   host_volume "bookstack_data" {
     path = "{{ nas_mount_point }}/bookstack/data"
     read_only = false

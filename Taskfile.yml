@@ -188,6 +188,8 @@ tasks:
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/infrastructure/minio/minio.nomad.hcl
       - |
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/infrastructure/speedtest/speedtest.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/infrastructure/ntfy/ntfy.nomad.hcl
       # Observability
       - |
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/observability/loki/loki.nomad.hcl

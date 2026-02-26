@@ -19,16 +19,19 @@ route:
 # Receivers define where alerts are sent
 receivers:
   - name: 'default'
-    # For now, just log alerts
-    # Can be extended with email, Slack, Discord, etc.
-    
+    webhook_configs:
+      - url: 'http://ntfy.service.consul:8085/homelab-alerts'
+        send_resolved: true
+
   - name: 'critical'
-    # Critical alerts receiver
-    # Add notification channels here (email, Slack, etc.)
-    
+    webhook_configs:
+      - url: 'http://ntfy.service.consul:8085/homelab-critical'
+        send_resolved: true
+
   - name: 'warning'
-    # Warning alerts receiver
-    # Add notification channels here
+    webhook_configs:
+      - url: 'http://ntfy.service.consul:8085/homelab-warnings'
+        send_resolved: true
 
 # Inhibit rules to reduce noise
 inhibit_rules:

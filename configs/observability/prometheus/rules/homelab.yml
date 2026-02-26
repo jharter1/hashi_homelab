@@ -1,0 +1,80 @@
+groups:
+  - name: cluster_health
+    rules:
+      - alert: NomadClientDown
+        expr: up{job="nomad-client"} == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Nomad client {{ $labels.node }} unreachable"
+          description: "Cannot scrape Nomad client metrics on {{ $labels.instance }} for more than 3 minutes."
+
+      - alert: NomadServerDown
+        expr: up{job="nomad-server"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Nomad server {{ $labels.node }} unreachable"
+          description: "Cannot scrape Nomad server metrics on {{ $labels.instance }} for more than 2 minutes."
+
+      - alert: ConsulAgentDown
+        expr: up{job="consul"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Consul agent unreachable on {{ $labels.instance }}"
+          description: "Cannot scrape Consul metrics on {{ $labels.instance }} for more than 2 minutes."
+
+      - alert: PrometheusTargetMissing
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prometheus target {{ $labels.job }} is down"
+          description: "Scrape target {{ $labels.instance }} (job={{ $labels.job }}) has been unreachable for 5 minutes."
+
+  - name: node_resources
+    rules:
+      - alert: HighMemoryUsage
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 0.90
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory on {{ $labels.node }}"
+          description: "Memory usage is at {{ humanizePercentage $value }} on {{ $labels.instance }}"
+
+      - alert: DiskSpaceWarning
+        expr: >
+          (1 - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay",mountpoint!~"/run.*|/sys.*|/dev.*"}
+               / node_filesystem_size_bytes{fstype!~"tmpfs|overlay",mountpoint!~"/run.*|/sys.*|/dev.*"}) > 0.80
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space on {{ $labels.node }}"
+          description: "Disk {{ $labels.mountpoint }} is {{ humanizePercentage $value }} full on {{ $labels.instance }}"
+
+      - alert: DiskSpaceCritical
+        expr: >
+          (1 - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay",mountpoint!~"/run.*|/sys.*|/dev.*"}
+               / node_filesystem_size_bytes{fstype!~"tmpfs|overlay",mountpoint!~"/run.*|/sys.*|/dev.*"}) > 0.90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical disk space on {{ $labels.node }}"
+          description: "Disk {{ $labels.mountpoint }} is {{ humanizePercentage $value }} full on {{ $labels.instance }}"
+
+      - alert: HighSystemLoad
+        expr: node_load15 / count without(cpu, mode) (node_cpu_seconds_total{mode="idle"}) > 2.0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High system load on {{ $labels.node }}"
+          description: "15m load average is {{ printf \"%.2f\" $value }} per CPU on {{ $labels.instance }}"
