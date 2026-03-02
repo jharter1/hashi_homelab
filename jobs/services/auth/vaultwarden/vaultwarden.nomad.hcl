@@ -44,7 +44,7 @@ job "vaultwarden" {
       vault {}
 
       config {
-        image        = "postgres:16-alpine"
+        image        = "registry.lab.hartr.net/postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -100,7 +100,7 @@ EOH
       vault {}
 
       config {
-        image        = "vaultwarden/server:latest"
+        image        = "registry.lab.hartr.net/vaultwarden/server:latest"
         network_mode = "host"
         ports        = ["http"]
       }

@@ -44,7 +44,7 @@ job "freshrss" {
       vault {}
 
       config {
-        image        = "postgres:16-alpine"
+        image        = "registry.lab.hartr.net/postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -99,7 +99,7 @@ EOH
       vault {}
 
       config {
-        image        = "freshrss/freshrss:latest"
+        image        = "registry.lab.hartr.net/freshrss:latest"
         network_mode = "host"
         ports        = ["http"]
       }
@@ -182,7 +182,7 @@ EOH
       }
 
       config {
-        image        = "freshrss/freshrss:latest"
+        image        = "registry.lab.hartr.net/freshrss:latest"
         network_mode = "host"
         command      = "cron"
         args         = ["-f"]

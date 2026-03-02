@@ -31,7 +31,7 @@ job "authelia" {
       }
 
       config {
-        image        = "authelia/authelia:latest"
+        image        = "registry.lab.hartr.net/authelia:latest"
         network_mode = "host"
         userns_mode  = "host"
         privileged   = true
@@ -137,6 +137,7 @@ access_control:
         - registry-ui.lab.hartr.net
         - traefik.lab.hartr.net
         - speedtest.lab.hartr.net
+        - preview.lab.hartr.net
       policy: one_factor
     
     # Admin-only infrastructure services

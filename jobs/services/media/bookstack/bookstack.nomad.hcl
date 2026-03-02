@@ -57,7 +57,7 @@ job "bookstack" {
       vault {}
 
       config {
-        image        = "mariadb:11.2"
+        image        = "registry.lab.hartr.net/mariadb:11.2"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -109,7 +109,7 @@ EOH
       vault {}
 
       config {
-        image        = "lscr.io/linuxserver/bookstack:latest"
+        image        = "registry.lab.hartr.net/bookstack:latest"
         network_mode = "host"
         ports        = ["http"]
         privileged   = true

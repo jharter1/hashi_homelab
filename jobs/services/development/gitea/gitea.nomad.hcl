@@ -44,7 +44,7 @@ job "gitea" {
       vault {}
 
       config {
-        image        = "postgres:16-alpine"
+        image        = "registry.lab.hartr.net/postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -100,7 +100,7 @@ EOH
       vault {}
 
       config {
-        image        = "gitea/gitea:latest-rootless"
+        image        = "registry.lab.hartr.net/gitea:latest-rootless"
         network_mode = "host"
         ports        = ["http"]
       }

@@ -44,7 +44,7 @@ job "speedtest" {
       vault {}
 
       config {
-        image        = "postgres:16-alpine"
+        image        = "registry.lab.hartr.net/postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -100,7 +100,7 @@ EOH
       vault {}
 
       config {
-        image        = "lscr.io/linuxserver/speedtest-tracker:latest"
+        image        = "registry.lab.hartr.net/speedtest-tracker:latest"
         network_mode = "host"
         ports        = ["http"]
         privileged   = true

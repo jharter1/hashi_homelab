@@ -1,56 +1,70 @@
 ---
-title: Homelab Dashboard
+title: Homelab
 favicon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/nomad.png
-logo: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/home-assistant.png
+logo: mdi-home-network-outline
+
+# Background image — updated daily by the wallpaper-rotate Nomad job (8 AM Chicago).
+# This default is overwritten on every homepage:sync. That's intentional —
+# the sync task forces wallpaper-rotate immediately after to pick a fresh image.
 background:
-  image: https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920
+  image: https://s3.lab.hartr.net/wallpapers/rainbow-feather-bird-colorful.jpg
   blur: sm
-  saturate: 50
-  brightness: 50
-  opacity: 20
+  saturate: 75
+  brightness: 60
+  opacity: 35
 
 theme: dark
 color: slate
 headerStyle: boxed
+
 layout:
   Infrastructure:
     style: row
-    columns: 3
+    columns: 4
     icon: mdi-server-network
   Monitoring:
     style: row
     columns: 3
     icon: mdi-chart-line
-  Services:
+  System:
+    style: row
+    columns: 6
+    icon: mdi-cog-outline
+    collapsible: true
+    initiallyCollapsed: true
+  Development:
+    style: row
+    columns: 3
+    icon: mdi-code-braces
+  Content:
+    style: row
+    columns: 5
+    icon: mdi-bookshelf
+  Tools:
     style: row
     columns: 4
-    icon: mdi-apps
+    icon: mdi-wrench-outline
   Storage:
     style: row
-    columns: 2
-    icon: mdi-database
+    columns: 1
+    icon: mdi-database-outline
   Security:
     style: row
-    columns: 2
-    icon: mdi-shield-lock
+    columns: 1
+    icon: mdi-shield-lock-outline
 
-# Quick launch with keyboard shortcuts
 quicklaunch:
   searchDescriptions: true
   hideInternetSearch: false
   hideVisitURL: false
 
-# Custom CSS for additional styling
+statusStyle: "dot"
+showStats: true
+
 customCss: |
   .service-card {
     transition: transform 0.2s;
   }
   .service-card:hover {
-    transform: scale(1.05);
+    transform: scale(1.03);
   }
-
-# Status style
-statusStyle: "dot"
-
-# Show stats
-showStats: true

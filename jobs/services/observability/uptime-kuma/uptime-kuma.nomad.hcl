@@ -67,7 +67,7 @@ job "uptime-kuma" {
       }
       
       config {
-        image = "louislam/uptime-kuma:2.0.2"
+        image = "registry.lab.hartr.net/uptime-kuma:2.0.2"
         ports = ["http"]
       }
 

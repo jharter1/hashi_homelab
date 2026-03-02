@@ -55,7 +55,7 @@ job "traefik" {
       driver = "docker"
 
       config {
-        image        = "traefik:v3.0"
+        image        = "registry.lab.hartr.net/traefik:v3.0"
         network_mode = "host"
         
         # Run as root to bind to privileged ports 80/443

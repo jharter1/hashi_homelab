@@ -34,7 +34,7 @@ job "mariadb" {
       vault {}
 
       config {
-        image        = "mariadb:11.2"
+        image        = "registry.lab.hartr.net/mariadb:11.2"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true

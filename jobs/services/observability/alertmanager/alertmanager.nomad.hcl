@@ -28,7 +28,7 @@ job "alertmanager" {
       driver = "docker"
 
       config {
-        image        = "prom/alertmanager:latest"
+        image        = "registry.lab.hartr.net/alertmanager:latest"
         network_mode = "host"
         ports        = ["http"]
 

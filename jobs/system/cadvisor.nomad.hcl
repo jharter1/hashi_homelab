@@ -15,7 +15,7 @@ job "cadvisor" {
       driver = "docker"
 
       config {
-        image        = "gcr.io/cadvisor/cadvisor:v0.47.0"
+        image        = "registry.lab.hartr.net/cadvisor:v0.47.0"
         network_mode = "host"
         ports        = ["http"]
 

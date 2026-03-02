@@ -56,7 +56,7 @@ job "dozzle" {
       driver = "docker"
 
       config {
-        image = "amir20/dozzle:latest"
+        image = "registry.lab.hartr.net/dozzle:latest"
         ports = ["http"]
         
         volumes = [

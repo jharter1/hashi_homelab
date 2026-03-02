@@ -26,7 +26,7 @@ job "trilium" {
       driver = "docker"
 
       config {
-        image        = "zadam/trilium:latest"
+        image        = "registry.lab.hartr.net/trilium:latest"
         network_mode = "host"
         ports        = ["http"]
         privileged   = true

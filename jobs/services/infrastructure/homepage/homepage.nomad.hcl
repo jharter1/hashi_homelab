@@ -54,12 +54,12 @@ job "homepage" {
         LOG_LEVEL              = "info"
         HOSTNAME               = "0.0.0.0"
         PORT                   = "3333"
-        HOMEPAGE_ALLOWED_HOSTS = "home.lab.hartr.net"
+        HOMEPAGE_ALLOWED_HOSTS = "home.lab.hartr.net,homepage.service.consul,homepage.service.consul:3333"
         NODE_OPTIONS           = "--dns-result-order=ipv4first"
       }
 
       config {
-        image        = "gethomepage/homepage:latest"
+        image        = "registry.lab.hartr.net/homepage:latest"
         network_mode = "host"
       }
 

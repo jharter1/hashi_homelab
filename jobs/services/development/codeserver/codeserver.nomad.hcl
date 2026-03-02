@@ -47,7 +47,7 @@ job "codeserver" {
       }
 
       config {
-        image = "codercom/code-server:latest"
+        image = "registry.lab.hartr.net/code-server:latest"
         ports = ["http"]
         args = [
           "--bind-addr", "0.0.0.0:8080",

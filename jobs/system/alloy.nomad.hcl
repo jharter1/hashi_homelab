@@ -16,7 +16,7 @@ job "alloy" {
       driver = "docker"
 
       config {
-        image        = "grafana/alloy:latest"
+        image        = "registry.lab.hartr.net/alloy:latest"
         network_mode = "host"
         # The 'ports' list is mainly for the service stanza below when using host network.
         ports = ["http"]

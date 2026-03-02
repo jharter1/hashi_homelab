@@ -37,7 +37,7 @@ job "woodpecker" {
       vault {}
 
       config {
-        image        = "woodpeckerci/woodpecker-server:latest"
+        image        = "registry.lab.hartr.net/woodpecker-server:latest"
         network_mode = "host"
         ports        = ["http", "grpc"]
       }
@@ -119,7 +119,7 @@ EOH
       vault {}
 
       config {
-        image        = "woodpeckerci/woodpecker-agent:latest"
+        image        = "registry.lab.hartr.net/woodpecker-agent:latest"
         network_mode = "host"
         privileged   = true
 

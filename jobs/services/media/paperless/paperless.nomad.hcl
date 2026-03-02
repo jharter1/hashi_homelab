@@ -69,7 +69,7 @@ job "paperless-ngx" {
       vault {}
 
       config {
-        image        = "postgres:16-alpine"
+        image        = "registry.lab.hartr.net/postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
         command      = "postgres"
@@ -122,7 +122,7 @@ EOH
       driver = "docker"
 
       config {
-        image        = "redis:7-alpine"
+        image        = "registry.lab.hartr.net/redis:7-alpine"
         network_mode = "host"
         ports        = ["redis"]
         args         = ["redis-server", "--port", "6380"]
@@ -152,7 +152,7 @@ EOH
       vault {}
 
       config {
-        image        = "ghcr.io/paperless-ngx/paperless-ngx:latest"
+        image        = "registry.lab.hartr.net/paperless-ngx:latest"
         network_mode = "host"
         privileged   = true
         ports        = ["http"]

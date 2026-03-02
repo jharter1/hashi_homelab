@@ -179,6 +179,11 @@ tasks:
   deploy:services:
     desc: "Deploy all service jobs"
     cmds:
+      # Registry — deploy first, then sync images, then start services
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/infrastructure/registry/registry.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/infrastructure/registry/skopeo-sync.nomad.hcl
       # Infrastructure
       - |
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/infrastructure/whoami/whoami.nomad.hcl
@@ -190,6 +195,10 @@ tasks:
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/infrastructure/speedtest/speedtest.nomad.hcl
       - |
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/infrastructure/ntfy/ntfy.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/infrastructure/playwright/playwright.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/infrastructure/homepage/wallpaper-rotate.nomad.hcl
       # Observability
       - |
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/observability/loki/loki.nomad.hcl
@@ -242,11 +251,35 @@ tasks:
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run -detach jobs/services/media/drawio/drawio.nomad.hcl
       - echo "All service jobs submitted (use 'nomad job status <name>' to check progress)"
 
+  deploy:registry:
+    desc: "Deploy local Docker registry and start initial image sync"
+    cmds:
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/registry/registry.nomad.hcl
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/registry/skopeo-sync.nomad.hcl
+      - |
+        echo "Waiting 10s for registry to be healthy before forcing initial sync..."
+        sleep 10
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job periodic force skopeo-sync
+
   deploy:speedtest:
     desc: "Deploy Speedtest Tracker"
     cmds:
       - |
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/speedtest/speedtest.nomad.hcl
+
+  deploy:playwright:
+    desc: "Deploy Playwright homepage preview service"
+    cmds:
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/playwright/playwright.nomad.hcl
+
+  deploy:wallpaper-rotate:
+    desc: "Deploy wallpaper rotation job (requires minio/mc in local registry)"
+    cmds:
+      - |
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/infrastructure/homepage/wallpaper-rotate.nomad.hcl
 
   deploy:immich:
     desc: "Deploy Immich photo backup service"
@@ -255,12 +288,16 @@ tasks:
         NOMAD_ADDR=http://10.0.0.50:4646 nomad job run jobs/services/media/immich/immich.nomad.hcl
 
   homepage:sync:
-    desc: "🏠 Sync homepage configuration files to NAS"
+    desc: "🏠 Sync homepage configuration files to NAS, then re-rotate wallpaper"
     cmds:
       - |
         echo "📤 Syncing homepage configs to /mnt/nas/homepage/..."
         cd ansible && ansible-playbook playbooks/sync-homepage-config.yml
         echo "✅ Homepage configs synced"
+      - |
+        echo "🖼️  Re-rotating wallpaper (sync overwrites settings.yaml)..."
+        NOMAD_ADDR=http://10.0.0.50:4646 nomad job periodic force wallpaper-rotate
+        echo "✅ Wallpaper rotation triggered"
 
   homepage:deploy:
     desc: "🏠 Deploy homepage service"

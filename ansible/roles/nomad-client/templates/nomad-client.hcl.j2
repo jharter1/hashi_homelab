@@ -276,6 +276,11 @@ client {
     path = "{{ nas_mount_point }}/woodpecker"
     read_only = false
   }
+
+  host_volume "playwright_screenshots" {
+    path = "{{ nas_mount_point }}/playwright_screenshots"
+    read_only = false
+  }
 }
 
 bind_addr = "0.0.0.0"

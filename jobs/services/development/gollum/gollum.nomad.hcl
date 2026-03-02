@@ -25,7 +25,7 @@ job "gollum" {
       driver = "docker"
 
       config {
-        image = "gollumwiki/gollum:latest"
+        image = "registry.lab.hartr.net/gollum:latest"
         ports = ["http"]
         args = [
           "/wiki",

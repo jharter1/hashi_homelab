@@ -137,3 +137,4 @@ scripts/set-mcp-env.fish
 .aws/
 **/*aws*credentials*
 !terraform/aws/README.md
+.aider*

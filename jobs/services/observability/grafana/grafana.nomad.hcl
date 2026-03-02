@@ -44,7 +44,7 @@ job "grafana" {
       vault {}
 
       config {
-        image        = "postgres:16-alpine"
+        image        = "registry.lab.hartr.net/postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -108,7 +108,7 @@ EOH
       # }
 
       config {
-        image        = "grafana/grafana:latest"
+        image        = "registry.lab.hartr.net/grafana:latest"
         network_mode = "host"
         ports        = ["http"]
         dns_servers  = ["10.0.0.10", "1.1.1.1"]

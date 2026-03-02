@@ -96,7 +96,7 @@ job "audiobookshelf" {
       }
 
       config {
-        image        = "ghcr.io/advplyr/audiobookshelf:latest"
+        image        = "registry.lab.hartr.net/audiobookshelf:latest"
         network_mode = "host"
         privileged   = true
         

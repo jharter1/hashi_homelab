@@ -16,9 +16,46 @@
       - vim
       - htop
       - jq
+      - dnsmasq
     state: present
     update_cache: yes
     cache_valid_time: 3600
+
+- name: Configure dnsmasq upstream DNS servers
+  ansible.builtin.copy:
+    dest: /etc/dnsmasq.d/00-upstream.conf
+    content: |
+      # Explicit upstream DNS - no-resolv prevents reading /etc/resolv.conf (avoids loop)
+      no-resolv
+      server=10.0.0.10
+      server=1.1.1.1
+      # Listen only on localhost so we don't interfere with other services
+      listen-address=127.0.0.1
+      bind-interfaces
+    mode: '0644'
+  notify: restart dnsmasq
+
+- name: Configure dnsmasq Consul DNS forwarding
+  ansible.builtin.copy:
+    dest: /etc/dnsmasq.d/10-consul.conf
+    content: |
+      # Forward all .consul queries to the local Consul agent DNS port
+      server=/consul/127.0.0.1#8600
+    mode: '0644'
+  notify: restart dnsmasq
+
+- name: Enable and start dnsmasq
+  ansible.builtin.systemd:
+    name: dnsmasq
+    enabled: true
+    state: started
+
+- name: Configure resolv.conf to use local dnsmasq (Consul DNS forwarding)
+  ansible.builtin.copy:
+    content: |
+      nameserver 127.0.0.1
+    dest: /etc/resolv.conf
+    mode: '0644'
 
 - name: Check if systemd-resolved is used
   ansible.builtin.stat:
@@ -122,6 +159,7 @@
     - { name: 'wallabag_postgres', owner: '999', group: '999',  mode: '0755' }
     - { name: 'immich/upload',    owner: '1000', group: '1000', mode: '0755' }
     - { name: 'immich/postgres',  owner: '1000', group: '1000', mode: '0755' }
+    - { name: 'playwright_screenshots', mode: '0777' }
   when: node_type == 'client' and nas_mount_source is defined
 
 - name: Sync homepage configuration files

@@ -29,7 +29,7 @@ job "loki" {
       driver = "docker"
 
       config {
-        image        = "grafana/loki:3.6.0"
+        image        = "registry.lab.hartr.net/loki:3.6.0"
         network_mode = "host"
         ports        = ["http", "grpc"]
 

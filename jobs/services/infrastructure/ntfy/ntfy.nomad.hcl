@@ -26,7 +26,7 @@ job "ntfy" {
       driver = "docker"
 
       config {
-        image        = "binwiederhier/ntfy:latest"
+        image        = "registry.lab.hartr.net/ntfy:latest"
         network_mode = "host"
         ports        = ["http"]
         args         = ["serve"]

@@ -52,7 +52,7 @@ job "calibre" {
     task "calibre-web" {
       driver = "docker"
       config {
-        image = "linuxserver/calibre-web:latest"
+        image = "registry.lab.hartr.net/calibre-web:latest"
         ports = ["http"]
         privileged = true
       }

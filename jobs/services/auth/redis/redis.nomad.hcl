@@ -20,7 +20,7 @@ job "redis" {
       driver = "docker"
 
       config {
-        image        = "redis:7-alpine"
+        image        = "registry.lab.hartr.net/redis:7-alpine"
         network_mode = "host"
         ports        = ["redis"]
         privileged   = true

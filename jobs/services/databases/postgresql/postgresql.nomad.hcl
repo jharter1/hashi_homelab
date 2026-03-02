@@ -34,7 +34,7 @@ job "postgresql" {
       vault {}
 
       config {
-        image        = "postgres:16-alpine"
+        image        = "registry.lab.hartr.net/postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -118,7 +118,7 @@ EOH
       }
 
       config {
-        image        = "postgres:16-alpine"
+        image        = "registry.lab.hartr.net/postgres:16-alpine"
         network_mode = "host"
         command      = "/bin/sh"
         args         = ["${NOMAD_TASK_DIR}/init-databases.sh"]
@@ -273,7 +273,7 @@ EOH
       }
 
       config {
-        image   = "postgres:16-alpine"
+        image   = "registry.lab.hartr.net/postgres:16-alpine"
         command = "sh"
         args = ["-c", <<EOF
 # Wait for PostgreSQL to be ready

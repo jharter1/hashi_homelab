@@ -55,7 +55,7 @@ job "homepage" {
       }
 
       config {
-        image        = "gethomepage/homepage:latest"
+        image        = "registry.lab.hartr.net/homepage:latest"
         network_mode = "host"
       }
 

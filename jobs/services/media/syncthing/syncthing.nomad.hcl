@@ -40,7 +40,7 @@ job "syncthing" {
       user = "1000:1000"
 
       config {
-        image        = "syncthing/syncthing:latest"
+        image        = "registry.lab.hartr.net/syncthing:latest"
         network_mode = "host"
         ports        = ["web", "listen", "discovery"]
       }

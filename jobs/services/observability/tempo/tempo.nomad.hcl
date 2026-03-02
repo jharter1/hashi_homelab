@@ -32,7 +32,7 @@ job "tempo" {
       driver = "docker"
 
       config {
-        image        = "grafana/tempo:latest"
+        image        = "registry.lab.hartr.net/tempo:latest"
         network_mode = "host"
         ports        = ["http", "otlp_grpc", "otlp_http"]
 

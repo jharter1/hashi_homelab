@@ -35,11 +35,11 @@
         "ANSIBLE_DIR": "ansible"
       }
     },
-    "terraform": {
+    "_disabled_terraform": {
       "command": "node",
       "args": ["mcp-servers/terraform/dist/index.js"],
       "env": {
-        "TERRAFORM_DIR": "terraform"
+        "TERRAFORM_DIR": "terraform/environments/dev"
       }
     }
   }

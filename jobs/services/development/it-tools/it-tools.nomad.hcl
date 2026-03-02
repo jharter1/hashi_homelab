@@ -34,7 +34,7 @@ job "it-tools" {
       driver = "docker"
 
       config {
-        image = "corentinth/it-tools:latest"
+        image = "registry.lab.hartr.net/it-tools:latest"
         ports = ["http"]
         privileged = true
       }

@@ -27,7 +27,7 @@ job "prometheus" {
       driver = "docker"
 
       config {
-        image        = "prom/prometheus:latest"
+        image        = "registry.lab.hartr.net/prometheus:latest"
         network_mode = "host"
         ports        = ["http"]
 

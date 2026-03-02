@@ -20,7 +20,7 @@ job "drawio" {
       driver = "docker"
 
       config {
-        image        = "jgraph/drawio:latest"
+        image        = "registry.lab.hartr.net/drawio:latest"
         network_mode = "host"
         ports        = ["http"]
         privileged   = true

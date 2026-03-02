@@ -45,7 +45,7 @@ EOH
       }
 
       config {
-        image        = "minio/minio:RELEASE.2023-09-04T19-57-37Z"
+        image        = "registry.lab.hartr.net/minio:RELEASE.2023-09-04T19-57-37Z"
         network_mode = "host"
         privileged   = true
 

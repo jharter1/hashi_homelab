@@ -13,8 +13,7 @@ import * as fs from "fs/promises";
 
 const execAsync = promisify(exec);
 
-// Default to the terraform directory in the homelab repo
-const TERRAFORM_DIR = process.env.TERRAFORM_DIR || "/Users/jackharter/Developer/hashi_homelab/terraform";
+const TERRAFORM_DIR = path.resolve(process.cwd(), process.env.TERRAFORM_DIR || "terraform");
 
 const TOOLS: Tool[] = [
   {
@@ -39,7 +38,6 @@ const TOOLS: Tool[] = [
         environment: {
           type: "string",
           description: "Environment to plan (e.g., 'dev', 'hub')",
-          required: true,
         },
       },
       required: ["environment"],

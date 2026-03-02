@@ -26,7 +26,7 @@ job "whoami" {
       driver = "docker"
 
       config {
-        image = "traefik/whoami"
+        image = "registry.lab.hartr.net/whoami"
         ports = ["http"]
       }
     }

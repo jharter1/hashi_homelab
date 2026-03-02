@@ -14,7 +14,7 @@ import * as yaml from "js-yaml";
 
 const execAsync = promisify(exec);
 
-const ANSIBLE_DIR = process.env.ANSIBLE_DIR || "/Users/jackharter/Developer/hashi_homelab/ansible";
+const ANSIBLE_DIR = path.resolve(process.cwd(), process.env.ANSIBLE_DIR || "ansible");
 
 const TOOLS: Tool[] = [
   {

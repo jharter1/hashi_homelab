@@ -56,7 +56,7 @@ job "netdata" {
       driver = "docker"
 
       config {
-        image = "netdata/netdata:latest"
+        image = "registry.lab.hartr.net/netdata:latest"
         ports = ["http"]
         
         volumes = [
