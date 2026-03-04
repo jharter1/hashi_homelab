@@ -66,7 +66,9 @@ job "paperless-ngx" {
         sidecar = true
       }
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "registry.lab.hartr.net/postgres:16-alpine"
@@ -149,7 +151,9 @@ EOH
     task "paperless" {
       driver = "docker"
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "registry.lab.hartr.net/paperless-ngx:latest"
@@ -229,12 +233,15 @@ EOH
         # Tika and Gotenberg (disabled for resource efficiency)
         PAPERLESS_TIKA_ENABLED = "false"
         PAPERLESS_ENABLE_HTTP_REMOTE_USER = "false"
+
+        # Post-consume notification hook → ntfy
+        PAPERLESS_POST_CONSUME_SCRIPT = "/usr/src/paperless/data/post-consume.sh"
       }
 
       resources {
         cpu        = 1000
         memory     = 512
-        memory_max = 1024
+        memory_max = 2048
       }
 
       service {

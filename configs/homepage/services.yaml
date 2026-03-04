@@ -32,7 +32,7 @@
         description: Metrics Collection
         widget:
           type: prometheus
-          url: http://prometheus.service.consul:9090
+          url: https://prometheus.lab.hartr.net
     - Uptime Kuma:
         icon: uptime-kuma.png
         href: https://uptime-kuma.lab.hartr.net
@@ -129,12 +129,11 @@
         icon: freshrss.png
         href: https://freshrss.lab.hartr.net
         description: RSS Reader
-        # To enable live widget: fill in your FreshRSS credentials below:
-        # widget:
-        #   type: freshrss
-        #   url: http://freshrss.service.consul:8082
-        #   username: admin
-        #   password: YOUR_PASSWORD
+        widget:
+          type: freshrss
+          url: http://freshrss.service.consul:8082
+          username: jack
+          password: autoChef22
     - Wallabag:
         icon: wallabag.png
         href: https://wallabag.lab.hartr.net

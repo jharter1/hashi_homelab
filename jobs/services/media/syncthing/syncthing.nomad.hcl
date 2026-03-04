@@ -34,6 +34,12 @@ job "syncthing" {
       source    = "syncthing_data"
     }
 
+    volume "paperless_consume" {
+      type      = "host"
+      read_only = false
+      source    = "paperless_consume"
+    }
+
     task "syncthing" {
       driver = "docker"
       
@@ -53,6 +59,11 @@ job "syncthing" {
       volume_mount {
         volume      = "syncthing_data"
         destination = "/data"
+      }
+
+      volume_mount {
+        volume      = "paperless_consume"
+        destination = "/paperless-consume"
       }
 
       resources {

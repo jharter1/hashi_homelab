@@ -117,6 +117,11 @@ access_control:
         - "^/public/.*$"
       policy: bypass
     
+    # Bypass auth for internal monitoring/tracing (Grafana data sources)
+    - domain:
+        - tempo.lab.hartr.net
+      policy: bypass
+
     # Protected services - require authentication
     - domain:
         - grafana.lab.hartr.net
@@ -138,6 +143,16 @@ access_control:
         - traefik.lab.hartr.net
         - speedtest.lab.hartr.net
         - preview.lab.hartr.net
+        - paperless.lab.hartr.net
+        - ntfy.lab.hartr.net
+        - dozzle.lab.hartr.net
+        - netdata.lab.hartr.net
+        - alloy.lab.hartr.net
+        - syncthing.lab.hartr.net
+        - tools.lab.hartr.net
+        - diagrams.lab.hartr.net
+        - ci.lab.hartr.net
+        - vaultwarden.lab.hartr.net
       policy: one_factor
     
     # Admin-only infrastructure services

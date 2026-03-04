@@ -41,7 +41,9 @@ job "freshrss" {
         sidecar = true
       }
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "registry.lab.hartr.net/postgres:16-alpine"
@@ -96,7 +98,9 @@ EOH
     task "freshrss" {
       driver = "docker"
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "registry.lab.hartr.net/freshrss:latest"
@@ -140,7 +144,6 @@ EOH
         
         # Security settings
         TRUSTED_PROXY = "10.0.0.0/24"
-        # Form-based auth; initial setup was run via CLI with this auth type
         AUTH_TYPE = "form"
       }
 
@@ -174,7 +177,9 @@ EOH
     task "freshrss-cron" {
       driver = "docker"
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       lifecycle {
         hook    = "poststart"

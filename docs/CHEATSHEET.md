@@ -275,20 +275,26 @@ consul catalog service redis
 
 ### Protect a Service
 
-```bash
-# 1. Edit service job file
-nano jobs/services/SERVICE.nomad.hcl
+**Both steps are required** — the middleware tag alone is not enough. Authelia uses `default_policy: deny`, so any domain not listed in `access_control.rules` returns 403 even for authenticated users.
 
-# 2. Add middleware tag
+```bash
+# 1. Add middleware tag to service job file
+#    jobs/services/<category>/<service>/<service>.nomad.hcl
 tags = [
   # ... existing tags ...
-  "traefik.http.routers.SERVICE.middlewares=authelia@consulcatalog",
+  "traefik.http.routers.SERVICE.middlewares=authelia@file",
 ]
 
-# 3. Redeploy
-nomad job run jobs/services/SERVICE.nomad.hcl
+# 2. Add domain to access_control.rules in authelia job
+#    jobs/services/auth/authelia/authelia.nomad.hcl
+#    Add to the one_factor domain list:
+#    - service.lab.hartr.net
 
-# 4. Test (should redirect to Authelia)
+# 3. Redeploy both jobs
+nomad job run jobs/services/<category>/<service>/<service>.nomad.hcl
+nomad job run jobs/services/auth/authelia/authelia.nomad.hcl
+
+# 4. Test (should redirect to Authelia login)
 curl -I https://SERVICE.lab.hartr.net
 ```
 

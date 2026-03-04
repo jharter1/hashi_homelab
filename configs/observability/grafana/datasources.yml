@@ -5,7 +5,7 @@ datasources:
     uid: prometheus
     type: prometheus
     access: proxy
-    url: http://prometheus.service.consul:9090
+    url: https://prometheus.lab.hartr.net
     isDefault: true
     editable: true
     jsonData:
