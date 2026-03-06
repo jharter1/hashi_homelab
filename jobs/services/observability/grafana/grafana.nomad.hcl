@@ -2,10 +2,6 @@ job "grafana" {
   datacenters = ["dc1"]
   type        = "service"
 
-  spread {
-    attribute = "${node.unique.name}"
-  }
-
   group "grafana" {
     count = 1
 
@@ -41,12 +37,10 @@ job "grafana" {
         sidecar = true
       }
 
-      vault {
-        change_mode = "noop"
-      }
+      vault {}
 
       config {
-        image        = "registry.lab.hartr.net/postgres:16-alpine"
+        image        = "postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -62,7 +56,6 @@ job "grafana" {
       template {
         destination = "secrets/postgres.env"
         env         = true
-        change_mode = "noop"
         data        = <<EOH
 POSTGRES_DB=grafana
 POSTGRES_USER=grafana
@@ -77,9 +70,8 @@ EOH
       }
 
       resources {
-        cpu        = 200
-        memory     = 64
-        memory_max = 128
+        cpu    = 500
+        memory = 256
       }
 
       service {
@@ -99,9 +91,7 @@ EOH
       driver = "docker"
 
       # Enable Vault workload identity for secrets access
-      vault {
-        change_mode = "noop"
-      }
+      vault {}
 
       # Fetch the Vault CA chain for trusting internal HTTPS services
       # TODO: Enable once PKI intermediate CA is generated
@@ -112,7 +102,7 @@ EOH
       # }
 
       config {
-        image        = "registry.lab.hartr.net/grafana:latest"
+        image        = "grafana/grafana:latest"
         network_mode = "host"
         ports        = ["http"]
         dns_servers  = ["10.0.0.10", "1.1.1.1"]
@@ -134,7 +124,6 @@ EOH
       template {
         destination = "secrets/db.env"
         env         = true
-        change_mode = "noop"
         data        = <<EOH
 GF_DATABASE_PASSWORD={{ with secret "secret/data/postgres/grafana" }}{{ .Data.data.password }}{{ end }}
 GF_DATABASE_HOST=localhost:5436
@@ -186,9 +175,8 @@ EOH
       }
 
       resources {
-        cpu        = 200
-        memory     = 128
-        memory_max = 256
+        cpu    = 500
+        memory = 512
       }
 
       service {

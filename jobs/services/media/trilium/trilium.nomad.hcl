@@ -2,10 +2,6 @@ job "trilium" {
   datacenters = ["dc1"]
   type        = "service"
 
-  spread {
-    attribute = "${node.unique.name}"
-  }
-
   group "trilium" {
     count = 1
 
@@ -26,7 +22,7 @@ job "trilium" {
       driver = "docker"
 
       config {
-        image        = "registry.lab.hartr.net/trilium:latest"
+        image        = "zadam/trilium:latest"
         network_mode = "host"
         ports        = ["http"]
         privileged   = true
@@ -47,9 +43,8 @@ job "trilium" {
       }
 
       resources {
-        cpu        = 200
-        memory     = 64
-        memory_max = 256
+        cpu    = 500
+        memory = 512
       }
 
       service {

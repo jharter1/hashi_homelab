@@ -47,6 +47,11 @@ client {
     read_only = false
   }
 
+  host_volume "artifactory_data" {
+    path = "/opt/nomad-volumes/artifactory_data"
+    read_only = false
+  }
+
   host_volume "jenkins_home" {
     path = "{{ nas_mount_point }}/jenkins"
     read_only = false
@@ -76,17 +81,6 @@ client {
     path = "{{ nas_mount_point }}/alertmanager"
     read_only = false
   }
-
-  host_volume "tempo_data" {
-    path = "{{ nas_mount_point }}/tempo"
-    read_only = false
-  }
-
-  host_volume "ntfy_data" {
-    path = "{{ nas_mount_point }}/ntfy"
-    read_only = false
-  }
-
   host_volume "bookstack_data" {
     path = "{{ nas_mount_point }}/bookstack/data"
     read_only = false
@@ -178,7 +172,7 @@ client {
   }
 
   host_volume "traefik_acme" {
-    path = "{{ nas_mount_point }}/traefik-acme"
+    path = "/opt/traefik/acme"
     read_only = false
   }
 
@@ -246,41 +240,6 @@ client {
     path = "{{ nas_mount_point }}/vaultwarden_postgres"
     read_only = false
   }
-
-  host_volume "paperless_data" {
-    path = "{{ nas_mount_point }}/paperless/data"
-    read_only = false
-  }
-
-  host_volume "paperless_media" {
-    path = "{{ nas_mount_point }}/paperless/media"
-    read_only = false
-  }
-
-  host_volume "paperless_consume" {
-    path = "{{ nas_mount_point }}/paperless/consume"
-    read_only = false
-  }
-
-  host_volume "paperless_export" {
-    path = "{{ nas_mount_point }}/paperless/export"
-    read_only = false
-  }
-
-  host_volume "paperless_postgres_data" {
-    path = "{{ nas_mount_point }}/paperless_postgres"
-    read_only = false
-  }
-
-  host_volume "woodpecker_data" {
-    path = "{{ nas_mount_point }}/woodpecker"
-    read_only = false
-  }
-
-  host_volume "playwright_screenshots" {
-    path = "{{ nas_mount_point }}/playwright_screenshots"
-    read_only = false
-  }
 }
 
 bind_addr = "0.0.0.0"
@@ -305,10 +264,6 @@ plugin "docker" {
     volumes {
       enabled = true
     }
-    auth {
-      config = "/root/.docker/config.json"
-    }
-    image_pull_timeout = "15m"
   }
 }
 

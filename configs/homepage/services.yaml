@@ -1,14 +1,12 @@
+---
 - Infrastructure:
     - Nomad:
         icon: nomad.png
         href: http://10.0.0.50:4646
         description: Container Orchestration
-        widget:
-          type: nomad
-          url: http://10.0.0.50:4646
     - Consul:
         icon: consul.png
-        href: https://consul.lab.hartr.net
+        href: http://10.0.0.50:8500
         description: Service Discovery
     - Vault:
         icon: vault.png
@@ -20,12 +18,18 @@
         description: Reverse Proxy
         widget:
           type: traefik
-          url: http://traefik.service.consul:8080
+          url: http://10.0.0.60:8080
+    - Redis:
+        icon: redis.png
+        href: http://10.0.0.60:6379
+        description: Cache & Session Store
+        ping: http://10.0.0.60:6379
+
 - Monitoring:
     - Grafana:
         icon: grafana.png
         href: https://grafana.lab.hartr.net
-        description: Metrics & Dashboards
+        description: Metrics Visualization
     - Prometheus:
         icon: prometheus.png
         href: https://prometheus.lab.hartr.net
@@ -33,6 +37,32 @@
         widget:
           type: prometheus
           url: https://prometheus.lab.hartr.net
+    - Alertmanager:
+        icon: alertmanager.png
+        href: https://alertmanager.lab.hartr.net
+        description: Alert Routing
+    - Loki:
+        icon: loki.png
+        href: https://loki.lab.hartr.net
+        description: Log Aggregation
+    - Grafana Alloy:
+        icon: grafana.png
+        href: http://10.0.0.60:12345
+        description: Observability Collector
+        ping: http://10.0.0.60:12345
+    - cAdvisor:
+        icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/google.png
+        href: http://10.0.0.60:8081
+        description: Container Metrics
+        ping: http://10.0.0.60:8081
+    - Netdata:
+        icon: netdata.png
+        href: https://netdata.lab.hartr.net
+        description: Real-time Performance
+    - Dozzle:
+        icon: dozzle.png
+        href: https://dozzle.lab.hartr.net
+        description: Docker Log Viewer
     - Uptime Kuma:
         icon: uptime-kuma.png
         href: https://uptime-kuma.lab.hartr.net
@@ -41,52 +71,8 @@
           type: uptimekuma
           url: https://uptime-kuma.lab.hartr.net
           slug: default
-- System:
-    - Alertmanager:
-        icon: alertmanager.png
-        href: https://alertmanager.lab.hartr.net
-        description: Alert Routing
-    - Dozzle:
-        icon: dozzle.png
-        href: https://dozzle.lab.hartr.net
-        description: Docker Log Viewer
-    - Netdata:
-        icon: netdata.png
-        href: https://netdata.lab.hartr.net
-        description: Real-time Performance
-    - Grafana Alloy:
-        icon: grafana.png
-        href: https://alloy.lab.hartr.net
-        description: Observability Collector
-        ping: http://alloy.service.consul:12345
-    - cAdvisor:
-        icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/google.png
-        href: http://10.0.0.60:8081
-        description: Container Metrics
-        ping: http://cadvisor.service.consul:8081
-    - Homepage Preview:
-        icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/playwright.png
-        href: https://preview.lab.hartr.net
-        description: Widget Health Screenshot
-- Development:
-    - Gitea:
-        icon: gitea.png
-        href: https://gitea.lab.hartr.net
-        description: Git Repository Manager
-        widget:
-          type: gitea
-          url: http://gitea-http.service.consul:3001
-          key: c5333b89b0e2ee971dad779d8681219d6a4fffe6
-    - Woodpecker CI:
-        icon: woodpecker-ci.png
-        href: https://ci.lab.hartr.net
-        description: CI/CD Pipeline
-        ping: http://woodpecker-server.service.consul:8088
-    - Code Server:
-        icon: code.png
-        href: https://code.lab.hartr.net
-        description: VS Code in Browser
-- Content:
+
+- Applications:
     - Bookstack:
         icon: bookstack.png
         href: https://bookstack.lab.hartr.net
@@ -98,81 +84,77 @@
     - Trilium:
         icon: trilium.png
         href: https://trilium.lab.hartr.net
-        description: Note Taking
-    - Paperless-ngx:
-        icon: paperless.png
-        href: https://paperless.lab.hartr.net
-        description: Document Management
-        # To enable live widget: generate a token in Paperless (Settings > API Tokens),
-        # then uncomment and fill in below:
-        # widget:
-        #   type: paperless
-        #   url: http://paperless.service.consul:8086
-        #   key: YOUR_TOKEN_HERE
-    - Linkwarden:
-        icon: linkwarden.png
-        href: https://linkwarden.lab.hartr.net
-        description: Bookmark Manager
-    - Audiobookshelf:
-        icon: audiobookshelf.png
-        href: https://audiobookshelf.lab.hartr.net
-        description: Audiobook & Podcast Server
-        widget:
-          type: audiobookshelf
-          url: http://audiobookshelf.service.consul:13378
-          key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXlJZCI6IjA4NDE2ODhlLWEyYzQtNDMzYy05ZmY0LTM3ZTQ0NmJmNWVhZiIsIm5hbWUiOiJ3aWRnZXQiLCJ0eXBlIjoiYXBpIiwiaWF0IjoxNzcwODQxNDEzfQ.DTtiVThhl6n6CQZNs-9dyARRWcPeTvlRS6Ew8Th2rLk"
-    - Calibre Web:
-        icon: calibre-web.png
-        href: https://calibre.lab.hartr.net
-        description: eBook Library
-    - FreshRSS:
-        icon: freshrss.png
-        href: https://freshrss.lab.hartr.net
-        description: RSS Reader
-        widget:
-          type: freshrss
-          url: http://freshrss.service.consul:8082
-          username: jack
-          password: autoChef22
-    - Wallabag:
-        icon: wallabag.png
-        href: https://wallabag.lab.hartr.net
-        description: Read-It-Later
-        ping: http://wallabag.service.consul:8084
-    - Draw.io:
-        icon: diagrams-net.png
-        href: https://diagrams.lab.hartr.net
-        description: Diagram Editor
-- Tools:
+        description: Note Taking App
     - IT Tools:
         icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/it-tools.png
         href: https://tools.lab.hartr.net
-        description: Developer Utilities
+        description: Developer Tools Collection
     - Speedtest:
         icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/speedtest-tracker.png
         href: https://speedtest.lab.hartr.net
         description: Internet Speed Testing
         widget:
           type: speedtest
-          url: http://speedtest.service.consul:8765
-          key: "1|49lo5MNH8ZdyFhrHPJWqT5kVBfKExEvAzjAXxGI5e92c8d62"
+          url: https://speedtest.lab.hartr.net
+          key: "lVBkCELz5L7PYgyrPEd0BbFn64KEbuFkrmo7q9iGe22c26b4"
+    - Linkwarden:
+        icon: linkwarden.png
+        href: https://linkwarden.lab.hartr.net
+        description: Bookmark Manager
+    - Wallabag:
+        icon: wallabag.png
+        href: https://wallabag.lab.hartr.net
+        description: Read-it-later Service
+    - FreshRSS:
+        icon: freshrss.png
+        href: https://freshrss.lab.hartr.net
+        description: RSS Reader
+    - Audiobookshelf:
+        icon: audiobookshelf.png
+        href: https://audiobookshelf.lab.hartr.net
+        description: Audiobook & Podcast Server
+        ping: http://10.0.0.60:13378
+        widget:
+          type: audiobookshelf
+          url: http://10.0.0.60:13378
+          key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXlJZCI6IjA4NDE2ODhlLWEyYzQtNDMzYy05ZmY0LTM3ZTQ0NmJmNWVhZiIsIm5hbWUiOiJ3aWRnZXQiLCJ0eXBlIjoiYXBpIiwiaWF0IjoxNzcwODQxNDEzfQ.DTtiVThhl6n6CQZNs-9dyARRWcPeTvlRS6Ew8Th2rLk"
+    - Calibre Web:
+        icon: calibre-web.png
+        href: https://calibre.lab.hartr.net
+        description: eBook Library
+        widget:
+          type: calibreweb
+          url: https://calibre.lab.hartr.net
     - Syncthing:
         icon: syncthing.png
         href: https://syncthing.lab.hartr.net
         description: File Synchronization
-    - ntfy:
-        icon: ntfy.png
-        href: https://ntfy.lab.hartr.net
-        description: Push Notifications
+
 - Storage:
+    - MinIO S3:
+        icon: minio.png
+        href: https://s3.lab.hartr.net
+        description: S3-Compatible Object Storage (API)
+        ping: http://10.0.0.61:9000
     - MinIO Console:
         icon: minio.png
         href: https://minio.lab.hartr.net
-        description: Object Storage Admin
-        ping: http://minio-console.service.consul:9001
+        description: MinIO Admin Console
+        ping: http://10.0.0.61:9001
+    - NFS Storage:
+        icon: mdi-F08F3.png
+        href: nfs://10.0.0.220/mnt/storage
+        description: Network File System (10.0.0.220)
+        ping: 10.0.0.220
+
 - Security:
     - Vaultwarden:
         icon: vaultwarden.png
         href: https://vaultwarden.lab.hartr.net
         description: Password Manager
-        ping: http://vaultwarden.service.consul:8222
+        ping: http://10.0.0.60:80
+    - Authelia:
+        icon: authelia.png
+        href: https://authelia.lab.hartr.net
+        description: SSO & Authentication
+        ping: http://10.0.0.60:9091

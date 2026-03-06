@@ -154,6 +154,7 @@
     - { name: 'trilium',          owner: '1000', group: '1000', mode: '0755' }
     - { name: 'vaultwarden',      owner: '1000', group: '1000', mode: '0755' }
     - { name: 'vaultwarden_postgres', owner: '999', group: '999', mode: '0755' }
+    - { name: 'readeck',          owner: '1000', group: '1000', mode: '0755' }
     - { name: 'wallabag',         owner: '1000', group: '1000', mode: '0755' }
     - { name: 'wallabag_images',  owner: '1000', group: '1000', mode: '0755' }
     - { name: 'wallabag_postgres', owner: '999', group: '999',  mode: '0755' }

@@ -34,7 +34,9 @@ job "woodpecker" {
         sidecar = true
       }
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "registry.lab.hartr.net/woodpecker-server:latest"
@@ -116,7 +118,9 @@ EOH
     task "agent" {
       driver = "docker"
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "registry.lab.hartr.net/woodpecker-agent:latest"
@@ -152,7 +156,7 @@ EOH
         DOCKER_API_VERSION = "1.47"
 
         # Log level
-        WOODPECKER_LOG_LEVEL = "debug"
+        WOODPECKER_LOG_LEVEL = "info"
       }
 
       restart {

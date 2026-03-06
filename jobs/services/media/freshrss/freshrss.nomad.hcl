@@ -2,10 +2,6 @@ job "freshrss" {
   datacenters = ["dc1"]
   type        = "service"
 
-  spread {
-    attribute = "${node.unique.name}"
-  }
-
   group "freshrss" {
     count = 1
 
@@ -41,12 +37,10 @@ job "freshrss" {
         sidecar = true
       }
 
-      vault {
-        change_mode = "noop"
-      }
+      vault {}
 
       config {
-        image        = "registry.lab.hartr.net/postgres:16-alpine"
+        image        = "postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -62,7 +56,6 @@ job "freshrss" {
       template {
         destination = "secrets/postgres.env"
         env         = true
-        change_mode = "noop"
         data        = <<EOH
 POSTGRES_DB=freshrss
 POSTGRES_USER=freshrss
@@ -77,9 +70,8 @@ EOH
       }
 
       resources {
-        cpu        = 200
-        memory     = 32
-        memory_max = 128
+        cpu    = 500
+        memory = 256
       }
 
       service {
@@ -98,12 +90,10 @@ EOH
     task "freshrss" {
       driver = "docker"
 
-      vault {
-        change_mode = "noop"
-      }
+      vault {}
 
       config {
-        image        = "registry.lab.hartr.net/freshrss:latest"
+        image        = "freshrss/freshrss:latest"
         network_mode = "host"
         ports        = ["http"]
       }
@@ -117,7 +107,6 @@ EOH
       template {
         destination = "secrets/db.env"
         env         = true
-        change_mode = "noop"
         data        = <<EOH
 # Database configuration
 DB_BASE=freshrss
@@ -139,18 +128,24 @@ EOH
         # Database type
         DB_PREFIX = "freshrss_"
         
+        # FreshRSS admin credentials (initial setup)
+        # After first login, change these via the web UI
+        ADMIN_EMAIL    = "admin@home.local"
+        ADMIN_PASSWORD = "changeme"
+        ADMIN_API_PASSWORD = "changeme_api"
+        
         # Application URL
         BASE_URL = "https://freshrss.lab.hartr.net"
         
         # Security settings
         TRUSTED_PROXY = "10.0.0.0/24"
+        # Form-based auth; initial setup was run via CLI with this auth type
         AUTH_TYPE = "form"
       }
 
       resources {
-        cpu        = 200
-        memory     = 64
-        memory_max = 128
+        cpu    = 500
+        memory = 256
       }
 
       service {
@@ -177,9 +172,7 @@ EOH
     task "freshrss-cron" {
       driver = "docker"
 
-      vault {
-        change_mode = "noop"
-      }
+      vault {}
 
       lifecycle {
         hook    = "poststart"
@@ -187,21 +180,18 @@ EOH
       }
 
       config {
-        image        = "registry.lab.hartr.net/freshrss:latest"
-        network_mode = "host"
-        command      = "cron"
-        args         = ["-f"]
-      }
+        image   = "freshrss/freshrss:latest"
+        command = "cron"
+        args    = ["-f"]
 
-      volume_mount {
-        volume      = "freshrss_data"
-        destination = "/var/www/FreshRSS/data"
+        volumes = [
+          "${NOMAD_ALLOC_DIR}/../freshrss_data:/var/www/FreshRSS/data"
+        ]
       }
 
       template {
         destination = "secrets/db.env"
         env         = true
-        change_mode = "noop"
         data        = <<EOH
 DB_BASE=freshrss
 DB_HOST=localhost
@@ -217,9 +207,8 @@ EOH
       }
 
       resources {
-        cpu        = 100
-        memory     = 32
-        memory_max = 64
+        cpu    = 100
+        memory = 128
       }
     }
   }

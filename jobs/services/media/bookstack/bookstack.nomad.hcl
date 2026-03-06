@@ -2,10 +2,6 @@ job "bookstack" {
   datacenters = ["dc1"]
   type        = "service"
 
-  spread {
-    attribute = "${node.unique.name}"
-  }
-
   update {
     max_parallel     = 1
     min_healthy_time = "30s"
@@ -57,7 +53,7 @@ job "bookstack" {
       vault {}
 
       config {
-        image        = "registry.lab.hartr.net/mariadb:11.2"
+        image        = "mariadb:11.2"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -71,7 +67,6 @@ job "bookstack" {
       template {
         destination = "secrets/mariadb.env"
         env         = true
-        change_mode = "noop"
         data        = <<EOH
 MYSQL_ROOT_PASSWORD={{ with secret "secret/data/mariadb/bookstack" }}{{ .Data.data.password }}{{ end }}
 MYSQL_DATABASE=bookstack
@@ -85,9 +80,8 @@ EOH
       }
 
       resources {
-        cpu        = 500
-        memory     = 256
-        memory_max = 512
+        cpu    = 500
+        memory = 256
       }
 
       service {
@@ -109,7 +103,7 @@ EOH
       vault {}
 
       config {
-        image        = "registry.lab.hartr.net/bookstack:latest"
+        image        = "lscr.io/linuxserver/bookstack:latest"
         network_mode = "host"
         ports        = ["http"]
         privileged   = true
@@ -135,7 +129,6 @@ EOH
       template {
         destination = "secrets/app.env"
         env         = true
-        change_mode = "noop"
         data        = <<EOH
 # Database password - linuxserver.io uses DB_PASSWORD
 DB_PASSWORD={{ with secret "secret/data/mariadb/bookstack" }}{{ .Data.data.password }}{{ end }}
@@ -221,9 +214,8 @@ EOH
       }
 
       resources {
-        cpu        = 200
-        memory     = 128
-        memory_max = 256
+        cpu    = 500
+        memory = 512
       }
 
       service {

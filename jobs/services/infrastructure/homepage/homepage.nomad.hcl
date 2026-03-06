@@ -2,10 +2,6 @@ job "homepage" {
   datacenters = ["dc1"]
   type        = "service"
 
-  spread {
-    attribute = "${node.unique.name}"
-  }
-
   group "homepage" {
     count = 1
 
@@ -54,19 +50,18 @@ job "homepage" {
         LOG_LEVEL              = "info"
         HOSTNAME               = "0.0.0.0"
         PORT                   = "3333"
-        HOMEPAGE_ALLOWED_HOSTS = "home.lab.hartr.net,homepage.service.consul,homepage.service.consul:3333"
+        HOMEPAGE_ALLOWED_HOSTS = "home.lab.hartr.net"
         NODE_OPTIONS           = "--dns-result-order=ipv4first"
       }
 
       config {
-        image        = "registry.lab.hartr.net/homepage:latest"
+        image        = "gethomepage/homepage:latest"
         network_mode = "host"
       }
 
       resources {
-        cpu        = 100
-        memory     = 128
-        memory_max = 256
+        cpu    = 200
+        memory = 256
       }
 
       service {

@@ -41,7 +41,9 @@ job "speedtest" {
         sidecar = true
       }
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "registry.lab.hartr.net/postgres:16-alpine"
@@ -97,7 +99,9 @@ EOH
       driver = "docker"
 
       # Enable Vault workload identity for secrets access
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "registry.lab.hartr.net/speedtest-tracker:latest"

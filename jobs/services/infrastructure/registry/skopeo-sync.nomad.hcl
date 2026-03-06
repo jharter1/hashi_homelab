@@ -158,6 +158,11 @@ quay.io:
   images:
     skopeo/stable:
       - "latest"
+
+codeberg.org:
+  images:
+    readeck/readeck:
+      - "latest"
 EOH
       }
 

@@ -33,6 +33,9 @@ scrape_configs:
 
   # Nomad Clients via Consul service discovery
   - job_name: 'nomad-client'
+    metrics_path: /v1/metrics
+    params:
+      format: ['prometheus']
     consul_sd_configs:
       - server: 'localhost:8500'
     relabel_configs:
@@ -47,19 +50,21 @@ scrape_configs:
         target_label: __address__
 
   # Nomad Servers via Consul service discovery
+  # Nomad registers as service "nomad" with three instances per node (serf/rpc/http).
+  # Filter to only the http instance (port 4646) to avoid scraping serf/rpc ports.
   - job_name: 'nomad-server'
+    metrics_path: /v1/metrics
+    params:
+      format: ['prometheus']
     consul_sd_configs:
       - server: 'localhost:8500'
+        services: ['nomad']
+        tags: ['http']
     relabel_configs:
-      - source_labels: [__meta_consul_service]
-        regex: 'nomad-server'
-        action: keep
       - source_labels: [__meta_consul_node]
         target_label: node
       - source_labels: [__address__]
-        regex: '([^:]+)(?::\d+)?'
-        replacement: '${1}:4646'
-        target_label: __address__
+        target_label: instance
 
   # Consul via Consul service discovery
   - job_name: 'consul'

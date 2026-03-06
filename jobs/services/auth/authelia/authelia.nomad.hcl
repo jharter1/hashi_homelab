@@ -2,10 +2,6 @@ job "authelia" {
   datacenters = ["dc1"]
   type        = "service"
 
-  spread {
-    attribute = "${node.unique.name}"
-  }
-
   group "authelia" {
     count = 1
 
@@ -31,7 +27,7 @@ job "authelia" {
       }
 
       config {
-        image        = "registry.lab.hartr.net/authelia:latest"
+        image        = "authelia/authelia:latest"
         network_mode = "host"
         userns_mode  = "host"
         privileged   = true
@@ -100,6 +96,14 @@ access_control:
         - loki.lab.hartr.net
       policy: bypass
     
+    # Bypass Gitea OAuth token endpoint and API (server-to-server calls have no Authelia session)
+    - domain:
+        - gitea.lab.hartr.net
+      resources:
+        - "^/login/oauth/access_token$"
+        - "^/api/v1/.*$"
+      policy: bypass
+
     # Bypass API endpoints that have their own authentication
     # Calibre OPDS API - used by ebook readers
     - domain:
@@ -117,11 +121,6 @@ access_control:
         - "^/public/.*$"
       policy: bypass
     
-    # Bypass auth for internal monitoring/tracing (Grafana data sources)
-    - domain:
-        - tempo.lab.hartr.net
-      policy: bypass
-
     # Protected services - require authentication
     - domain:
         - grafana.lab.hartr.net
@@ -142,17 +141,8 @@ access_control:
         - registry-ui.lab.hartr.net
         - traefik.lab.hartr.net
         - speedtest.lab.hartr.net
-        - preview.lab.hartr.net
         - paperless.lab.hartr.net
-        - ntfy.lab.hartr.net
-        - dozzle.lab.hartr.net
-        - netdata.lab.hartr.net
-        - alloy.lab.hartr.net
         - syncthing.lab.hartr.net
-        - tools.lab.hartr.net
-        - diagrams.lab.hartr.net
-        - ci.lab.hartr.net
-        - vaultwarden.lab.hartr.net
       policy: one_factor
     
     # Admin-only infrastructure services
@@ -238,9 +228,8 @@ EOH
       }
 
       resources {
-        cpu        = 100
-        memory     = 64
-        memory_max = 128
+        cpu    = 200
+        memory = 256
       }
 
       service {

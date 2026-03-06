@@ -1,14 +1,14 @@
 job "traefik" {
   datacenters = ["dc1"]
-  type        = "service"
+  type        = "service" # Run 2 instances for HA (was system)
 
   group "traefik" {
-    count = 1
+    count = 2 # Run exactly 2 instances for high availability
 
-    # Pin to client-1 so DNS (*.lab.hartr.net → 10.0.0.60) always resolves correctly
-    constraint {
-      attribute = "${node.unique.name}"
-      value     = "dev-nomad-client-1"
+    # Spread instances across different nodes for reliability
+    spread {
+      attribute = "${node.unique.id}"
+      weight    = 100
     }
 
     # Add volume for certificate storage
@@ -55,7 +55,7 @@ job "traefik" {
       driver = "docker"
 
       config {
-        image        = "registry.lab.hartr.net/traefik:v3.0"
+        image        = "traefik:v3.0"
         network_mode = "host"
         
         # Run as root to bind to privileged ports 80/443
@@ -111,9 +111,8 @@ EOF
       }
 
       resources {
-        cpu        = 200
-        memory     = 64
-        memory_max = 256
+        cpu    = 200
+        memory = 256
       }
     }
   }

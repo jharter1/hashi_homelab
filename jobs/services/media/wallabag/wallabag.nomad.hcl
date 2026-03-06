@@ -2,10 +2,6 @@ job "wallabag" {
   datacenters = ["dc1"]
   type        = "service"
 
-  spread {
-    attribute = "${node.unique.name}"
-  }
-
   group "wallabag" {
     count = 1
 
@@ -50,7 +46,7 @@ job "wallabag" {
       vault {}
 
       config {
-        image        = "registry.lab.hartr.net/postgres:16-alpine"
+        image        = "postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -64,7 +60,6 @@ job "wallabag" {
       template {
         destination = "secrets/postgres.env"
         env         = true
-        change_mode = "noop"
         data        = <<EOH
 POSTGRES_DB=wallabag
 POSTGRES_USER=wallabag
@@ -79,9 +74,8 @@ EOH
       }
 
       resources {
-        cpu        = 200
-        memory     = 32
-        memory_max = 128
+        cpu    = 500
+        memory = 256
       }
 
       service {
@@ -97,14 +91,14 @@ EOH
       }
     }
 
-    # Wallabag application (migrations must be run manually on first deploy)
+    # Wallabag application
     task "wallabag" {
       driver = "docker"
 
       vault {}
 
       config {
-        image        = "registry.lab.hartr.net/wallabag:latest"
+        image        = "wallabag/wallabag:latest"
         network_mode = "host"
         ports        = ["http"]
         privileged   = true
@@ -131,7 +125,6 @@ EOH
       template {
         destination = "secrets/app.env"
         env         = true
-        change_mode = "noop"
         data        = <<EOH
 # Database configuration
 SYMFONY__ENV__DATABASE_DRIVER=pdo_pgsql
@@ -232,16 +225,9 @@ EOH
         SYMFONY__ENV__TRUSTED_PROXIES = "10.0.0.0/24,127.0.0.1,REMOTE_ADDR"
       }
 
-      restart {
-        attempts = 5
-        delay    = "60s"
-        mode     = "delay"
-      }
-
       resources {
-        cpu        = 200
-        memory     = 128
-        memory_max = 256
+        cpu    = 500
+        memory = 512
       }
 
       service {
@@ -261,12 +247,7 @@ EOH
           type     = "http"
           path     = "/"
           interval = "30s"
-          timeout  = "10s"
-          check_restart {
-            limit = 3
-            grace = "120s"
-            ignore_warnings = false
-          }
+          timeout  = "5s"
         }
       }
     }

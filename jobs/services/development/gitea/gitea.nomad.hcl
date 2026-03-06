@@ -2,10 +2,6 @@ job "gitea" {
   datacenters = ["dc1"]
   type        = "service"
 
-  spread {
-    attribute = "${node.unique.name}"
-  }
-
   group "gitea" {
     count = 1
 
@@ -44,7 +40,7 @@ job "gitea" {
       vault {}
 
       config {
-        image        = "registry.lab.hartr.net/postgres:16-alpine"
+        image        = "postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -60,7 +56,6 @@ job "gitea" {
       template {
         destination = "secrets/postgres.env"
         env         = true
-        change_mode = "noop"
         data        = <<EOH
 POSTGRES_DB=gitea
 POSTGRES_USER=gitea
@@ -75,9 +70,8 @@ EOH
       }
 
       resources {
-        cpu        = 200
-        memory     = 32
-        memory_max = 128
+        cpu    = 500
+        memory = 256
       }
 
       service {
@@ -100,7 +94,7 @@ EOH
       vault {}
 
       config {
-        image        = "registry.lab.hartr.net/gitea:latest-rootless"
+        image        = "gitea/gitea:latest-rootless"
         network_mode = "host"
         ports        = ["http"]
       }
@@ -117,7 +111,6 @@ EOH
       template {
         destination = "secrets/db.env"
         env         = true
-        change_mode = "noop"
         data        = <<EOH
 GITEA__database__PASSWD={{ with secret "secret/data/postgres/gitea" }}{{ .Data.data.password }}{{ end }}
 EOH
@@ -126,12 +119,7 @@ EOH
       env {
         USER_UID = "1000"
         USER_GID = "1000"
-
-        # Tell the rootless image where to find config and data (default is /var/lib/gitea)
-        GITEA_WORK_DIR   = "/data/gitea"
-        GITEA_APP_INI    = "/data/gitea/conf/app.ini"
-        GITEA_CUSTOM     = "/data/gitea/custom"
-
+        
         # PostgreSQL database configuration
         GITEA__database__DB_TYPE = "postgres"
         GITEA__database__HOST = "localhost:5437"
@@ -158,14 +146,14 @@ EOH
       }
 
       resources {
-        cpu        = 200
-        memory     = 128
-        memory_max = 256
+        cpu    = 500
+        memory = 512
       }
 
       service {
-        name = "gitea-http"
-        port = "http"
+        name         = "gitea-http"
+        port         = "http"
+        address_mode = "driver"
         tags = [
           "git",
           "development",
