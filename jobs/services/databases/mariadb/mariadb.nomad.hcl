@@ -31,7 +31,9 @@ job "mariadb" {
       driver = "docker"
 
       # Enable Vault workload identity for secrets access
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "registry.lab.hartr.net/mariadb:11.2"

@@ -2,10 +2,6 @@ job "speedtest" {
   datacenters = ["dc1"]
   type        = "service"
 
-  spread {
-    attribute = "${node.unique.name}"
-  }
-
   group "speedtest" {
     count = 1
 

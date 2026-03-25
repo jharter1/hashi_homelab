@@ -37,7 +37,9 @@ job "grafana" {
         sidecar = true
       }
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "postgres:16-alpine"
@@ -91,7 +93,9 @@ EOH
       driver = "docker"
 
       # Enable Vault workload identity for secrets access
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       # Fetch the Vault CA chain for trusting internal HTTPS services
       # TODO: Enable once PKI intermediate CA is generated
@@ -102,7 +106,7 @@ EOH
       # }
 
       config {
-        image        = "grafana/grafana:latest"
+        image        = "registry.lab.hartr.net/grafana:latest"
         network_mode = "host"
         ports        = ["http"]
         dns_servers  = ["10.0.0.10", "1.1.1.1"]
@@ -159,15 +163,15 @@ EOH
         GF_SERVER_ENABLE_GZIP = "true"
         
         # Authelia SSO Integration via Proxy Authentication
-        # TEMPORARILY DISABLED - Testing if proxy auth is causing infinite reload
-        # GF_AUTH_PROXY_ENABLED = "true"
-        # GF_AUTH_PROXY_HEADER_NAME = "Remote-User"
-        # GF_AUTH_PROXY_HEADER_PROPERTY = "username"
-        # GF_AUTH_PROXY_AUTO_SIGN_UP = "true"
-        # GF_AUTH_PROXY_SYNC_TTL = "60"
-        # GF_AUTH_PROXY_WHITELIST = "10.0.0.0/24"
-        # GF_AUTH_PROXY_HEADERS = "Email:Remote-Email Name:Remote-Name"
-        # GF_AUTH_PROXY_ENABLE_LOGIN_TOKEN = "false"
+        GF_AUTH_PROXY_ENABLED = "true"
+        GF_AUTH_PROXY_HEADER_NAME = "Remote-User"
+        GF_AUTH_PROXY_HEADER_PROPERTY = "username"
+        GF_AUTH_PROXY_AUTO_SIGN_UP = "true"
+        GF_AUTH_PROXY_SYNC_TTL = "60"
+        GF_AUTH_PROXY_WHITELIST = "10.0.0.0/24"
+        GF_AUTH_PROXY_HEADERS = "Email:Remote-Email Name:Remote-Name"
+        GF_AUTH_PROXY_ENABLE_LOGIN_TOKEN = "true"
+        GF_AUTH_DISABLE_LOGIN_FORM = "true"
         
         # Fix Monaco Editor loading issues
         GF_SECURITY_CONTENT_SECURITY_POLICY = "false"
@@ -188,8 +192,7 @@ EOH
           "traefik.http.routers.grafana.entrypoints=websecure",
           "traefik.http.routers.grafana.tls=true",
           "traefik.http.routers.grafana.tls.certresolver=letsencrypt",
-          # Authelia SSO Protection - TEMPORARILY DISABLED for testing
-          # "traefik.http.routers.grafana.middlewares=authelia@file",
+          "traefik.http.routers.grafana.middlewares=authelia@file",
         ]
         check {
           type     = "http"

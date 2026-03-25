@@ -42,96 +42,112 @@ This project deploys a multi-tier HashiCorp stack on Proxmox VE.
 ### Cluster Topology
 
 ```mermaid
-graph TD
-    Server1[Nomad Server 1<br/>10.0.0.50<br/>4 GB RAM]
-    Server2[Nomad Server 2<br/>10.0.0.51<br/>4 GB RAM]
-    Server3[Nomad Server 3<br/>10.0.0.52<br/>4 GB RAM]
-    Client1[Nomad Client 1<br/>10.0.0.60<br/>6 GB RAM]
-    Client2[Nomad Client 2<br/>10.0.0.61<br/>6 GB RAM]
-    Client3[Nomad Client 3<br/>10.0.0.62<br/>6 GB RAM]
-    Client4[Nomad Client 4<br/>10.0.0.63<br/>6 GB RAM]
-    Client5[Nomad Client 5<br/>10.0.0.64<br/>6 GB RAM]
-    Client6[Nomad Client 6<br/>10.0.0.65<br/>6 GB RAM]
-    
-    Server1 <-->|Raft Consensus| Server2
-    Server2 <-->|Raft Consensus| Server3
-    Server3 <-->|Raft Consensus| Server1
-    
-    Client1 -->|Register| Server1
-    Client2 -->|Register| Server2
-    Client3 -->|Register| Server3
-    Client4 -->|Register| Server1
-    Client5 -->|Register| Server2
-    Client6 -->|Register| Server3
-    
-    style Server1 fill:#60ac39,stroke:#333,stroke-width:2px,color:white
-    style Server2 fill:#60ac39,stroke:#333,stroke-width:2px,color:white
-    style Server3 fill:#60ac39,stroke:#333,stroke-width:2px,color:white
-    style Client1 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
-    style Client2 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
-    style Client3 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
-    style Client4 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
-    style Client5 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
-    style Client6 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
+graph TB
+    subgraph proxmox["Proxmox VE (pve1 – pve3)"]
+        subgraph control["Control Plane · 10.0.0.50-52"]
+            S1["Server 1\n10.0.0.50"]
+            S2["Server 2\n10.0.0.51"]
+            S3["Server 3\n10.0.0.52"]
+            S1 <-->|Raft| S2
+            S2 <-->|Raft| S3
+            S3 <-->|Raft| S1
+        end
+        subgraph workers["Worker Nodes · 10.0.0.60-63"]
+            C1["Client 1\n10.0.0.60\nTraefik (pinned)"]
+            C2["Client 2\n10.0.0.61"]
+            C3["Client 3\n10.0.0.62"]
+            C4["Client 4\n10.0.0.63\nGrafana"]
+        end
+    end
+
+    subgraph infra["Supporting Infrastructure"]
+        Vault["Vault HA\n10.0.0.30-32"]
+        NAS[("NFS Storage\n10.0.0.100")]
+    end
+
+    control -->|"schedule jobs"| workers
+    workers <-->|"secrets"| Vault
+    workers -->|"/mnt/nas"| NAS
+
+    style S1 fill:#60ac39,color:#fff,stroke:none
+    style S2 fill:#60ac39,color:#fff,stroke:none
+    style S3 fill:#60ac39,color:#fff,stroke:none
+    style C1 fill:#2496ed,color:#fff,stroke:none
+    style C2 fill:#2496ed,color:#fff,stroke:none
+    style C3 fill:#2496ed,color:#fff,stroke:none
+    style C4 fill:#2496ed,color:#fff,stroke:none
+    style Vault fill:#ffca28,color:#333,stroke:none
+    style NAS fill:#ff6b35,color:#fff,stroke:none
 ```
 
-### Service Flow
+### Request Flow
 
 ```mermaid
 graph LR
-    User[User] -->|HTTP/HTTPS| Traefik[Traefik]
-    Traefik -->|Service Discovery| Consul[Consul]
-    Traefik -->|Route to| Services[Services]
-    
-    Services -->|Metrics| Prometheus[Prometheus]
-    Services -->|Logs| Loki[Loki]
-    Prometheus -->|Visualize| Grafana[Grafana]
-    Loki -->|Visualize| Grafana
-    
-    style Traefik fill:#37abc8,stroke:#333,stroke-width:2px,color:white
-    style Consul fill:#e03875,stroke:#333,stroke-width:2px,color:white
-    style Prometheus fill:#e6522c,stroke:#333,stroke-width:2px,color:white
-    style Grafana fill:#f46800,stroke:#333,stroke-width:2px,color:white
+    User -->|HTTPS| Traefik
+    Traefik -->|"authelia@file\nmiddleware"| Authelia
+    Authelia -->|"authenticated\nrequest"| Traefik
+    Traefik -->|"Consul SD\nrouting"| Service["Service\nContainers"]
+    Service -->|"Vault workload\nidentity"| Vault
+
+    subgraph observe["Observability"]
+        Service -->|metrics| Prometheus
+        Service -->|logs| Alloy -->|ship| Loki
+        Prometheus --> Grafana
+        Loki --> Grafana
+    end
+
+    style Traefik fill:#37abc8,color:#fff,stroke:none
+    style Authelia fill:#e03875,color:#fff,stroke:none
+    style Vault fill:#ffca28,color:#333,stroke:none
+    style Prometheus fill:#e6522c,color:#fff,stroke:none
+    style Grafana fill:#f46800,color:#fff,stroke:none
+    style Loki fill:#f0a830,color:#333,stroke:none
+    style Alloy fill:#4a90d9,color:#fff,stroke:none
 ```
 
 ### Storage Architecture
 
 ```mermaid
-graph TD
-    NAS[(NFS Storage<br/>10.0.0.100)]
-    Client1[Nomad Client 1]
-    Client2[Nomad Client 2]
-    
-    NAS -->|/mnt/nas| Client1
-    NAS -->|/mnt/nas| Client2
-    
-    Client1 -->|Host Volumes| Jobs1[Jobs with<br/>Persistent Data]
-    Client2 -->|Host Volumes| Jobs2[Jobs with<br/>Persistent Data]
-    
-    style NAS fill:#ff6b35,stroke:#333,stroke-width:2px,color:white
-    style Client1 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
-    style Client2 fill:#2496ed,stroke:#333,stroke-width:2px,color:white
+graph LR
+    NAS[("NFS Storage\n10.0.0.100")]
+    C1["Client 1\n10.0.0.60"]
+    C2["Client 2\n10.0.0.61"]
+    C3["Client 3\n10.0.0.62"]
+    C4["Client 4\n10.0.0.63"]
+
+    NAS -->|"/mnt/nas"| C1 & C2 & C3 & C4
+    C1 & C2 & C3 & C4 -->|"host volumes"| Jobs["Nomad Job\nAllocations"]
+
+    style NAS fill:#ff6b35,color:#fff,stroke:none
+    style C1 fill:#2496ed,color:#fff,stroke:none
+    style C2 fill:#2496ed,color:#fff,stroke:none
+    style C3 fill:#2496ed,color:#fff,stroke:none
+    style C4 fill:#2496ed,color:#fff,stroke:none
+    style Jobs fill:#60ac39,color:#fff,stroke:none
 ```
 
 **Key Components:**
 
-- **Nomad Servers (3)**: Manage cluster state, scheduling decisions, and job placement using Raft consensus
-- **Nomad Clients (6)**: Run containerized workloads with Docker driver
-- **Consul**: Service discovery, health checking, and KV store (co-located with Nomad servers)
-- **Traefik**: Reverse proxy with automatic service registration via Consul catalog
-- **Observability Stack**: Prometheus (metrics), Loki (logs), Grafana (visualization), Alloy (collection)
-- **Storage**: NFS mounts from NAS provide persistent storage via host volumes
+- **Nomad Servers (3)**: Manage cluster state, scheduling, and job placement via Raft consensus (Consul co-located)
+- **Nomad Clients (4)**: Run containerized workloads via Docker driver; all persistent data on NFS
+- **Consul**: Service discovery, health checking, DNS, and KV store
+- **Traefik**: Reverse proxy — auto-discovers services via Consul catalog tags; pinned to client-1 (static DNS)
+- **Authelia**: SSO and MFA gateway; enforces access control via Traefik `authelia@file` middleware
+- **Vault HA (3 nodes)**: Secrets management with Nomad workload identity — DB credentials, API keys, app secrets
+- **Observability**: Prometheus (metrics) + Loki (logs) + Grafana (dashboards) + Alloy (collection agent)
+- **Storage**: NFS mounts from NAS at `/mnt/nas/` provide portable persistent volumes across all clients
 
 **Current Resource Allocation:**
 
 | Component | Count | vCPU | Memory | Notes |
 |-----------|-------|------|--------|-------|
 | Nomad Servers | 3 | 2 | 4 GB | Consul co-located |
-| Nomad Clients | 6 | 4 | 6 GB | Docker + workloads |
-| Vault Hubs (optional) | 3 | 2 | 2 GB | HA cluster |
-| **Total** | **9-12** | **32-38** | **48-54 GB** | **~75% utilization** |
+| Nomad Clients | 4 | 4 | 8 GB | Docker + workloads |
+| Vault HA | 3 | 2 | 2 GB | Raft integrated storage |
+| **Total** | **10** | **26** | **46 GB** | |
 
-**Container Memory Usage:** ~13.6 GB across 28+ services  
+**Container Memory Usage:** ~13.6 GB across 28+ services
 **Optimization History:** See [RESOURCE_SURVEY.md](docs/RESOURCE_SURVEY.md)
 
 ## Quick Start
@@ -217,7 +233,7 @@ terraform apply tfplan
 
 This provisions:
 - 3 Nomad servers with Consul
-- 6 Nomad clients with Docker
+- 4 Nomad clients with Docker
 - All networking and VM configuration
 - NFS mounts for shared storage
 
@@ -281,7 +297,7 @@ task bootstrap
 
 This executes all steps:
 1. Verifies Packer templates exist (requires DNS on Proxmox for initial creation)
-2. Provisions VMs with Terraform (9 VMs: 3 servers, 6 clients)
+2. Provisions VMs with Terraform (7 VMs: 3 servers, 4 clients)
 3. Waits for VMs to boot (60 seconds)
 4. Configures nodes with Ansible (Docker, Nomad, NFS, etc.)
 5. Deploys all Nomad jobs (Traefik, monitoring, registry, apps)

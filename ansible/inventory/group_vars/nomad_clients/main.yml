@@ -1,4 +1,7 @@
 ---
+node_type: client
+node_class: compute
+
 # Consul client configuration (servers use defaults from nomad_cluster.yml)
 consul_server: false
 
@@ -7,3 +10,10 @@ nomad_server_addresses:
   - "10.0.0.50"
   - "10.0.0.51"
   - "10.0.0.52"
+
+# NAS storage
+nas_mount_source: "10.0.0.220:/mnt/HD/HD_a2/PVE-VM-Storage"
+nas_mount_point: "/mnt/nas"
+
+# Docker registry mirror (local registry on client-2)
+docker_registry_mirror: "http://10.0.0.61:5000"

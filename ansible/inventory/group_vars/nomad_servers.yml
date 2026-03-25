@@ -1,4 +1,6 @@
 ---
+node_type: server
+
 # Consul server configuration
 consul_server: true
 consul_bootstrap_expect: 3

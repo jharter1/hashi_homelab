@@ -2,10 +2,6 @@ job "minio" {
   datacenters = ["dc1"]
   type        = "service"
 
-  spread {
-    attribute = "${node.unique.name}"
-  }
-
   group "minio" {
     count = 1
 
@@ -28,7 +24,9 @@ job "minio" {
     task "minio" {
       driver = "docker"
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       template {
         destination = "secrets/minio.env"
@@ -53,7 +51,7 @@ EOH
           "server",
           "/data",
           "--address",
-          ":9000",
+          "${NOMAD_IP_api}:9000",
           "--console-address",
           ":9001",
         ]

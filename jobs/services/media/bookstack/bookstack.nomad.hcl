@@ -50,7 +50,9 @@ job "bookstack" {
         sidecar = true
       }
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "mariadb:11.2"
@@ -100,7 +102,9 @@ EOH
     task "bookstack" {
       driver = "docker"
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "lscr.io/linuxserver/bookstack:latest"

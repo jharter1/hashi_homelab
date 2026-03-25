@@ -37,7 +37,9 @@ job "linkwarden" {
         sidecar = true
       }
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "postgres:16-alpine"
@@ -89,7 +91,9 @@ EOH
     task "linkwarden" {
       driver = "docker"
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "ghcr.io/linkwarden/linkwarden:latest"

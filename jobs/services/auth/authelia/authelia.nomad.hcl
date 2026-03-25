@@ -23,7 +23,8 @@ job "authelia" {
 
       # Enable Vault workload identity for secrets access
       vault {
-        policies = ["nomad-workloads"]
+        change_mode = "noop"
+        policies    = ["nomad-workloads"]
       }
 
       config {

@@ -77,6 +77,12 @@ tasks:
       - |
         cd ansible && ansible-playbook playbooks/configure-docker.yml
 
+  ansible:inventory:
+    desc: "Show dynamic inventory sourced from Consul"
+    cmds:
+      - |
+        cd ansible && python3 inventory/consul_inventory.py --list | python3 -m json.tool
+
   ansible:test:
     desc: "Test Ansible connectivity to all nodes"
     cmds:
@@ -136,6 +142,12 @@ tasks:
     cmds:
       - |
         cd ansible && ansible-playbook playbooks/update-nomad-configs.yml --limit nomad_clients
+
+  ansible:update:os:
+    desc: "Update all OS packages on cluster nodes (serial, reboots if required)"
+    cmds:
+      - |
+        cd ansible && ansible-playbook playbooks/update-os.yml {{.CLI_ARGS}}
 
   tailscale:deploy:
     desc: "Deploy Tailscale on Nomad clients for remote access"

@@ -43,7 +43,9 @@ job "wallabag" {
         sidecar = true
       }
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "postgres:16-alpine"
@@ -95,7 +97,9 @@ EOH
     task "wallabag" {
       driver = "docker"
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "wallabag/wallabag:latest"

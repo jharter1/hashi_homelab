@@ -37,7 +37,9 @@ job "freshrss" {
         sidecar = true
       }
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "postgres:16-alpine"
@@ -90,7 +92,9 @@ EOH
     task "freshrss" {
       driver = "docker"
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       config {
         image        = "freshrss/freshrss:latest"
@@ -172,7 +176,9 @@ EOH
     task "freshrss-cron" {
       driver = "docker"
 
-      vault {}
+      vault {
+        change_mode = "noop"
+      }
 
       lifecycle {
         hook    = "poststart"
