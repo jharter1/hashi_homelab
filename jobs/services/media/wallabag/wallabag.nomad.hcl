@@ -48,7 +48,7 @@ job "wallabag" {
       }
 
       config {
-        image        = "postgres:16-alpine"
+        image        = "registry.lab.hartr.net/postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -102,7 +102,7 @@ EOH
       }
 
       config {
-        image        = "wallabag/wallabag:latest"
+        image        = "registry.lab.hartr.net/wallabag:latest"
         network_mode = "host"
         ports        = ["http"]
         privileged   = true

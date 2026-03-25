@@ -22,7 +22,7 @@ job "trilium" {
       driver = "docker"
 
       config {
-        image        = "zadam/trilium:latest"
+        image        = "registry.lab.hartr.net/trilium:latest"
         network_mode = "host"
         ports        = ["http"]
         privileged   = true
@@ -44,7 +44,8 @@ job "trilium" {
 
       resources {
         cpu    = 500
-        memory = 512
+        memory     = 128
+        memory_max = 256
       }
 
       service {

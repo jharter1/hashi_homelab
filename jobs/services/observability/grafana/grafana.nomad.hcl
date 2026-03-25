@@ -42,7 +42,7 @@ job "grafana" {
       }
 
       config {
-        image        = "postgres:16-alpine"
+        image        = "registry.lab.hartr.net/postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -73,7 +73,7 @@ EOH
 
       resources {
         cpu    = 500
-        memory = 256
+        memory = 128
       }
 
       service {
@@ -179,8 +179,9 @@ EOH
       }
 
       resources {
-        cpu    = 500
-        memory = 512
+        cpu        = 500
+        memory     = 256
+        memory_max = 512
       }
 
       service {

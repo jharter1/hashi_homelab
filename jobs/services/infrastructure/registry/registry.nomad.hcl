@@ -61,7 +61,7 @@ job "registry" {
       resources {
         cpu        = 100
         memory     = 128
-        memory_max = 512
+        memory_max = 768
       }
 
       service {

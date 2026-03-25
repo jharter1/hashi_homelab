@@ -42,7 +42,7 @@ job "gitea" {
       }
 
       config {
-        image        = "postgres:16-alpine"
+        image        = "registry.lab.hartr.net/postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -73,7 +73,7 @@ EOH
 
       resources {
         cpu    = 500
-        memory = 256
+        memory = 128
       }
 
       service {
@@ -98,7 +98,7 @@ EOH
       }
 
       config {
-        image        = "gitea/gitea:latest-rootless"
+        image        = "registry.lab.hartr.net/gitea:latest-rootless"
         network_mode = "host"
         ports        = ["http"]
       }
@@ -123,6 +123,12 @@ EOH
       env {
         USER_UID = "1000"
         USER_GID = "1000"
+
+        # Point rootless image to volume mount at /data instead of defaults
+        # (/var/lib/gitea and /etc/gitea/app.ini)
+        GITEA_WORK_DIR = "/data/gitea"
+        GITEA_APP_INI  = "/data/gitea/conf/app.ini"
+        GITEA_CUSTOM   = "/data/gitea/custom"
         
         # PostgreSQL database configuration
         GITEA__database__DB_TYPE = "postgres"
@@ -151,13 +157,13 @@ EOH
 
       resources {
         cpu    = 500
-        memory = 512
+        memory     = 256
+        memory_max = 512
       }
 
       service {
-        name         = "gitea-http"
-        port         = "http"
-        address_mode = "driver"
+        name = "gitea-http"
+        port = "http"
         tags = [
           "git",
           "development",

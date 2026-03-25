@@ -90,7 +90,8 @@ EOH
 
       resources {
         cpu    = 500
-        memory = 512
+        memory     = 64
+        memory_max = 128
       }
 
       service {
@@ -166,8 +167,9 @@ EOH
       }
 
       resources {
-        cpu    = 1000
-        memory = 1024
+        cpu    = 500
+        memory     = 128
+        memory_max = 256
       }
 
       service {

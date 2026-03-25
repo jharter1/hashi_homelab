@@ -28,7 +28,7 @@ job "authelia" {
       }
 
       config {
-        image        = "authelia/authelia:latest"
+        image        = "registry.lab.hartr.net/authelia:latest"
         network_mode = "host"
         userns_mode  = "host"
         privileged   = true
@@ -121,7 +121,14 @@ access_control:
         - "^/avatar/.*$"
         - "^/public/.*$"
       policy: bypass
-    
+
+    # Uptime Kuma status page API - used by homepage widget (no session available)
+    - domain:
+        - uptime-kuma.lab.hartr.net
+      resources:
+        - "^/api/status-page/.*$"
+      policy: bypass
+
     # Protected services - require authentication
     - domain:
         - grafana.lab.hartr.net
@@ -144,6 +151,11 @@ access_control:
         - speedtest.lab.hartr.net
         - paperless.lab.hartr.net
         - syncthing.lab.hartr.net
+        - ntfy.lab.hartr.net
+        - preview.lab.hartr.net
+        - readeck.lab.hartr.net
+        - dozzle.lab.hartr.net
+        - netdata.lab.hartr.net
       policy: one_factor
     
     # Admin-only infrastructure services
@@ -230,7 +242,8 @@ EOH
 
       resources {
         cpu    = 200
-        memory = 256
+        memory     = 64
+        memory_max = 128
       }
 
       service {

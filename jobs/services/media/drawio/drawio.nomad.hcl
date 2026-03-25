@@ -41,7 +41,7 @@ job "drawio" {
 
       resources {
         cpu    = 500
-        memory = 256
+        memory = 192
       }
 
       service {

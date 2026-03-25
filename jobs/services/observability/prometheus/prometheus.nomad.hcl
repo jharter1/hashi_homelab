@@ -62,7 +62,7 @@ job "prometheus" {
       resources {
         cpu        = 300
         memory     = 256
-        memory_max = 512
+        memory_max = 1024
       }
 
       service {

@@ -42,7 +42,7 @@ job "linkwarden" {
       }
 
       config {
-        image        = "postgres:16-alpine"
+        image        = "registry.lab.hartr.net/postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -96,7 +96,7 @@ EOH
       }
 
       config {
-        image        = "ghcr.io/linkwarden/linkwarden:latest"
+        image        = "registry.lab.hartr.net/linkwarden:latest"
         network_mode = "host"
         ports        = ["http"]
         privileged   = true

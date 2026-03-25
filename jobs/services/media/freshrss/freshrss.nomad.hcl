@@ -42,7 +42,7 @@ job "freshrss" {
       }
 
       config {
-        image        = "postgres:16-alpine"
+        image        = "registry.lab.hartr.net/postgres:16-alpine"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -73,7 +73,7 @@ EOH
 
       resources {
         cpu    = 500
-        memory = 256
+        memory = 128
       }
 
       service {
@@ -97,7 +97,7 @@ EOH
       }
 
       config {
-        image        = "freshrss/freshrss:latest"
+        image        = "registry.lab.hartr.net/freshrss:latest"
         network_mode = "host"
         ports        = ["http"]
       }
@@ -149,7 +149,7 @@ EOH
 
       resources {
         cpu    = 500
-        memory = 256
+        memory = 128
       }
 
       service {
@@ -186,7 +186,7 @@ EOH
       }
 
       config {
-        image   = "freshrss/freshrss:latest"
+        image   = "registry.lab.hartr.net/freshrss:latest"
         command = "cron"
         args    = ["-f"]
 

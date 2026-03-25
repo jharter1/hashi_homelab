@@ -55,7 +55,7 @@ job "bookstack" {
       }
 
       config {
-        image        = "mariadb:11.2"
+        image        = "registry.lab.hartr.net/mariadb:11.2"
         network_mode = "host"
         ports        = ["db"]
         privileged   = true
@@ -107,7 +107,7 @@ EOH
       }
 
       config {
-        image        = "lscr.io/linuxserver/bookstack:latest"
+        image        = "registry.lab.hartr.net/bookstack:latest"
         network_mode = "host"
         ports        = ["http"]
         privileged   = true
@@ -219,7 +219,8 @@ EOH
 
       resources {
         cpu    = 500
-        memory = 512
+        memory     = 192
+        memory_max = 384
       }
 
       service {
